@@ -1,0 +1,339 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+    <meta name="theme-color" content="#060C1A" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="description" content="Plan de dieta para mantenimiento 78-80kg de Rony Cozzi." />
+    <title>Dieta Rony · 78-80kg</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <link rel="manifest" href="manifest.json" />
+    <link rel="apple-touch-icon" href="favicon.svg" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Dieta Rony" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="format-detection" content="telephone=no" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+
+    <!-- FAB -->
+    <button type="button" class="day-fab" id="day-fab" onclick="scrollToTodayPanel()" aria-label="Ir al día de hoy">
+      <span class="day-fab-icon">🍽️</span>
+      <span class="day-fab-text">Hoy</span>
+    </button>
+
+    <!-- APP LAYOUT -->
+    <div class="app-layout">
+
+      <!-- SIDEBAR (desktop) -->
+      <aside class="sidebar">
+
+        <div class="sb-brand">
+          <div class="sb-logo">🔥</div>
+          <div class="sb-brand-text">
+            <span class="sb-app-name">Dieta App</span>
+            <span class="sb-app-sub">Mantenimiento · 78-80kg</span>
+          </div>
+        </div>
+
+        <div class="sb-profile">
+          <img src="assets/rony-cozzi.jpg" alt="Rony" class="sb-avatar" loading="lazy" decoding="async" />
+          <div class="sb-greeting" id="hero-greeting">Hola, Rony</div>
+          <div class="sb-clock" id="live-clock">00:00:00</div>
+          <div class="sb-date" id="clock-date">Cargando…</div>
+          <div class="sb-streak" id="streak-badge">0 días seguidos</div>
+        </div>
+
+        <div class="sb-divider"></div>
+
+        <div class="sb-macros-block">
+          <div class="sb-macro-label">Objetivos diarios</div>
+          <div class="sb-macro-row">
+            <div class="sb-macro-item">
+              <span class="sb-macro-val sb-kcal">2500–3100</span>
+              <span class="sb-macro-unit">kcal</span>
+            </div>
+            <div class="sb-macro-item">
+              <span class="sb-macro-val sb-prot">150–185g</span>
+              <span class="sb-macro-unit">proteína</span>
+            </div>
+            <div class="sb-macro-item">
+              <span class="sb-macro-val sb-carb">240–380g</span>
+              <span class="sb-macro-unit">carbos</span>
+            </div>
+            <div class="sb-macro-item">
+              <span class="sb-macro-val sb-fat">78–82g</span>
+              <span class="sb-macro-unit">grasas</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="sb-divider"></div>
+
+        <nav class="sb-nav">
+          <a class="sb-nav-item sb-nav-active" href="#plan-section"><span class="sb-nav-icon">📅</span><span>Plan del día</span></a>
+          <a class="sb-nav-item" href="#supp-section"><span class="sb-nav-icon">💊</span><span>Suplementos</span></a>
+          <a class="sb-nav-item" href="#weight-section"><span class="sb-nav-icon">⚖️</span><span>Peso</span></a>
+          <a class="sb-nav-item" href="#shopping-list"><span class="sb-nav-icon">🛒</span><span>Compras</span></a>
+          <a class="sb-nav-item" href="#review-section"><span class="sb-nav-icon">📖</span><span>Info del plan</span></a>
+        </nav>
+
+        <div class="sb-divider"></div>
+
+        <div class="sb-actions">
+          <button class="sb-action-btn sb-primary" type="button" onclick="showCalendarHelp()">📅 Sync Calendario</button>
+          <button class="sb-action-btn sb-watch" type="button" onclick="showWatchModal()">⌚ Apple Watch</button>
+          <button class="sb-action-btn" id="share-day-btn" type="button">📤 Compartir día</button>
+          <button class="sb-action-btn" id="notif-btn" type="button">🔔 Notificaciones</button>
+          <button class="sb-action-btn" id="reset-btn" type="button">↻ Resetear día</button>
+        </div>
+
+      </aside>
+
+      <!-- MAIN CONTENT -->
+      <div class="main-content">
+
+        <!-- TOP BAR (mobile only) -->
+        <div class="topbar">
+          <div class="topbar-left">
+            <div class="topbar-greeting" id="topbar-greeting-mirror"></div>
+            <div class="topbar-date" id="topbar-date-mirror"></div>
+          </div>
+          <div class="topbar-right">
+            <div class="topbar-clock" id="topbar-clock-mirror"></div>
+            <div class="topbar-streak" id="topbar-streak-mirror"></div>
+          </div>
+        </div>
+
+        <!-- BENTO HEADER -->
+        <div class="bento-header">
+          <div class="bento-gym" id="gym-banner-dieta"></div>
+          <div class="bento-next">
+            <div class="bento-card-label">⏰ Próxima comida</div>
+            <div id="next-meal" class="bento-next-content">Cargando…</div>
+          </div>
+          <div class="bento-water">
+            <div class="bento-card-label">💧 Agua &nbsp;<strong id="water-label">0/10</strong></div>
+            <div class="water-dots" id="water-dots"></div>
+          </div>
+        </div>
+
+        <!-- WEEK OVERVIEW -->
+        <section class="week-overview" id="plan-section">
+          <div class="section-header">
+            <div>
+              <div class="section-eyebrow">Esta semana</div>
+              <div class="section-title">Cumplimiento</div>
+            </div>
+          </div>
+          <div class="week-overview-grid" id="week-overview-grid"></div>
+        </section>
+
+        <!-- WEEK TABS + DAY PLAN -->
+        <div class="plan-block">
+          <div class="current-week-label" id="current-week-label"></div>
+          <nav class="week-tabs" id="week-tabs" aria-label="Plan semanal"></nav>
+          <main id="day-container"></main>
+        </div>
+
+        <!-- SUPPLEMENTS -->
+        <section class="supp-section" id="supp-section">
+          <div class="section-header">
+            <div>
+              <div class="section-eyebrow">Diaria · Sin vueltas</div>
+              <div class="section-title">Suplementación base</div>
+            </div>
+          </div>
+          <div id="supp-base-row" class="supp-row"></div>
+        </section>
+
+        <!-- hidden extra supps slot for JS compat -->
+        <div style="display:none"><div id="supp-extra-row"></div></div>
+
+        <!-- WEIGHT TRACKER -->
+        <section class="weight-section" id="weight-section">
+          <div class="section-header">
+            <div>
+              <div class="section-eyebrow">Cada lunes en ayunas</div>
+              <div class="section-title">Progreso de peso</div>
+            </div>
+          </div>
+          <div class="weight-input-row">
+            <label for="weight-input" class="visually-hidden">Peso de hoy en kg</label>
+            <input type="number" step="0.1" min="40" max="200" id="weight-input" inputmode="decimal" placeholder="Ej: 78.5 kg" aria-label="Peso de hoy en kg" />
+            <button type="button" id="weight-save-btn" class="weight-save-btn">Guardar</button>
+          </div>
+          <div id="weight-history"></div>
+        </section>
+
+        <!-- EXPERT REVIEW -->
+        <section class="review-section" id="review-section">
+          <div class="section-header">
+            <div>
+              <div class="section-eyebrow">Por qué este plan está así</div>
+              <div class="section-title">Revisión experta</div>
+            </div>
+          </div>
+          <div class="review-grid">
+            <article class="review-card">
+              <h3>Recomposición: músculo sin subir peso</h3>
+              <p>Tu TDEE está cerca de las 2800 kcal. El plan tiene <strong>leve superávit en días de gym</strong> (2900–3100) y <strong>leve déficit en descanso</strong> (2500–2550). Promedio semanal ~2790 kcal = mantenimiento.</p>
+            </article>
+            <article class="review-card">
+              <h3>Por qué la proteína sigue alta</h3>
+              <p>150–185g/día mantiene la masa muscular sin superávit calórico fuerte. Bajar la proteína sería el peor error: perderías músculo aunque comas bien.</p>
+            </article>
+            <article class="review-card">
+              <h3>Día de piernas: el más exigente</h3>
+              <p>El jueves pide 3100 kcal (+200 vs otros días de gym). Sentadilla, prensa y peso muerto rumano queman tanto glucógeno que comer poco te deja destrozado.</p>
+            </article>
+            <article class="review-card">
+              <h3>Si pasás de 80kg</h3>
+              <p>El tracker te avisa. Fórmula simple: <strong>achicar 1 porción de carbo</strong> en almuerzo o cena. Si en 2 semanas volviste al rango, recuperás la porción.</p>
+            </article>
+          </div>
+        </section>
+
+        <!-- SHOPPING LIST -->
+        <section class="shopping-list" id="shopping-list">
+          <div class="section-header">
+            <div>
+              <div class="section-eyebrow">Semana completa</div>
+              <div class="section-title">Lista de compras</div>
+            </div>
+            <div class="sl-actions">
+              <button class="sl-btn" type="button" onclick="exportShopping()">Compartir</button>
+              <button class="sl-btn" type="button" id="shopping-btn">Ver / Ocultar</button>
+              <button class="sl-btn" type="button" onclick="resetShopping()">Resetear</button>
+            </div>
+          </div>
+          <div id="shopping-content"></div>
+          <div class="sl-progress">
+            <div class="sl-prog-text">Completado: <span id="sl-count">0</span> / <span id="sl-total">0</span></div>
+            <div class="sl-prog-bar"><div class="sl-prog-fill" id="sl-fill"></div></div>
+          </div>
+        </section>
+
+        <!-- hidden rules slot for JS compat -->
+        <div style="display:none"><div id="rules-grid"></div></div>
+
+      </div><!-- /main-content -->
+    </div><!-- /app-layout -->
+
+    <!-- APPLE WATCH MODAL -->
+    <div class="watch-modal-overlay" id="watch-modal" onclick="closeWatchModal(event)" style="display:none" role="dialog" aria-modal="true" aria-label="Integración Apple Watch">
+      <div class="watch-modal">
+        <button class="watch-modal-close" onclick="closeWatchModal()" aria-label="Cerrar">✕</button>
+        <div class="watch-modal-header">
+          <div class="watch-modal-icon">⌚</div>
+          <div>
+            <div class="watch-modal-title">Apple Watch</div>
+            <div class="watch-modal-sub">Controlá tu dieta desde la muñeca</div>
+          </div>
+        </div>
+
+        <div class="watch-section-label">QUÉ FUNCIONA AHORA MISMO</div>
+        <div class="watch-feature-list">
+          <div class="watch-feature">
+            <span class="watch-feature-icon">🔔</span>
+            <div>
+              <strong>Notificaciones de comidas</strong>
+              <p>Activá las notificaciones en esta app → aparecen directo en tu Watch. Cada comida llega 5 minutos antes con nombre y calorías.</p>
+            </div>
+          </div>
+          <div class="watch-feature">
+            <span class="watch-feature-icon">📅</span>
+            <div>
+              <strong>Recordatorios en el calendario</strong>
+              <p>Descargá el .ics → los eventos del plan aparecen en la app Calendario del Watch. Podés verlos con solo levantar la muñeca.</p>
+            </div>
+          </div>
+          <div class="watch-feature">
+            <span class="watch-feature-icon">🗣️</span>
+            <div>
+              <strong>Siri Shortcuts desde el Watch</strong>
+              <p>Instalá los atajos de abajo → desde el Watch podés decir "Oye Siri, agregar agua" o ejecutarlos con un toque en la complicación de Atajos.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="watch-section-label">ATAJOS DE SIRI — INSTALÁ EN UN TAP</div>
+        <div class="watch-shortcuts-grid">
+          <div class="watch-shortcut-card">
+            <div class="wsc-icon">💧</div>
+            <div class="wsc-name">Agregar agua</div>
+            <div class="wsc-desc">Abre la app y registra un vaso. Decile a Siri: "Agua dieta"</div>
+            <button class="wsc-btn" onclick="installShortcut('water')">Instalar atajo</button>
+          </div>
+          <div class="watch-shortcut-card">
+            <div class="wsc-icon">✅</div>
+            <div class="wsc-name">Marcar comida</div>
+            <div class="wsc-desc">Marca la comida más cercana al horario actual</div>
+            <button class="wsc-btn" onclick="installShortcut('meal')">Instalar atajo</button>
+          </div>
+          <div class="watch-shortcut-card">
+            <div class="wsc-icon">⚖️</div>
+            <div class="wsc-name">Registrar peso</div>
+            <div class="wsc-desc">Abre directo la sección de peso para cargar el lunes</div>
+            <button class="wsc-btn" onclick="installShortcut('weight')">Instalar atajo</button>
+          </div>
+          <div class="watch-shortcut-card">
+            <div class="wsc-icon">📊</div>
+            <div class="wsc-name">Ver plan del día</div>
+            <div class="wsc-desc">Abre la app en el día de hoy directo</div>
+            <button class="wsc-btn" onclick="installShortcut('today')">Instalar atajo</button>
+          </div>
+        </div>
+
+        <div class="watch-section-label">CÓMO AGREGAR AL WATCH</div>
+        <ol class="watch-steps">
+          <li>Instalá los atajos tocando los botones de arriba</li>
+          <li>Abrí la app <strong>Atajos</strong> en tu iPhone → tocá el atajo → "···" → activá "Mostrar en Apple Watch"</li>
+          <li>En tu Watch, abrí la app <strong>Atajos</strong> → aparecen ahí</li>
+          <li>También podés agregar una <strong>complicación de Atajos</strong> en tu esfera para acceder con un toque</li>
+        </ol>
+
+        <button class="watch-notif-btn" onclick="requestNotifications(); closeWatchModal()">
+          🔔 Activar notificaciones de comidas ahora
+        </button>
+      </div>
+    </div>
+
+    <!-- BOTTOM NAV (mobile) -->
+    <nav class="bottom-nav" aria-label="Navegación principal">
+      <a class="bn-item" href="#plan-section"><span class="bn-icon">📅</span><span class="bn-label">Plan</span></a>
+      <a class="bn-item" href="#weight-section"><span class="bn-icon">⚖️</span><span class="bn-label">Peso</span></a>
+      <button class="bn-item bn-fab-trigger" type="button" onclick="scrollToTodayPanel()">
+        <span class="bn-fab-inner">🍽️</span>
+      </button>
+      <a class="bn-item" href="#supp-section"><span class="bn-icon">💊</span><span class="bn-label">Supls</span></a>
+      <a class="bn-item" href="#shopping-list"><span class="bn-icon">🛒</span><span class="bn-label">Compras</span></a>
+    </nav>
+
+    <script src="script.js"></script>
+    <script>
+      // Mirror sidebar values to mobile topbar
+      function mirrorToTopbar() {
+        var pairs = [
+          ['hero-greeting','topbar-greeting-mirror'],
+          ['live-clock','topbar-clock-mirror'],
+          ['clock-date','topbar-date-mirror'],
+          ['streak-badge','topbar-streak-mirror']
+        ];
+        pairs.forEach(function(p) {
+          var src = document.getElementById(p[0]);
+          var dst = document.getElementById(p[1]);
+          if (src && dst) dst.textContent = src.textContent;
+        });
+      }
+      setInterval(mirrorToTopbar, 1000);
+      mirrorToTopbar();
+    </script>
+  </body>
+</html>

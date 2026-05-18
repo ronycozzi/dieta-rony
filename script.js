@@ -1,0 +1,4721 @@
+// =====================================================
+// DIETA RONY COZZI · 78-80kg · Ectomorfo
+// Plan de mantenimiento + recomposición
+// Menús rotativos: 4 semanas distintas, auto-actualiza
+// Almuerzo y cena con opción B al toque
+// =====================================================
+
+const WATER_GOAL = 10;
+const STORAGE = {
+  meals:           "rony-dieta-meals",
+  water:           "rony-dieta-water",
+  shopping:        "rony-dieta-shopping",
+  streak:          "rony-dieta-streak",
+  weight:          "rony-dieta-weight",
+  fridayMode:      "rony-dieta-friday-mode",
+  weightSeeded:    "weight-seeded"
+};
+
+// =====================================================
+// HELPERS
+// =====================================================
+function meal(time, label, name, desc, _kcalLegacy, foods, prep, note, alt) {
+  const computedKcal = Math.round(foods.reduce((sum, f) => sum + f.p * 4 + f.c * 4 + f.g * 9, 0));
+  return { id: slug(`${time}-${name}`), time, label, name, desc, kcal: computedKcal, foods, prep, note: note || null, alt: alt || null };
+}
+
+function altMeal(name, desc, foods, prep) {
+  const computedKcal = Math.round(foods.reduce((sum, f) => sum + f.p * 4 + f.c * 4 + f.g * 9, 0));
+  return { name, desc, kcal: computedKcal, foods, prep };
+}
+
+function food(name, p, c, g) {
+  return { name, p, c, g };
+}
+
+function slug(value) {
+  return value.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+}
+
+function formatLocalDateKey(date) {
+  const d = date || new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function getTodayKey() {
+  return formatLocalDateKey(new Date());
+}
+
+function cleanupOldData() {
+  try {
+    const today = new Date();
+    const cutoff = new Date(today);
+    cutoff.setDate(today.getDate() - 60);
+    const cutoffKey = formatLocalDateKey(cutoff);
+    const keysToRemove = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith("goal-celebrated-")) {
+        const dateStr = key.slice("goal-celebrated-".length);
+        if (dateStr < cutoffKey) keysToRemove.push(key);
+      }
+    }
+    keysToRemove.forEach((k) => localStorage.removeItem(k));
+    const meals = JSON.parse(localStorage.getItem(STORAGE.meals) || "{}");
+    let mealsChanged = false;
+    Object.keys(meals).forEach((date) => {
+      if (date < cutoffKey) { delete meals[date]; mealsChanged = true; }
+    });
+    if (mealsChanged) localStorage.setItem(STORAGE.meals, JSON.stringify(meals));
+  } catch (e) {}
+}
+
+function sumMacros(meals) {
+  return meals.reduce((acc, m) => {
+    m.foods.forEach((f) => { acc.p += f.p; acc.c += f.c; acc.g += f.g; });
+    acc.kcal += m.kcal;
+    return acc;
+  }, { kcal: 0, p: 0, c: 0, g: 0 });
+}
+
+// =====================================================
+// SEMANA ROTATIVA · Elige menú según número de semana ISO
+// Semana 1 → 2 → 3 → 4 → 1 → 2 → ... automáticamente
+// =====================================================
+function getISOWeekNumber() {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() + 3 - (d.getDay() + 6) % 7);
+  const week1 = new Date(d.getFullYear(), 0, 4);
+  return 1 + Math.round(((d.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
+}
+
+
+// =====================================================
+// DATOS · 4 SEMANAS DE MENÚ DISTINTO
+// =====================================================
+const allWeeks = [
+
+// ╔══════════════════════════════════════╗
+// ║  SEMANA 1 · "Mediterránea"           ║
+// ╚══════════════════════════════════════╝
+[
+  // ===== LUNES · PECHO + TRÍCEPS =====
+  {
+    id: "lun", tab: "Lun", dayIndex: 1, title: "Lunes",
+    type: "Día de gym · Pecho + tríceps",
+    workout: { name: "Pecho · Tríceps", duration: "60 min", icon: "🏋️", primary: ["Pecho", "Tríceps"] },
+    isRestDay: false, kcal: 2900, protein: 170, carbs: 330, fats: 80,
+    tags: ["Pecho", "Tríceps", "Mantenimiento"],
+    tip: "Día de empuje. Desayuná bien — la avena te da energía sostenida para las series pesadas de pecho. Si terminás el entreno con hambre real, sumá el cottage antes de dormir.",
+    meals: [
+      meal("10:00", "Desayuno", "Bowl de avena con banana, manteca de maní y miel", "60g avena · banana · 2 cdas manteca de maní · miel · leche", 0, [
+        food("60g avena en hojuelas", 7, 40, 4),
+        food("1 banana madura", 1, 27, 0),
+        food("2 cdas manteca de maní", 8, 6, 16),
+        food("1 cda miel", 0, 17, 0),
+        food("200ml leche entera", 6, 10, 7)
+      ], [
+        "Calentá la leche en el microondas 2 min. Volcá sobre la avena y dejá reposar 3 min hasta que absorba.",
+        "Cortá la banana en rodajas. Poné encima la manteca de maní y bañá con miel. El combo avena+banana+maní da energía sostenida para 3-4 horas de entreno.",
+        "Tomá un café negro al lado para el boost de cafeína pre-gym si entrás cerca."
+      ], "Avena = energía de liberación lenta. Ideal para ectomorfos que entrenan al mediodía."),
+
+      meal("11:30", "Media mañana", "Tostadas con queso fresco, tomate seco y orégano", "2 tostadas · queso fresco · tomate seco · orégano", 0, [
+        food("2 tostadas integrales", 8, 28, 2),
+        food("60g queso fresco en fetas", 7, 1, 6),
+        food("30g tomates secos en aceite", 1, 4, 4),
+        food("Té o mate sin azúcar", 0, 0, 0)
+      ], [
+        "Tostá el pan al gusto. Poné las fetas de queso sobre la tostada caliente para que se ablanden un poco.",
+        "Escurrí los tomates secos del aceite y poné encima. Agregá orégano, un hilo de oliva y pimienta negra."
+      ], null),
+
+      meal("12:30", "Pre-entreno", "Banana + pasas de uva", "Carbo rápido · cero grasa", 0, [
+        food("1 banana madura", 1, 27, 0),
+        food("35g pasas de uva", 1, 27, 0)
+      ], [
+        "Comelo 40-60 min antes del gym. Glucosa rápida de las pasas + carbos sostenidos de la banana.",
+        "Nada de grasas ahora — enlentecen la digestión y podés sentir pesadez en el press."
+      ], "Glucosa rápida para el press de banca pesado."),
+
+      meal("14:30", "Post-entreno", "Shake proteico + banana + creatina", "1 scoop whey · banana · creatina · leche", 0, [
+        food("1 scoop whey protein", 25, 2, 2),
+        food("1 banana", 1, 27, 0),
+        food("200ml leche entera", 6, 10, 7),
+        food("5g creatina monohidrato", 0, 0, 0)
+      ], [
+        "Licuá whey + banana + leche + creatina. Tomalo dentro de los 45 min post-entreno.",
+        "La creatina no tiene efecto sin constancia — tomala TODOS los días aunque no entrenes."
+      ], null),
+
+      meal("16:00", "Almuerzo", "Pollo a la mostaza con arroz y brócoli", "200g pechuga · arroz · brócoli al vapor · ensalada", 0, [
+        food("200g pechuga de pollo", 62, 0, 6),
+        food("1 taza arroz blanco cocido", 4, 50, 0),
+        food("150g brócoli al vapor", 4, 7, 0),
+        food("1 cda aceite de oliva", 0, 0, 14),
+        food("1 cda mostaza de Dijon", 1, 1, 0)
+      ], [
+        "Salpimentá la pechuga. En sartén con oliva a fuego medio-alto, sellá 4 min por lado hasta dorar.",
+        "Mezclá 1 cda mostaza + 1 cda miel + ajo en polvo y bañá el pollo en los últimos 2 min de cocción.",
+        "Serví con arroz y brócoli al vapor. La mostaza + miel le da sabor sin sumar grasas."
+      ], "Variá la mostaza: granulada, de Dijon o criolla cambian el sabor completamente.",
+      altMeal("Milanesa de carne con puré de papa", "180g bife rebozado · puré cremoso · ensalada verde", [
+        food("180g bife rebozado al horno", 40, 10, 10),
+        food("Puré de papa con oliva", 3, 35, 6),
+        food("Ensalada de lechuga y tomate", 2, 6, 0)
+      ], [
+        "Rebozá el bife con huevo + pan rallado + ajo y perejil. Horneá a 200°C por 18 min dando vuelta a mitad.",
+        "Para el puré: papas hervidas pisadas con oliva, sal y pizca de nuez moscada. Sin manteca — igual queda cremoso con oliva."
+      ])),
+
+      meal("19:30", "Merienda", "Yogur griego con granola, banana y miel", "200g yogur griego · granola · banana · miel", 0, [
+        food("200g yogur griego natural", 20, 8, 10),
+        food("30g granola sin azúcar", 3, 20, 4),
+        food("1 banana", 1, 27, 0),
+        food("1 cdita miel", 0, 8, 0)
+      ], [
+        "Poné el yogur en el bol. Cortá la banana en rodajas arriba.",
+        "Esparcí la granola y rociá con miel. El yogur griego tiene el doble de proteína que el yogur común."
+      ], null),
+
+      meal("22:00", "Cena", "Fideos al tuco casero con carne molida", "80g fideos · 150g carne magra · tomate triturado · queso", 0, [
+        food("80g fideos secos (tallarines)", 10, 58, 2),
+        food("150g carne molida magra", 30, 0, 12),
+        food("200ml tomate triturado", 2, 10, 0),
+        food("1 cda aceite de oliva", 0, 0, 14),
+        food("20g queso rallado", 4, 0, 6)
+      ], [
+        "Dorá la carne molida con ajo y cebolla picada en un hilo de oliva. Agregá tomate triturado + orégano + sal. Cociná 10 min.",
+        "Herví los fideos al dente (1 min menos que lo indicado). Mezclá con el tuco.",
+        "Serví con queso rallado encima. Cena diferente al almuerzo: carbo distinto (pasta), proteína mezclada."
+      ], null,
+      altMeal("Wraps de lechuga con pollo y arroz", "Hojas de lechuga · pollo salteado · arroz · palta · soja", [
+        food("160g pechuga en cubos", 50, 0, 5),
+        food("3/4 taza arroz cocido", 3, 37, 0),
+        food("4 hojas lechuga mantecosa", 1, 3, 0),
+        food("1/4 palta", 1, 5, 8),
+        food("1 cda salsa de soja", 1, 1, 0)
+      ], [
+        "Salteá el pollo en cubos con ajo, jengibre rallado y salsa de soja 5 min.",
+        "Armá los wraps poniendo arroz + pollo + palta en cada hoja de lechuga. Enrollá y comé de un mordisco."
+      ])),
+
+      meal("23:30", "Antes de dormir", "Cottage con miel (opcional)", "100g queso cottage · miel · caseína natural", 0, [
+        food("100g queso cottage", 11, 3, 4),
+        food("1 cdita miel", 0, 8, 0)
+      ], [
+        "Mezclá el cottage con la miel. El cottage tiene caseína — proteína de digestión lenta, ideal antes de dormir.",
+        "Solo si llegaste corto de proteína en el día. Si ya cumpliste los 170g, podés saltearlo."
+      ], "Opcional. Saltealo si llegaste a la proteína del día.")
+    ]
+  },
+
+  // ===== MARTES · ESPALDA + BÍCEPS =====
+  {
+    id: "mar", tab: "Mar", dayIndex: 2, title: "Martes",
+    type: "Día de gym · Espalda + bíceps",
+    workout: { name: "Espalda · Bíceps", duration: "60 min", icon: "🏋️", primary: ["Espalda", "Bíceps"] },
+    isRestDay: false, kcal: 2950, protein: 175, carbs: 335, fats: 80,
+    tags: ["Espalda", "Bíceps", "Tirón pesado"],
+    tip: "Espalda consume mucho glucógeno. Las dominadas y el remo piden energía. Si llegás débil a la barra, faltó carbo en el pre-entreno.",
+    meals: [
+      meal("10:00", "Desayuno", "Tostadas francesas con canela y banana", "2 rebanadas · 2 huevos · leche · canela · banana · miel", 0, [
+        food("2 rebanadas pan integral", 8, 30, 2),
+        food("2 huevos enteros", 12, 0, 10),
+        food("100ml leche entera", 3, 5, 4),
+        food("1 banana", 1, 27, 0),
+        food("1 cda miel", 0, 17, 0)
+      ], [
+        "Batí 2 huevos con 100ml leche, 1 cdita canela y una pizca de sal. Remojá el pan 10 segundos de cada lado.",
+        "Cocinalo en sartén con 1 cdita manteca a fuego medio, 2 min por lado hasta dorar.",
+        "Serví con banana en rodajas y un hilo de miel."
+      ], null),
+
+      meal("11:30", "Media mañana", "Sándwich de atún con palta y tomate", "Pan · atún natural · palta · tomate · limón", 0, [
+        food("2 rodajas pan integral", 8, 28, 2),
+        food("1 lata atún al natural (170g)", 28, 0, 2),
+        food("1/4 palta", 1, 5, 8),
+        food("1 tomate mediano", 1, 5, 0)
+      ], [
+        "Escurrí bien el atún. Pisá la palta con limón y sal hasta que quede tipo crema.",
+        "Untá la palta en el pan, poné el atún desmenuzado y las rodajas de tomate."
+      ], null),
+
+      meal("12:30", "Pre-entreno", "Banana + miel + tostada", "Carbo rápido reforzado para espalda", 0, [
+        food("1 banana", 1, 27, 0),
+        food("1 cda miel", 0, 17, 0),
+        food("1 tostada integral", 4, 14, 1)
+      ], [
+        "Espalda pide más carbo que pecho — sumamos la tostada. Comelo 40 min antes.",
+        "La miel da glucosa explosiva para las dominadas y el remo."
+      ], null),
+
+      meal("14:30", "Post-entreno", "Shake proteico + banana + creatina", "Whey · banana · creatina · leche", 0, [
+        food("1 scoop whey", 25, 2, 2),
+        food("1 banana", 1, 27, 0),
+        food("200ml leche", 6, 10, 7),
+        food("5g creatina", 0, 0, 0)
+      ], [
+        "Shake post-espalda. Tomalo dentro de 45 min.",
+        "Podés agregar 1 cdita de cacao amargo si querés sabor diferente."
+      ], null),
+
+      meal("16:00", "Almuerzo", "Arroz frito con pollo y verduras (chaufa)", "190g pollo · arroz · choclo · zanahoria · soja", 0, [
+        food("190g pechuga en tiras", 59, 0, 6),
+        food("1 taza arroz blanco cocido", 4, 50, 0),
+        food("1/2 taza choclo", 2, 18, 1),
+        food("1/2 zanahoria rallada", 0, 5, 0),
+        food("1 cda salsa de soja", 1, 1, 0),
+        food("1 cda aceite de girasol", 0, 0, 14)
+      ], [
+        "En wok o sartén amplia a fuego fuerte, salteá el pollo en tiras con ajo y jengibre 4 min.",
+        "Sumá el arroz cocido (del día anterior queda mejor), el choclo y la zanahoria. Salteá 3 min.",
+        "Bañá con salsa de soja y un toque de aceite de sésamo si tenés. El arroz frito absorbe los sabores y queda totalmente distinto al arroz hervido."
+      ], null,
+      altMeal("Cazuela criolla de pollo con papas", "170g pollo · papas · zanahoria · caldo · pimentón", [
+        food("170g muslo de pollo deshuesado", 34, 0, 9),
+        food("2 papas medianas", 4, 40, 0),
+        food("1 zanahoria", 1, 10, 0),
+        food("Caldo de verduras", 1, 3, 0)
+      ], [
+        "Doré el pollo en dados con cebolla y pimentón. Sumá papas en cubos, zanahoria y caldo.",
+        "Tapá y cociná 20 min a fuego medio hasta que las papas estén tiernas. Un plato que calienta el cuerpo y repone glucógeno."
+      ])),
+
+      meal("19:30", "Merienda", "Pan con manteca de maní, banana y leche", "2 tostadas · manteca de maní · banana · vaso de leche", 0, [
+        food("2 tostadas integrales", 8, 28, 2),
+        food("2 cdas manteca de maní", 8, 6, 16),
+        food("1 banana", 1, 27, 0),
+        food("250ml leche entera", 8, 12, 9)
+      ], [
+        "Untá la manteca de maní sobre las tostadas. Cortá la banana en rodajas arriba.",
+        "Tomá el vaso de leche al lado. Es la merienda más calórica del día — perfecta para el ectomorfo que necesita densidad calórica."
+      ], null),
+
+      meal("22:00", "Cena", "Tortilla española con ensalada verde", "3 huevos · 2 papas · cebolla · aceite · ensalada", 0, [
+        food("3 huevos enteros", 18, 0, 15),
+        food("2 papas medianas hervidas", 4, 40, 0),
+        food("1/2 cebolla", 1, 5, 0),
+        food("1 cda aceite de oliva", 0, 0, 14),
+        food("Ensalada rúcula + tomate", 2, 6, 0)
+      ], [
+        "Hervite las papas en cubos 10 min hasta que estén tiernas. Escurrí bien.",
+        "Sofreí la cebolla en oliva hasta transparente. Batí los huevos, sumá papa y cebolla, salpimentá.",
+        "En sartén antiadherente a fuego bajo, volcá la mezcla. Cociná 5 min tapado, deslizá en un plato, invertí y terminá 3 min del otro lado."
+      ], null,
+      altMeal("Bife al chimichurri con batata asada", "180g bife · batata · chimichurri casero · ensalada", [
+        food("180g bife de vacío o cuadrada", 40, 0, 12),
+        food("200g batata asada", 4, 48, 0),
+        food("Chimichurri casero", 0, 2, 8),
+        food("Ensalada verde", 2, 5, 0)
+      ], [
+        "Asá la batata en el horno a 200°C por 35 min envuelta en papel aluminio.",
+        "Grillá el bife 3-4 min por lado. Bañá con chimichurri (perejil + ajo + orégano + oliva + limón) y serví."
+      ])),
+
+      meal("23:30", "Antes de dormir", "Shake nocturno o cottage", "Proteína de digestión lenta", 0, [
+        food("1 scoop whey con leche entera o 100g cottage", 25, 8, 6)
+      ], [
+        "Si llegaste corto de proteína: shake con leche entera (caseína natural + whey).",
+        "Alternativa sin batidora: 100g cottage con 1 cdita miel. Proteína lenta ideal antes de dormir."
+      ], "Opcional según proteína del día.")
+    ]
+  },
+
+  // ===== MIÉRCOLES · HOMBROS =====
+  {
+    id: "mie", tab: "Mié", dayIndex: 3, title: "Miércoles",
+    type: "Día de gym · Hombros",
+    workout: { name: "Hombros · Abdomen", duration: "55 min", icon: "🏋️", primary: ["Hombros"] },
+    isRestDay: false, kcal: 2850, protein: 165, carbs: 320, fats: 78,
+    tags: ["Hombros", "Abdomen", "Mantenimiento"],
+    tip: "Hombros es un grupo relativamente pequeño pero muy técnico. El press militar y los laterales piden buena hidratación. Asegurate de tomar 2-3 vasos antes de ir.",
+    meals: [
+      meal("10:00", "Desayuno", "Panqueques de avena y banana con miel", "2 panqueques · avena · banana · huevo · miel · leche", 0, [
+        food("50g avena", 6, 33, 3),
+        food("1 banana madura", 1, 27, 0),
+        food("2 huevos", 12, 0, 10),
+        food("100ml leche entera", 3, 5, 4),
+        food("1 cda miel", 0, 17, 0)
+      ], [
+        "Licuá avena + banana + 2 huevos + 100ml leche hasta que no queden grumos. Dejá reposar 2 min.",
+        "En sartén antiadherente con aceite en aerosol, volcá porciones a fuego medio. 2 min cada lado.",
+        "Apilá los panqueques y bañá con miel. Podés agregar banana extra en rodajas arriba."
+      ], "Más saciantes que las tostadas comunes. Los panqueques de avena dan energía por horas."),
+
+      meal("11:30", "Media mañana", "Tostadas con palta, huevo duro y semillas", "2 tostadas · palta · huevo duro · semillas de chía", 0, [
+        food("2 tostadas integrales", 8, 28, 2),
+        food("1/4 palta", 1, 5, 8),
+        food("1 huevo duro", 6, 0, 5),
+        food("1 cdita semillas de chía", 1, 2, 2),
+        food("Jugo de limón", 0, 1, 0)
+      ], [
+        "Pisá la palta con limón, sal y pimienta. Untá sobre las tostadas.",
+        "Cortá el huevo duro en rodajas encima. Esparcí chía y un toque de pimentón ahumado."
+      ], null),
+
+      meal("12:30", "Pre-entreno", "Banana + dátiles", "Glucosa de liberación media", 0, [
+        food("1 banana", 1, 27, 0),
+        food("30g dátiles (4-5 unidades)", 0, 22, 0)
+      ], [
+        "Los dátiles son energía concentrada en pequeño volumen. Comelos junto con la banana.",
+        "Hidratate bien — 2 vasos grandes de agua antes de salir al gym."
+      ], null),
+
+      meal("14:30", "Post-entreno", "Shake proteico + banana + creatina", "Whey · banana · leche · creatina", 0, [
+        food("1 scoop whey", 25, 2, 2),
+        food("1 banana", 1, 27, 0),
+        food("200ml leche", 6, 10, 7),
+        food("5g creatina", 0, 0, 0)
+      ], ["Shake estándar post-entreno. Tomalo rápido y comé el almuerzo a las 16:00 normalmente."], null),
+
+      meal("16:00", "Almuerzo", "Pollo al horno con batata y morrones", "200g pollo · batata · morrón rojo · cebolla · oliva", 0, [
+        food("200g muslo deshuesado o pechuga", 50, 0, 9),
+        food("200g batata", 4, 48, 0),
+        food("1 morrón rojo", 1, 8, 0),
+        food("1/2 cebolla", 1, 5, 0),
+        food("1 cda aceite de oliva", 0, 0, 14)
+      ], [
+        "Cortá el pollo, batata en rodajas, morrón y cebolla en trozos. Mezcló todo con oliva, sal, orégano y pimentón.",
+        "Volcá en bandeja y horneá a 200°C por 30-35 min hasta que el pollo esté dorado y la batata tierna.",
+        "El asado al horno en bandeja es el método más simple — todo junto, sin lavar mil cosas."
+      ], "La batata es carbo de absorción lenta, más nutritivo y versátil que la papa.",
+      altMeal("Peceto al horno con arroz integral", "180g peceto · arroz integral · zucchini · romero", [
+        food("180g peceto", 47, 0, 6),
+        food("3/4 taza arroz integral cocido", 3, 37, 1),
+        food("1 zucchini", 1, 6, 0),
+        food("1 cda aceite de oliva", 0, 0, 14)
+      ], [
+        "Salpimentá el peceto con romero y ajo. Sellá en sartén caliente 3 min y pasá al horno 200°C por 20 min.",
+        "Hervite el arroz integral (25-30 min). Salteá el zucchini en rodajas en oliva 4 min."
+      ])),
+
+      meal("19:30", "Merienda", "Licuado proteico verde", "Banana · espinaca · leche · whey · miel", 0, [
+        food("1 banana", 1, 27, 0),
+        food("1 puñado espinaca fresca", 1, 2, 0),
+        food("1 scoop whey vainilla", 25, 2, 2),
+        food("250ml leche entera", 8, 12, 9),
+        food("1 cdita miel", 0, 8, 0)
+      ], [
+        "Licuá todo junto. La espinaca no se nota en el sabor pero suma hierro y fibra.",
+        "Si querés más espesor, sumá unos cubos de hielo."
+      ], null),
+
+      meal("22:00", "Cena", "Pizza de masa integral con mozzarella y vegetales", "Masa integral · mozzarella · tomate · morrón · rúcula", 0, [
+        food("1 prepizza integral (200g)", 12, 54, 4),
+        food("100g mozzarella", 18, 2, 14),
+        food("100ml tomate triturado", 1, 5, 0),
+        food("1/2 morrón asado", 0, 4, 0),
+        food("Rúcula fresca", 1, 2, 0)
+      ], [
+        "Precalentá el horno a 220°C. Untá la prepizza con tomate triturado condimentado con orégano y ajo.",
+        "Cubrí con mozzarella desmenuzada y el morrón. Horneá 12-15 min hasta que los bordes doren.",
+        "Al sacarla, poné la rúcula fresca arriba con un toque de oliva — contraste perfecto entre caliente y fresco."
+      ], null,
+      altMeal("Rigatoni con salsa de ricota y pollo", "80g pasta · pechuga · ricota · ajo · perejil", [
+        food("80g rigatoni secos", 10, 58, 2),
+        food("150g pechuga en tiras", 47, 0, 5),
+        food("4 cdas ricota", 12, 4, 7),
+        food("1 cda aceite de oliva", 0, 0, 14)
+      ], [
+        "Herví los rigatoni al dente. Salteá el pollo en tiras con ajo y oliva 5 min.",
+        "Mezclá la pasta con el pollo. Apagá el fuego y agregá ricota + perejil + sal, revolviendo hasta que se integre."
+      ])),
+
+      meal("23:30", "Antes de dormir", "Cottage con miel", "Caseína lenta · sueño reparador", 0, [
+        food("100g queso cottage", 11, 3, 4),
+        food("1 cdita miel", 0, 8, 0)
+      ], ["Solo si llegaste corto de proteína en el día."], "Opcional.")
+    ]
+  },
+
+  // ===== JUEVES · PIERNAS =====
+  {
+    id: "jue", tab: "Jue", dayIndex: 4, title: "Jueves",
+    type: "Día de gym · Piernas (día más pesado)",
+    workout: { name: "Piernas", duration: "70 min", icon: "🦵", primary: ["Cuádriceps", "Isquios", "Glúteos"] },
+    isRestDay: false, kcal: 3100, protein: 180, carbs: 360, fats: 85,
+    tags: ["Piernas", "Día más pesado", "+200 kcal"],
+    tip: "Piernas es el día más demandante. +200 kcal vs los demás días. Las sentadillas y el peso muerto queman glucógeno en cantidad — si llegás débil a la segunda serie, comiste poco en el pre.",
+    meals: [
+      meal("10:00", "Desayuno", "Revuelto de huevos con papa, jamón y queso", "3 huevos · papa · jamón natural · queso · tostadas", 0, [
+        food("3 huevos enteros", 18, 0, 15),
+        food("1 papa mediana hervida en cubos", 2, 20, 0),
+        food("60g jamón natural magro", 12, 0, 4),
+        food("30g queso rallado", 6, 0, 9),
+        food("2 tostadas integrales", 8, 28, 2),
+        food("Jugo de naranja 200ml", 2, 22, 0)
+      ], [
+        "Cortá la papa en cubos chicos y herví 8 min. Doré en sartén con aceite hasta que quede crocante.",
+        "Sumá el jamón en tiritas y los huevos batidos. Revolvé a fuego medio hasta casi cuajar, apagá y terminá con el queso rallado.",
+        "Serví con tostadas y el jugo. El desayuno más nutritivo de la semana para el día de piernas."
+      ], "Máximo combustible para sentadillas y peso muerto."),
+
+      meal("11:30", "Media mañana", "Sándwich de pavita con queso y palta", "Pan · pavita · queso fresco · palta · tomate · mostaza", 0, [
+        food("2 rodajas pan integral", 8, 28, 2),
+        food("80g pavita o pollo feteado", 19, 0, 2),
+        food("40g queso fresco", 5, 1, 4),
+        food("1/4 palta", 1, 5, 8),
+        food("1 tomate", 1, 5, 0)
+      ], [
+        "Untá una rodaja con palta pisada y la otra con mostaza.",
+        "Armá con pavita + queso + tomate en rodajas. Cortá al medio."
+      ], null),
+
+      meal("12:30", "Pre-entreno", "Banana + pasas + miel", "Triple carbo para el día más pesado", 0, [
+        food("1 banana grande", 1, 30, 0),
+        food("35g pasas de uva", 1, 27, 0),
+        food("1 cda miel", 0, 17, 0)
+      ], [
+        "El triple carbo: banana (sostenido) + pasas (explosivo) + miel (instantáneo).",
+        "Comelo 45-60 min antes de las sentadillas. No negociable — piernas vacías = mal entreno."
+      ], "Pre-entreno reforzado. Día de piernas exige más glucosa que cualquier otro día."),
+
+      meal("14:30", "Post-entreno", "Shake reforzado post-piernas", "2 scoops whey · banana · leche · creatina · pasas", 0, [
+        food("2 scoops whey protein", 50, 4, 4),
+        food("1 banana grande", 1, 30, 0),
+        food("200ml leche entera", 6, 10, 7),
+        food("5g creatina", 0, 0, 0),
+        food("20g pasas de uva", 0, 16, 0)
+      ], [
+        "Post-piernas usamos 2 scoops — el desgaste muscular es mucho mayor que en los días de tren superior.",
+        "Licuá con leche, banana y creatina. Si no tenés hambre (es normal después de piernas pesadas), tomá el shake igual — el músculo lo necesita."
+      ], "2 scoops solo hoy. El resto de la semana, 1 alcanza."),
+
+      meal("16:00", "Almuerzo", "Lomo al horno con papas rústicas y ensalada", "180g lomo · papas al horno · pimiento asado · ensalada", 0, [
+        food("180g lomo de res", 47, 0, 8),
+        food("250g papas rústicas al horno", 5, 50, 4),
+        food("1 morrón asado", 1, 8, 0),
+        food("Ensalada mixta", 2, 6, 0),
+        food("1 cda aceite de oliva", 0, 0, 14)
+      ], [
+        "Cortá las papas en gajos sin pelar, condimentá con oliva + sal + romero + ajo. Horneá 25 min a 200°C.",
+        "Mientras, sellá el lomo en sartén muy caliente 3 min por lado. Dejá reposar 5 min antes de cortar.",
+        "El reposo es clave — los jugos se redistribuyen y la carne queda tierna."
+      ], "Lomo + papas al horno: almuerzo de recuperación total para el día más demandante.",
+      altMeal("Cazuela de arroz con carne y verduras", "150g carne · arroz · zapallo · zanahoria · caldo", [
+        food("150g carne magra en cubos", 39, 0, 12),
+        food("1 taza arroz blanco", 4, 50, 0),
+        food("100g zapallo", 1, 8, 0),
+        food("1 zanahoria", 1, 10, 0),
+        food("Caldo de carne bajo sodio", 1, 2, 0)
+      ], [
+        "Dorá la carne en cubos con cebolla y ajo. Sumá zanahoria, zapallo en cubos y el arroz.",
+        "Cubrí con caldo y cociná 20 min tapado a fuego medio hasta que el arroz absorba el caldo."
+      ])),
+
+      meal("19:30", "Merienda", "Panqueques con miel y manteca de maní", "2 panqueques · banana · manteca de maní · miel · leche", 0, [
+        food("2 panqueques caseros (avena + huevo)", 10, 28, 6),
+        food("1 banana", 1, 27, 0),
+        food("2 cdas manteca de maní", 8, 6, 16),
+        food("1 cda miel", 0, 17, 0),
+        food("200ml leche entera", 6, 10, 7)
+      ], [
+        "Merienda densa para el día de piernas — necesitás reponer lo que gastaste.",
+        "Hacé los panqueques de avena simples (50g avena + 1 huevo + leche) y rellená con manteca de maní y banana."
+      ], null),
+
+      meal("22:00", "Cena", "Arroz con pollo cremoso al limón", "180g pollo · arroz · caldo · crema light · limón", 0, [
+        food("180g pechuga", 56, 0, 5),
+        food("1 taza arroz cocido", 4, 50, 0),
+        food("3 cdas crema light", 2, 2, 7),
+        food("Jugo de 1 limón", 0, 3, 0),
+        food("Caldo de verduras", 1, 2, 0)
+      ], [
+        "Cortá el pollo en cubos, doré con ajo y cebolla. Agregá el caldo y cociná 10 min.",
+        "Incorporá el arroz cocido, la crema light y el jugo de limón. Revolvé 3 min a fuego bajo.",
+        "El limón corta la pesadez de la crema y le da un sabor fresco completamente distinto al arroz con pollo de siempre."
+      ], null,
+      altMeal("Pollo al curry suave con pan de pita", "170g pollo · curry · tomate · yogur · 2 panes pita", [
+        food("170g pechuga", 53, 0, 5),
+        food("2 panes de pita", 10, 50, 2),
+        food("100g tomate triturado", 1, 5, 0),
+        food("2 cdas yogur natural", 3, 3, 2),
+        food("1 cdita curry en polvo", 0, 1, 0)
+      ], [
+        "Salteá el pollo en cubos con cebolla, ajo y curry en polvo. Sumá tomate triturado y cociná 12 min.",
+        "Apagá, incorporá yogur natural y mezclá. Serví con pan de pita cortado para mojar."
+      ])),
+
+      meal("23:30", "Antes de dormir", "Shake nocturno (obligatorio hoy)", "Piernas exige proteína nocturna", 0, [
+        food("1 scoop whey con leche entera", 25, 10, 9),
+        food("O 150g queso cottage", 16, 5, 6)
+      ], [
+        "Después de piernas, el shake nocturno no es opcional — el músculo sigue sintetizando proteína 24-48hs.",
+        "Si el shake te cae pesado de noche, usá cottage con una fruta."
+      ], "Hoy es obligatorio.")
+    ]
+  },
+
+  // ===== VIERNES · FULL BODY OPCIONAL =====
+  {
+    id: "vie", tab: "Vie", dayIndex: 5, title: "Viernes",
+    type: "Full body opcional · Cardio o descanso",
+    workout: { name: "Full Body", duration: "50 min", icon: "⚡", optional: true, primary: ["Full body"] },
+    isRestDay: false, kcal: 2700, protein: 160, carbs: 305, fats: 75,
+    tags: ["Full body", "Opcional", "Cardio"],
+    tip: "Viernes es flexible. Si entrenaste bien los 4 días, podés hacer full body liviano o cardio 25 min. Si el cuerpo pide descanso, escuchalo — 4 días de gym ya es suficiente.",
+    meals: [
+      meal("10:00", "Desayuno", "Omelette de espinaca y queso con tostadas", "3 huevos · espinaca · queso · 2 tostadas · jugo", 0, [
+        food("3 huevos enteros", 18, 0, 15),
+        food("1 puñado espinaca fresca", 1, 2, 0),
+        food("40g queso fresco o mozzarella", 7, 1, 5),
+        food("2 tostadas integrales", 8, 28, 2),
+        food("Jugo de 1 naranja", 1, 11, 0)
+      ], [
+        "Batí los huevos. En sartén con oliva, saltate la espinaca 1 min. Volcá los huevos encima.",
+        "Cuando la base cuaje, poné el queso en el centro y doblá el omelette a la mitad. Cociná 1 min más.",
+        "Servís con tostadas y jugo. Espinaca + huevos es la combinación de hierro + proteína más accesible."
+      ], null),
+
+      meal("12:00", "Media mañana", "Tostadas con ricota, nueces y miel", "2 tostadas · ricota · nueces · miel · fruta", 0, [
+        food("2 tostadas integrales", 8, 28, 2),
+        food("4 cdas ricota", 12, 4, 7),
+        food("20g nueces", 3, 3, 13),
+        food("1 cdita miel", 0, 8, 0),
+        food("1 manzana", 0, 20, 0)
+      ], [
+        "Batí la ricota con la miel hasta que quede cremosa. Untá en las tostadas.",
+        "Poné las nueces picadas encima. Comé la manzana al lado."
+      ], null),
+
+      meal("13:30", "Almuerzo", "Salmón a la plancha con quinoa y brócoli", "200g salmón · quinoa · brócoli · limón · oliva", 0, [
+        food("200g filet de salmón", 50, 0, 26),
+        food("3/4 taza quinoa cocida", 6, 30, 3),
+        food("150g brócoli al vapor", 4, 7, 0),
+        food("1 cda aceite de oliva", 0, 0, 14),
+        food("Jugo de limón", 0, 2, 0)
+      ], [
+        "Salpimentá el salmón y condimentá con eneldo o tomillo si tenés.",
+        "En sartén con oliva a fuego medio-alto, cocinalo 4 min por lado (no más — el salmón seco pierde la magia).",
+        "Servís con quinoa y brócoli. Exprimí limón sobre todo antes de comer."
+      ], "Salmón = Omega 3 real + proteína completa. La proteína de la semana más valiosa.",
+      altMeal("Pasta con atún, aceitunas y tomate cherry", "80g pasta · 2 latas atún · aceitunas · cherry · oliva", [
+        food("80g pasta seca (penne)", 10, 58, 2),
+        food("2 latas atún al natural", 56, 0, 4),
+        food("100g tomates cherry", 1, 7, 0),
+        food("20g aceitunas negras", 0, 1, 6),
+        food("1 cda aceite de oliva", 0, 0, 14)
+      ], [
+        "Herví la pasta al dente. En bowl, mezclá el atún escurrido con cherry cortados, aceitunas y oliva.",
+        "Volcá la pasta caliente sobre la mezcla y revolvé. Servís tibio o frío — ambas versiones funcionan."
+      ])),
+
+      meal("17:00", "Merienda", "Mate con tostadas y manteca de maní", "Mate + 2 tostadas + manteca de maní", 0, [
+        food("2 tostadas integrales", 8, 28, 2),
+        food("2 cdas manteca de maní", 8, 6, 16),
+        food("1 banana", 1, 27, 0)
+      ], [
+        "Mate con tostadas untadas con manteca de maní y banana. Simple, saciante y energético.",
+        "Si el viernes fue día de gym, sumá un vaso de leche para llegar mejor a la cena."
+      ], null),
+
+      meal("22:00", "Cena", "Bife a la criolla con arroz blanco", "180g vacío · cebolla · morrón · tomate · arroz", 0, [
+        food("180g bife de vacío o cuadrada", 40, 0, 12),
+        food("1 taza arroz cocido", 4, 50, 0),
+        food("1/2 cebolla", 1, 5, 0),
+        food("1/2 morrón rojo", 0, 4, 0),
+        food("1 tomate", 1, 5, 0),
+        food("1 cda aceite de oliva", 0, 0, 14)
+      ], [
+        "Preparala criolla: sofreí cebolla, morrón y tomate en cubos con oliva, sal y comino 10 min.",
+        "Grillá el bife 3-4 min por lado según grosor. Poné la criolla encima al servir.",
+        "El arroz lo podés hacer más sabroso con caldo en lugar de agua."
+      ], null,
+      altMeal("Wraps de pollo con hummus y vegetales", "160g pollo · 2 tortillas · hummus · pepino · palta", [
+        food("160g pechuga grillada", 50, 0, 5),
+        food("2 tortillas de harina", 8, 40, 4),
+        food("4 cdas hummus", 4, 8, 6),
+        food("1/2 pepino", 0, 4, 0),
+        food("1/4 palta", 1, 5, 8)
+      ], [
+        "Grillá la pechuga y cortá en tiras. Untá las tortillas con hummus.",
+        "Armá con pollo + pepino en bastones + palta. Enrollá apretando bien."
+      ])),
+
+      meal("23:30", "Antes de dormir", "Cottage con miel o leche tibia", "Proteína lenta", 0, [
+        food("100g queso cottage", 11, 3, 4),
+        food("1 cdita miel", 0, 8, 0)
+      ], ["Opcional. Solo si llegaste corto de proteína o tenés hambre real."], "Opcional.")
+    ]
+  },
+
+  // ===== SÁBADO · DESCANSO =====
+  {
+    id: "sab", tab: "Sáb", dayIndex: 6, title: "Sábado",
+    type: "Día de descanso activo",
+    workout: { name: "Descanso", duration: "—", icon: "🚶", primary: [] },
+    isRestDay: true, kcal: 2600, protein: 150, carbs: 290, fats: 80,
+    tags: ["Descanso", "Recuperación", "Caminar"],
+    tip: "Descanso es parte del plan, no falla. El músculo crece cuando descansás. Una caminata de 25-30 min ayuda a la recuperación activa sin fatigar.",
+    meals: [
+      meal("10:00", "Desayuno", "Brunch de huevos con bondiola y tostadas con palta", "3 huevos · bondiola · tostadas · palta · jugo · café", 0, [
+        food("3 huevos fritos o revueltos", 18, 0, 15),
+        food("60g bondiola ahumada feteada", 12, 0, 8),
+        food("2 tostadas integrales", 8, 28, 2),
+        food("1/4 palta", 1, 5, 8),
+        food("Jugo de naranja 200ml", 2, 22, 0),
+        food("Café con leche", 4, 6, 4)
+      ], [
+        "El brunch sabatino. Hacete los huevos como más te gusten — fritos en aceite, revueltos o poché.",
+        "Untá la tostada con palta pisada con limón. La bondiola va al costado.",
+        "Tomate el tiempo — es el desayuno del fin de semana, sin apuros."
+      ], "El desayuno más tranquilo de la semana. Disfrutalo."),
+
+      meal("12:30", "Media mañana", "Tostadas con queso y tomate cherry", "2 tostadas · queso fresco · cherry · orégano", 0, [
+        food("2 tostadas integrales", 8, 28, 2),
+        food("60g queso fresco", 7, 1, 6),
+        food("100g tomates cherry", 1, 7, 0)
+      ], [
+        "Tostadas con queso fresco y cherry cortados al medio. Oregano, sal y un hilo de oliva."
+      ], null),
+
+      meal("14:00", "Almuerzo", "Costillitas de cerdo al horno con ensalada rusa", "300g costillitas · papas · zanahoria · arvejas · mayonesa light", 0, [
+        food("300g costillitas de cerdo", 45, 0, 20),
+        food("Ensalada rusa (papa + zanahoria + arvejas + mayo light)", 4, 30, 8),
+        food("Pan integral x2", 8, 28, 2)
+      ], [
+        "Condimentá las costillitas con sal gruesa, ajo en polvo, pimentón y miel. Horneá a 180°C por 45 min cubierto con aluminio + 15 min descubierto para que doren.",
+        "Para la ensalada rusa: papa + zanahoria hervidas en cubos + arvejas + mayonesa light + sal y limón.",
+        "Servís con pan para acompañar."
+      ], "Almuerzo de fin de semana. El cerdo bien condimentado y cocido lento es otra categoria.",
+      altMeal("Pollo al romero con papas al horno", "250g pollo · papas · ajo · romero · oliva", [
+        food("250g muslo de pollo con piel", 50, 0, 18),
+        food("300g papas en gajos", 6, 60, 0),
+        food("2 cdas aceite de oliva", 0, 0, 28)
+      ], [
+        "Condimentá el pollo con ajo, romero, sal y oliva. Mezclá las papas igual.",
+        "Todo en la misma bandeja a 200°C por 40-45 min. Dales vuelta a mitad. El pollo queda jugoso por dentro y dorado por fuera."
+      ])),
+
+      meal("17:30", "Merienda", "Mate con tostadas y manteca de maní", "Mate + tostadas + manteca de maní + banana", 0, [
+        food("2 tostadas integrales", 8, 28, 2),
+        food("2 cdas manteca de maní", 8, 6, 16),
+        food("1 banana", 1, 27, 0)
+      ], ["La merienda del sábado. Mate con tostadas de maní y banana — simple y calórico."], null),
+
+      meal("22:00", "Cena", "Souvlaki de pollo con tzatziki y arroz", "160g pollo marinado · 2 panes pita · tzatziki · arroz", 0, [
+        food("160g pechuga en brochettes", 50, 0, 5),
+        food("2 panes de pita o árabe", 8, 36, 2),
+        food("Tzatziki (yogur + pepino + ajo + eneldo)", 4, 5, 4),
+        food("1/2 taza arroz cocido", 2, 25, 0)
+      ], [
+        "Marinala pechuga en cubos con oliva + limón + ajo + orégano + pimentón, 30 min mínimo.",
+        "Pinchá en palitos (si tenés) y grillá en sartén a fuego alto 6-8 min girando.",
+        "Para el tzatziki: yogur natural + pepino rallado escurrido + ajo + eneldo + sal. Servís todo junto con el arroz."
+      ], "Una cena distinta, con personalidad. Cambia completamente el sabor de la semana.",
+      altMeal("Fideos con pesto de albahaca y queso", "80g pasta · pesto casero · queso parmesano", [
+        food("80g fideos secos", 10, 58, 2),
+        food("Pesto casero (albahaca + ajo + nueces + oliva + parm)", 4, 3, 18),
+        food("30g queso parmesano rallado", 9, 0, 9)
+      ], [
+        "Herví los fideos. Para el pesto exprés: procesá albahaca + ajo + 1 cda nueces + 3 cdas oliva + queso.",
+        "Mezclá la pasta con el pesto. Servís con más queso encima. En 15 min tenés una cena con sabor italiano real."
+      ])),
+
+      meal("23:30", "Antes de dormir", "Leche tibia o cottage", "Descanso profundo con proteína lenta", 0, [
+        food("250ml leche entera tibia", 8, 12, 9)
+      ], ["Un vaso de leche tibia antes de dormir. Mejora la calidad del sueño."], "Opcional.")
+    ]
+  },
+
+  // ===== DOMINGO · DESCANSO =====
+  {
+    id: "dom", tab: "Dom", dayIndex: 0, title: "Domingo",
+    type: "Día de descanso completo",
+    workout: { name: "Descanso total", duration: "—", icon: "🛌", primary: [] },
+    isRestDay: true, kcal: 2500, protein: 145, carbs: 275, fats: 78,
+    tags: ["Descanso total", "Recuperación", "Familia"],
+    tip: "Domingo es recarga mental y física. Comé rico, descansá bien. La semana que viene empieza mejor cuando el cuerpo estuvo bien nutrido y descansado.",
+    meals: [
+      meal("10:00", "Desayuno", "Pancakes de avena con frutos rojos y miel", "50g avena · 2 huevos · banana · leche · frutos rojos", 0, [
+        food("50g avena", 6, 33, 3),
+        food("2 huevos", 12, 0, 10),
+        food("1 banana", 1, 27, 0),
+        food("150ml leche entera", 5, 8, 5),
+        food("80g frutos rojos o frutillas", 1, 10, 0),
+        food("1 cda miel", 0, 17, 0)
+      ], [
+        "Licuá avena + huevos + banana + leche. Dejá reposar 3 min.",
+        "Cocinalo en sartén a fuego medio, 2 min por lado. Saldrán 3-4 pancakes.",
+        "Servís con frutos rojos y un hilo de miel. Es el desayuno más festivo de la semana — disfrutalo tranquilo."
+      ], null),
+
+      meal("13:30", "Almuerzo", "Pastel de carne con papas y queso", "300g carne · papas · huevo · queso · vegetales", 0, [
+        food("300g carne molida magra", 60, 0, 24),
+        food("2 papas medianas (para puré)", 4, 40, 0),
+        food("1 huevo (para ligar)", 6, 0, 5),
+        food("40g queso rallado", 8, 0, 12),
+        food("1/2 cebolla + 1 zanahoria", 1, 10, 0),
+        food("1 cda aceite de oliva", 0, 0, 14)
+      ], [
+        "Sofreí la carne molida con cebolla, zanahoria rallada y condimentá. Poné en un molde engrasado.",
+        "Hacé el puré de papas, mezclalo con 1 huevo y cubrí la carne. Esparcí queso rallado encima.",
+        "Horneá a 200°C por 25 min hasta que la superficie dore. El pastel de carne es comfort food y nutrición real al mismo tiempo."
+      ], null,
+      altMeal("Pollo con aceitunas, papas y tomate al horno", "250g pollo · papas · aceitunas · cherry · oliva", [
+        food("250g pollo (muslo o pechuga)", 56, 0, 10),
+        food("200g papas", 4, 40, 0),
+        food("80g aceitunas negras", 0, 4, 15),
+        food("100g tomates cherry", 1, 7, 0),
+        food("2 cdas aceite de oliva", 0, 0, 28)
+      ], [
+        "Todo en una bandeja: pollo + papas en gajos + aceitunas + cherry. Rociá con oliva, ajo, sal y orégano.",
+        "Horneá a 200°C por 35-40 min. El jugo de las aceitunas y los tomates impregna todo."
+      ])),
+
+      meal("17:30", "Merienda", "Mate con sándwich y fruta", "Mate · pan · queso · pavita · banana", 0, [
+        food("2 rodajas pan integral", 8, 28, 2),
+        food("40g queso fresco", 5, 1, 4),
+        food("60g pavita feteada", 14, 0, 1),
+        food("1 banana", 1, 27, 0)
+      ], ["Mate + sándwich de queso y pavita + banana. La merienda dominguera tranquila."], null),
+
+      meal("22:00", "Cena", "Pollo al limón con cuscús y vegetales salteados", "180g pollo · cuscús · zucchini · zanahoria · limón", 0, [
+        food("180g pechuga", 56, 0, 5),
+        food("60g cuscús seco (rinde 120g cocido)", 7, 44, 1),
+        food("1 zucchini", 1, 6, 0),
+        food("1 zanahoria", 1, 10, 0),
+        food("1 cda aceite de oliva", 0, 0, 14),
+        food("Jugo de 1 limón", 0, 3, 0)
+      ], [
+        "Para el cuscús: herví agua, volcá sobre el cuscús en ratio 1:1, tapá 5 min y esponjá con tenedor.",
+        "Grillá el pollo con limón, ajo y oliva. Salteá el zucchini y zanahoria en tiras.",
+        "Armá el plato con cuscús de base, vegetales encima y el pollo. El cuscús cambia completamente la experiencia vs arroz o papa."
+      ], null,
+      altMeal("Hamburguesas caseras con batata frita al horno", "2 hamburguesas · pan · palta · batata · ensalada", [
+        food("2 hamburguesas de carne magra (180g)", 40, 0, 14),
+        food("2 panes de hamburguesa integral", 10, 40, 4),
+        food("1/4 palta", 1, 5, 8),
+        food("200g batata en bastones al horno", 4, 48, 0),
+        food("Lechuga + tomate", 2, 5, 0)
+      ], [
+        "Condimentá la carne con sal, pimienta, ajo en polvo y armá las hamburguesas. Grillá 4 min por lado.",
+        "Batata en bastones con oliva y sal a 200°C por 25 min. Armá las hamburguesas con palta y vegetales."
+      ])),
+
+      meal("23:30", "Antes de dormir", "Shake o leche tibia", "Proteína nocturna", 0, [
+        food("1 scoop whey o 250ml leche entera tibia", 20, 10, 8)
+      ], ["Shake con leche entera o leche tibia sola. Cerrá la semana bien."], "Opcional. Que descanses bien.")
+    ]
+  }
+], // fin Semana 1
+
+// ╔══════════════════════════════════════╗
+// ║  SEMANA 2 · "Potencia criolla"       ║
+// ╚══════════════════════════════════════╝
+[
+  // ===== LUNES · PECHO + TRÍCEPS =====
+  {
+    id: "lun", tab: "Lun", dayIndex: 1, title: "Lunes",
+    type: "Día de gym · Pecho + tríceps",
+    workout: { name: "Pecho · Tríceps", duration: "60 min", icon: "🏋️", primary: ["Pecho", "Tríceps"] },
+    isRestDay: false, kcal: 2900, protein: 170, carbs: 330, fats: 80,
+    tags: ["Pecho", "Tríceps", "Sabores criollos"],
+    tip: "Semana de sabores argentinos renovados. Todo lo que comés esta semana es diferente a la semana pasada.",
+    meals: [
+      meal("10:00", "Desayuno", "Huevos revueltos con morrón y tostadas con tomate", "3 huevos · morrón · cebolla · 2 tostadas · tomate · café", 0, [
+        food("3 huevos enteros", 18, 0, 15),
+        food("1/2 morrón rojo", 0, 4, 0),
+        food("1/4 cebolla", 0, 3, 0),
+        food("2 tostadas integrales", 8, 28, 2),
+        food("1 tomate fresco", 1, 5, 0),
+        food("Café con leche 200ml", 6, 8, 6)
+      ], [
+        "Sofreí el morrón y cebolla picados en oliva 3 min. Sumá los huevos batidos y revolvé a fuego bajo.",
+        "Serví sobre las tostadas con tomate fresco en rodajas encima. El morrón salteado cambia totalmente el desayuno de huevos."
+      ], null),
+
+      meal("11:30", "Media mañana", "Sándwich de lomito con queso y tomate", "Pan francés · 100g lomito · queso · tomate · lechuga", 0, [
+        food("1 pan francés o ciabatta", 8, 34, 2),
+        food("100g lomito de cerdo o vacuno", 22, 0, 7),
+        food("40g queso fresco", 5, 1, 4),
+        food("Tomate + lechuga", 1, 5, 0)
+      ], [
+        "Cortá el lomito en finas láminas. Calentalo 2 min en sartén.",
+        "Armá el sándwich con queso, tomate y lechuga. Podés tostar el pan si querés."
+      ], null),
+
+      meal("12:30", "Pre-entreno", "Banana + pasas de uva", "Glucosa rápida para pecho", 0, [
+        food("1 banana", 1, 27, 0),
+        food("35g pasas de uva", 1, 27, 0)
+      ], ["Clásico pre-entreno para días de pecho. 40 min antes del gym."], null),
+
+      meal("14:30", "Post-entreno", "Shake proteico + banana + creatina", "Whey · banana · leche · creatina", 0, [
+        food("1 scoop whey", 25, 2, 2),
+        food("1 banana", 1, 27, 0),
+        food("200ml leche entera", 6, 10, 7),
+        food("5g creatina", 0, 0, 0)
+      ], ["Post-entreno estándar. Tomalo dentro de 45 min."], null),
+
+      meal("16:00", "Almuerzo", "Asado de tira con ensalada mixta y pan", "250g asado de tira · ensalada · pan integral", 0, [
+        food("250g asado de tira", 50, 0, 24),
+        food("Ensalada mixta (lechuga, tomate, zanahoria)", 2, 8, 0),
+        food("2 rodajas pan integral", 8, 28, 2),
+        food("1 cda aceite de oliva", 0, 0, 14)
+      ], [
+        "Condimentá el asado con sal gruesa. Cocinalo en asador o plancha a fuego medio 6-8 min por lado.",
+        "Dejá reposar 3 min antes de servir. Acompañá con la ensalada y el pan.",
+        "El asado de tira tiene más grasa que el lomo pero es sabor puro — una vez por semana está perfecto."
+      ], "Una vez por semana, el asado de tira es la proteína más sabrosa de Argentina.",
+      altMeal("Pollo a la portuguesa con papas", "200g pollo · papas · morrón · cebolla · tomate · aceitunas", [
+        food("200g muslo de pollo", 46, 0, 14),
+        food("200g papas", 4, 40, 0),
+        food("1/2 morrón + 1/4 cebolla", 1, 6, 0),
+        food("100ml tomate triturado", 1, 5, 0),
+        food("30g aceitunas", 0, 2, 9)
+      ], [
+        "Doré el pollo. Sumá cebolla y morrón. Agregá papas en cubos, tomate y aceitunas.",
+        "Tapá y cociná 25 min a fuego medio. El tomate y las aceitunas le dan un sabor profundo y diferente."
+      ])),
+
+      meal("19:30", "Merienda", "Tostadas con ricota batida y fruta", "2 tostadas · ricota · banana o manzana · leche", 0, [
+        food("2 tostadas integrales", 8, 28, 2),
+        food("4 cdas ricota", 12, 4, 7),
+        food("1 banana", 1, 27, 0),
+        food("200ml leche entera", 6, 10, 7)
+      ], [
+        "Batí la ricota con 1 cdita de vainilla y miel hasta que quede cremosa. Untá en las tostadas con banana."
+      ], null),
+
+      meal("22:00", "Cena", "Sopa de pollo con fideos y vegetales", "200g pechuga · fideos cabello · zanahoria · apio · papa", 0, [
+        food("200g pechuga en hebras", 62, 0, 6),
+        food("60g fideos cabello de ángel", 8, 44, 1),
+        food("1 zanahoria", 1, 10, 0),
+        food("1 rama apio", 0, 2, 0),
+        food("1 papa chica", 2, 20, 0)
+      ], [
+        "Herví la pechuga entera 20 min con sal, ajo y apio. Retirala, desmenuzala en hebras.",
+        "En el mismo caldo, agregá zanahoria y papa en cubos 10 min. Sumá los fideos y cociná 4 min más.",
+        "Volvé a poner el pollo desmenuzado. La sopa casera es la cena más reconfortante y diferente al almuerzo."
+      ], null,
+      altMeal("Sándwich caliente de pollo con queso derretido", "160g pollo · 2 rebanadas pan · queso · tomate · mostaza", [
+        food("160g pechuga grillada", 50, 0, 5),
+        food("2 rebanadas pan de molde integral", 8, 28, 2),
+        food("60g queso mozzarella", 11, 1, 10),
+        food("Tomate + mostaza", 1, 5, 0)
+      ], [
+        "Armá el sándwich con pollo laminado, queso y tomate.",
+        "Cocinalo en sartén tapada a fuego bajo 4 min de cada lado hasta que el queso se derrita. Queda tipo panini."
+      ])),
+
+      meal("23:30", "Antes de dormir", "Cottage con miel", "Proteína lenta nocturna", 0, [
+        food("100g queso cottage", 11, 3, 4),
+        food("1 cdita miel", 0, 8, 0)
+      ], ["Solo si llegaste corto de proteína."], "Opcional.")
+    ]
+  },
+
+  // ===== MARTES · ESPALDA + BÍCEPS =====
+  {
+    id: "mar", tab: "Mar", dayIndex: 2, title: "Martes",
+    type: "Día de gym · Espalda + bíceps",
+    workout: { name: "Espalda · Bíceps", duration: "60 min", icon: "🏋️", primary: ["Espalda", "Bíceps"] },
+    isRestDay: false, kcal: 2950, protein: 175, carbs: 335, fats: 80,
+    tags: ["Espalda", "Bíceps", "Tirón pesado"],
+    tip: "Espalda demanda carbo. Reforzá el pre-entreno y no te saltees la media mañana.",
+    meals: [
+      meal("10:00", "Desayuno", "Bol de yogur natural con avena, banana y nueces", "200g yogur · 40g avena · banana · nueces · miel", 0, [
+        food("200g yogur natural entero", 8, 10, 8),
+        food("40g avena en hojuelas", 4, 27, 3),
+        food("1 banana", 1, 27, 0),
+        food("20g nueces", 3, 3, 13),
+        food("1 cda miel", 0, 17, 0)
+      ], [
+        "Mezcla el yogur con la avena y dejá reposar 5 min para que la avena absorba.",
+        "Cortá la banana en rodajas y poné arriba con las nueces picadas y la miel."
+      ], null),
+
+      meal("11:30", "Media mañana", "Tostadas con palta, jamón y tomate", "2 tostadas · jamón · palta · tomate · orégano", 0, [
+        food("2 tostadas integrales", 8, 28, 2),
+        food("60g jamón natural magro", 12, 0, 4),
+        food("1/4 palta", 1, 5, 8),
+        food("1 tomate", 1, 5, 0)
+      ], [
+        "Untá las tostadas con palta pisada. Poné el jamón y rodajas de tomate. Orégano y oliva."
+      ], null),
+
+      meal("12:30", "Pre-entreno", "Banana + miel + tostada", "Carbo reforzado", 0, [
+        food("1 banana", 1, 27, 0),
+        food("1 cda miel", 0, 17, 0),
+        food("1 tostada integral", 4, 14, 1)
+      ], ["Extra de carbo para espalda — las dominadas lo necesitan."], null),
+
+      meal("14:30", "Post-entreno", "Shake proteico + banana + creatina", "Whey · banana · leche · creatina", 0, [
+        food("1 scoop whey", 25, 2, 2),
+        food("1 banana", 1, 27, 0),
+        food("200ml leche entera", 6, 10, 7),
+        food("5g creatina", 0, 0, 0)
+      ], ["Tomalo dentro de 45 min post-entreno."], null),
+
+      meal("16:00", "Almuerzo", "Carne magra al horno con arvejas, zanahoria y papas", "180g carne · papas · arvejas · zanahoria", 0, [
+        food("180g peceto o cuadrada al horno", 47, 0, 8),
+        food("2 papas medianas", 4, 40, 0),
+        food("1/2 taza arvejas", 4, 13, 0),
+        food("1 zanahoria", 1, 10, 0),
+        food("1 cda aceite de oliva", 0, 0, 14)
+      ], [
+        "Salpimentá la carne con ajo y tomillo. Ponela en una fuente con las papas en cubos, zanahoria y un chorrito de caldo.",
+        "Cubrí con aluminio y horneá a 180°C por 40 min. Destapá 10 min para dorar. Sumá las arvejas los últimos 5 min.",
+        "La cocción lenta en el horno hace que la carne quede tierna y absorba todos los sabores."
+      ], null,
+      altMeal("Milanesa de pollo con arroz a la jardinera", "180g pechuga rebozada · arroz · morrón · arveja · zanahoria", [
+        food("180g pechuga rebozada al horno", 44, 8, 8),
+        food("1 taza arroz a la jardinera", 4, 52, 2),
+        food("Vegetales (morrón + arveja + zanahoria)", 3, 12, 0)
+      ], [
+        "Rebozá la pechuga y horneá 20 min a 200°C. Para el arroz: sofreí cebolla + morrón + zanahoria + arvejas, sumá arroz y agua."
+      ])),
+
+      meal("19:30", "Merienda", "Manzana con manteca de maní y leche caliente", "1 manzana · 2 cdas manteca de maní · 250ml leche", 0, [
+        food("1 manzana mediana", 0, 20, 0),
+        food("2 cdas manteca de maní", 8, 6, 16),
+        food("250ml leche entera caliente", 8, 12, 9)
+      ], [
+        "Cortá la manzana en gajos. Mojala en la manteca de maní como dip.",
+        "Tomá la leche caliente al lado. Una merienda simple que cambia la rutina."
+      ], null),
+
+      meal("22:00", "Cena", "Locro liviano de pollo y garbanzos", "150g pollo · 1 taza garbanzos · zapallo · chorizo colorado", 0, [
+        food("150g pechuga en cubos", 47, 0, 5),
+        food("1 taza garbanzos cocidos", 10, 30, 4),
+        food("150g zapallo", 1, 12, 0),
+        food("30g chorizo colorado (sabor, no grasa)", 4, 2, 5),
+        food("1/2 cebolla + condimentos", 0, 3, 0)
+      ], [
+        "Sofreí cebolla, el chorizo en rodajas finas y el pollo en cubos.",
+        "Sumá el zapallo y los garbanzos cocidos con caldo. Cociná 15-20 min tapado.",
+        "Locro liviano: sin cerdo pesado pero con todo el sabor de los garbanzos y el zapallo."
+      ], null,
+      altMeal("Arroz primavera con pollo y vegetales", "150g pollo · arroz · arvejas · morrón · choclo", [
+        food("150g pechuga", 47, 0, 5),
+        food("1 taza arroz blanco", 4, 50, 0),
+        food("Arvejas + morrón + choclo", 4, 18, 0),
+        food("1 cda aceite de oliva", 0, 0, 14)
+      ], [
+        "Salteá el pollo en cubos. Sumá los vegetales y el arroz ya cocido. Salteá 3-4 min hasta que todo se integre."
+      ])),
+
+      meal("23:30", "Antes de dormir", "Shake nocturno", "Proteína de recuperación", 0, [
+        food("1 scoop whey con 200ml leche", 25, 10, 9)
+      ], ["Después de espalda + bíceps, el shake nocturno ayuda a recuperar."], "Opcional según proteína del día.")
+    ]
+  },
+
+  // ===== MIÉRCOLES · HOMBROS =====
+  {
+    id: "mie", tab: "Mié", dayIndex: 3, title: "Miércoles",
+    type: "Día de gym · Hombros",
+    workout: { name: "Hombros · Abdomen", duration: "55 min", icon: "🏋️", primary: ["Hombros"] },
+    isRestDay: false, kcal: 2850, protein: 165, carbs: 320, fats: 78,
+    tags: ["Hombros", "Abdomen"],
+    tip: "Día de hombros. Menú con estilo casero argentino — todo diferente a la semana pasada.",
+    meals: [
+      meal("10:00", "Desayuno", "Medialunas con jamón y queso + café con leche", "2 medialunas · jamón · queso · café con leche", 0, [
+        food("2 medialunas de manteca", 6, 30, 10),
+        food("60g jamón natural", 12, 0, 4),
+        food("40g queso fresco", 5, 1, 4),
+        food("Café con leche 300ml", 9, 14, 10)
+      ], [
+        "El desayuno diferente de la semana. Las medialunas rellenas con jamón y queso cambian completamente el ritmo del día.",
+        "Tomá el café con leche grande para aumentar calorías y proteína."
+      ], "Una vez por semana, el desayuno café + medialunas es totalmente válido."),
+
+      meal("11:30", "Media mañana", "Yogur griego con frutos secos y miel", "200g yogur griego · almendras · nueces · miel", 0, [
+        food("200g yogur griego natural", 20, 8, 10),
+        food("15g almendras", 3, 3, 8),
+        food("10g nueces", 2, 2, 7),
+        food("1 cda miel", 0, 17, 0)
+      ], [
+        "Yogur con los frutos secos picados y miel encima. Proteína alta y muy poca preparación."
+      ], null),
+
+      meal("12:30", "Pre-entreno", "Banana + dátiles", "Glucosa concentrada", 0, [
+        food("1 banana", 1, 27, 0),
+        food("35g dátiles", 0, 26, 0)
+      ], ["Pre-entreno de hombros. Mismo concepto — carbo natural, sin grasa."], null),
+
+      meal("14:30", "Post-entreno", "Shake proteico + banana + creatina", "Whey · banana · leche · creatina", 0, [
+        food("1 scoop whey", 25, 2, 2),
+        food("1 banana", 1, 27, 0),
+        food("200ml leche entera", 6, 10, 7),
+        food("5g creatina", 0, 0, 0)
+      ], ["Post-entreno estándar."], null),
+
+      meal("16:00", "Almuerzo", "Peceto al ajo con batata y zucchini asados", "180g peceto · batata · zucchini · ajo · romero", 0, [
+        food("180g peceto", 47, 0, 6),
+        food("200g batata", 4, 48, 0),
+        food("1 zucchini grande", 1, 8, 0),
+        food("1 cda aceite de oliva", 0, 0, 14),
+        food("Ajo + romero", 0, 2, 0)
+      ], [
+        "Corte el peceto en medallones de 2cm. Marinalo con ajo machacado, romero, oliva y sal 20 min.",
+        "Sellalo en sartén caliente 2-3 min por lado. En la misma bandeja, asá la batata y el zucchini a 200°C por 20 min.",
+        "El peceto marinado con ajo y romero tiene un sabor totalmente diferente a la carne sin marinar."
+      ], null,
+      altMeal("Pollo al horno con morrones y cebolla caramelizada", "200g pollo · morrones · cebolla · tomillo · oliva", [
+        food("200g muslo o pechuga", 50, 0, 9),
+        food("2 morrones mixtos", 2, 16, 0),
+        food("1 cebolla grande", 1, 12, 0),
+        food("2 cdas aceite de oliva", 0, 0, 28)
+      ], [
+        "Caramelizá la cebolla en oliva a fuego bajo 15 min. Poné todo en bandeja con el pollo y los morrones.",
+        "Horneá a 200°C por 30 min. La cebolla caramelizada transforma el plato."
+      ])),
+
+      meal("19:30", "Merienda", "Tostadas con manteca de maní, banana y leche", "2 tostadas · maní · banana · leche", 0, [
+        food("2 tostadas integrales", 8, 28, 2),
+        food("2 cdas manteca de maní", 8, 6, 16),
+        food("1 banana", 1, 27, 0),
+        food("250ml leche entera", 8, 12, 9)
+      ], ["Merienda energética. El clásico maní + banana + leche."], null),
+
+      meal("22:00", "Cena", "Empanadas caseras de carne al horno con ensalada", "3 empanadas · carne magra · cebolla · huevo duro · ensalada", 0, [
+        food("3 tapas de empanada al horno", 9, 51, 6),
+        food("150g relleno de carne magra + cebolla + especias", 30, 6, 9),
+        food("Ensalada verde", 2, 6, 0)
+      ], [
+        "Para el relleno: sofreí cebolla + carne molida + pimentón + comino + sal. Sumá 1 huevo duro picado.",
+        "Rellená las tapas, cerrá en repulgue o con tenedor. Horneá a 200°C por 15-18 min hasta que doren.",
+        "3 empanadas al horno es una cena completa con proteína y carbo bien balanceados."
+      ], null,
+      altMeal("Omelette de carne molida y papas", "3 huevos · 100g carne molida · 1 papa · queso", [
+        food("3 huevos", 18, 0, 15),
+        food("100g carne molida", 20, 0, 8),
+        food("1 papa hervida en cubos", 2, 20, 0),
+        food("30g queso rallado", 6, 0, 9)
+      ], [
+        "Sofreí la carne molida con ajo, papa cocida y condimentos.",
+        "Batí los huevos, volcá en sartén con la carne y papa. Tapá y cociná a fuego bajo 5 min. Queso encima al final."
+      ])),
+
+      meal("23:30", "Antes de dormir", "Cottage con miel", "Caseína nocturna", 0, [
+        food("100g queso cottage", 11, 3, 4),
+        food("1 cdita miel", 0, 8, 0)
+      ], ["Opcional."], "Opcional.")
+    ]
+  },
+
+  // ===== JUEVES · PIERNAS =====
+  {
+    id: "jue", tab: "Jue", dayIndex: 4, title: "Jueves",
+    type: "Día de gym · Piernas (día más pesado)",
+    workout: { name: "Piernas", duration: "70 min", icon: "🦵", primary: ["Cuádriceps", "Isquios", "Glúteos"] },
+    isRestDay: false, kcal: 3100, protein: 180, carbs: 360, fats: 85,
+    tags: ["Piernas", "Día más pesado", "+200 kcal"],
+    tip: "El día más fuerte. Comé bien en todos los momentos del día.",
+    meals: [
+      meal("10:00", "Desayuno", "Tortilla de zapallitos con jamón y tostadas", "3 huevos · 1 zapallito · jamón · queso · 2 tostadas", 0, [
+        food("3 huevos", 18, 0, 15),
+        food("1 zapallito rallado", 1, 4, 0),
+        food("60g jamón natural", 12, 0, 4),
+        food("30g queso rallado", 6, 0, 9),
+        food("2 tostadas integrales", 8, 28, 2),
+        food("Jugo de naranja 200ml", 2, 22, 0)
+      ], [
+        "Escurrí el zapallito rallado (salá y dejá 5 min para que suelte agua). Mezclá con los huevos batidos y el jamón.",
+        "En sartén a fuego medio, cociná 4 min, deslizá al plato e invertí. Queso rallado encima al final.",
+        "Con tostadas y jugo. La tortilla de zapallito es totalmente diferente a la española."
+      ], null),
+
+      meal("11:30", "Media mañana", "Sándwich de atún con queso y verduras", "Pan · atún · queso · tomate · pepino · mostaza", 0, [
+        food("2 rodajas pan integral", 8, 28, 2),
+        food("1 lata atún", 28, 0, 2),
+        food("40g queso fresco", 5, 1, 4),
+        food("1/2 pepino + tomate", 1, 6, 0)
+      ], [
+        "Mezcla el atún con mostaza y limón. Armá el sándwich con queso, atún y vegetales."
+      ], null),
+
+      meal("12:30", "Pre-entreno", "Banana + pasas + miel (triple carbo)", "Máximo combustible para piernas", 0, [
+        food("1 banana grande", 1, 30, 0),
+        food("35g pasas", 1, 27, 0),
+        food("1 cda miel", 0, 17, 0)
+      ], ["Triple carbo para piernas. No te lo salteés."], "Obligatorio para piernas."),
+
+      meal("14:30", "Post-entreno", "Shake reforzado post-piernas", "2 scoops · banana · leche · creatina", 0, [
+        food("2 scoops whey", 50, 4, 4),
+        food("1 banana", 1, 30, 0),
+        food("200ml leche entera", 6, 10, 7),
+        food("5g creatina", 0, 0, 0)
+      ], ["2 scoops solo para el día de piernas. El desgaste es máximo."], null),
+
+      meal("16:00", "Almuerzo", "Guiso de lentejas con pollo y chorizo", "1 taza lentejas · 150g pollo · chorizo colorado · vegetales", 0, [
+        food("1 taza lentejas cocidas", 9, 20, 1),
+        food("150g pechuga en cubos", 47, 0, 5),
+        food("40g chorizo colorado picado", 5, 2, 9),
+        food("Zanahoria + papa + cebolla", 3, 25, 0),
+        food("1 cda aceite de oliva", 0, 0, 14)
+      ], [
+        "Sofreí el chorizo con cebolla y ajo. Sumá el pollo y dorá. Agregá zanahoria, papa en cubos y las lentejas.",
+        "Cubrí con caldo y cociná 20 min. Las lentejas son proteína vegetal que suma a la animal del pollo.",
+        "Un plato único, completo y diferente a todo lo que comiste en la semana anterior."
+      ], null,
+      altMeal("Puchero liviano de carne y vegetales", "200g carne · papas · zanahoria · choclo · zapallo", [
+        food("200g pecho de res o cuadrada", 40, 0, 16),
+        food("2 papas", 4, 40, 0),
+        food("1 zanahoria + 1 choclo + 100g zapallo", 2, 25, 0),
+        food("Caldo de carne", 2, 4, 2)
+      ], [
+        "Herví la carne con caldo 30 min. Sumá los vegetales en trozos grandes y cociná 20 min más.",
+        "Serví con el caldo como sopa primero, luego la carne y vegetales. El puchero alimenta y reconforta."
+      ])),
+
+      meal("19:30", "Merienda", "Panqueques rellenos de ricota y miel", "2 panqueques · ricota · miel · canela · banana", 0, [
+        food("2 panqueques finos (harina + huevo + leche)", 8, 30, 5),
+        food("4 cdas ricota batida", 12, 4, 7),
+        food("1 cda miel", 0, 17, 0),
+        food("1 banana", 1, 27, 0)
+      ], [
+        "Hacé los panqueques finos. Rellená con ricota batida con miel y canela.",
+        "Dobblalos o enrollalos. Poné banana en rodajas encima."
+      ], null),
+
+      meal("22:00", "Cena", "Sorrentinos de ricota con manteca y salvia", "300g sorrentinos frescos · ricota · manteca · salvia · queso", 0, [
+        food("300g sorrentinos de ricota frescos", 15, 57, 8),
+        food("20g manteca para saltear", 0, 0, 16),
+        food("Salvia fresca (4 hojas)", 0, 1, 0),
+        food("30g queso parmesano rallado", 9, 0, 9)
+      ], [
+        "Herví los sorrentinos en agua con sal según el paquete (3-4 min si son frescos).",
+        "En sartén, derretí la manteca con las hojas de salvia hasta que dore (no queme). Volcá los sorrentinos y saltealos 1 min.",
+        "Serví con parmesano rallado. Una cena de pasta con sabor gourmet en 15 min totales."
+      ], null,
+      altMeal("Ñoquis de papa con tuco de carne", "300g ñoquis frescos · 120g carne molida · tomate · queso", [
+        food("300g ñoquis de papa frescos", 6, 54, 3),
+        food("120g carne molida magra", 24, 0, 9),
+        food("200ml tomate triturado", 2, 10, 0),
+        food("20g queso rallado", 4, 0, 6)
+      ], [
+        "Herví los ñoquis: cuando suben a la superficie ya están listos (2-3 min).",
+        "El tuco: sofreí carne con cebolla y ajo, sumá tomate y cociná 15 min. Mezclá con los ñoquis y queso."
+      ])),
+
+      meal("23:30", "Antes de dormir", "Shake nocturno (obligatorio hoy)", "Proteína de recuperación muscular", 0, [
+        food("1 scoop whey con 200ml leche entera", 25, 10, 9)
+      ], ["Piernas exige proteína nocturna. No opcional hoy."], "Obligatorio hoy.")
+    ]
+  },
+
+  // ===== VIERNES · FULL BODY =====
+  {
+    id: "vie", tab: "Vie", dayIndex: 5, title: "Viernes",
+    type: "Full body opcional · Cardio o descanso",
+    workout: { name: "Full Body", duration: "50 min", icon: "⚡", optional: true, primary: ["Full body"] },
+    isRestDay: false, kcal: 2700, protein: 160, carbs: 305, fats: 75,
+    tags: ["Full body", "Opcional"],
+    tip: "Fin de semana de entrenamiento. Flexible — hacé lo que el cuerpo te pida.",
+    meals: [
+      meal("10:00", "Desayuno", "Huevos pochados con tostadas y palta", "2 huevos poché · 2 tostadas · palta · tomate · café", 0, [
+        food("2 huevos pochados", 12, 0, 10),
+        food("2 tostadas integrales", 8, 28, 2),
+        food("1/3 palta", 1, 7, 11),
+        food("1 tomate", 1, 5, 0),
+        food("Café con leche 200ml", 6, 8, 6)
+      ], [
+        "Herví agua con un chorro de vinagre (ayuda a mantener la clara unida). Bajá a fuego suave, hacé un remolino y volcá el huevo. 3-4 min.",
+        "Serví sobre las tostadas con palta y tomate. Los huevos pochados son la versión gourmet del desayuno."
+      ], null),
+
+      meal("12:00", "Media mañana", "Tostadas con queso fresco y semillas", "2 tostadas · queso fresco · semillas de chía y lino", 0, [
+        food("2 tostadas integrales", 8, 28, 2),
+        food("60g queso fresco", 7, 1, 6),
+        food("1 cda semillas mixtas (chía + lino)", 2, 4, 4)
+      ], ["Queso fresco con semillas encima. Las semillas aportan omega 3 y textura crocante."], null),
+
+      meal("13:30", "Almuerzo", "Trucha o salmón rosado al horno con arroz y espinaca", "200g pescado · arroz · espinaca · ajo · oliva", 0, [
+        food("200g trucha o salmón rosado", 46, 0, 18),
+        food("1 taza arroz blanco cocido", 4, 50, 0),
+        food("100g espinaca salteada", 3, 3, 0),
+        food("1 cda aceite de oliva", 0, 0, 14),
+        food("Ajo + limón", 0, 2, 0)
+      ], [
+        "Condimentá el pescado con ajo, limón, oliva y eneldo. Horneá a 200°C por 15-18 min.",
+        "Salteá la espinaca con ajo en oliva 2 min. Servís con arroz de base y el pescado encima.",
+        "La trucha de río es tan buena como el salmón, a veces más fresca y más barata."
+      ], null,
+      altMeal("Pasta con salsa de tomate fresco y albahaca", "80g pasta · tomate fresco · ajo · albahaca · oliva · queso", [
+        food("80g penne rigate", 10, 58, 2),
+        food("3 tomates maduros", 3, 15, 0),
+        food("30g queso parmesano", 9, 0, 9),
+        food("Albahaca fresca + ajo + oliva", 0, 2, 10)
+      ], [
+        "Sofreí ajo en oliva, sumá tomate en cubos y cociná 10 min. Apagá y sumá albahaca fresca.",
+        "Mezclá con la pasta al dente y el parmesano. La salsa de tomate fresco es completamente diferente a la de lata."
+      ])),
+
+      meal("17:00", "Merienda", "Mate con galletitas de avena y nueces", "Mate + 6-8 galletitas de avena", 0, [
+        food("8 galletitas de avena (caseras o compradas)", 5, 30, 7),
+        food("1 manzana", 0, 20, 0)
+      ], ["Mate con galletitas y manzana. Merienda liviana para el viernes."], null),
+
+      meal("22:00", "Cena", "Carne a la parrilla con chimichurri y pan", "180g bife · chimichurri casero · pan · ensalada", 0, [
+        food("180g bife de cuadrada", 40, 0, 12),
+        food("2 rodajas pan integral", 8, 28, 2),
+        food("Chimichurri (perejil + ajo + orégano + oliva)", 0, 2, 8),
+        food("Ensalada verde + tomate", 2, 7, 0)
+      ], [
+        "Grillá la carne a fuego fuerte. Para el chimichurri: perejil picado + ajo + orégano + 3 cdas oliva + vinagre + sal.",
+        "Serví con el pan y la ensalada. El chimichurri casero transforma cualquier corte."
+      ], null,
+      altMeal("Pollo salteado al wok con arroz integral y sésamo", "160g pollo · arroz integral · brócoli · soja · sésamo", [
+        food("160g pechuga en tiras", 50, 0, 5),
+        food("3/4 taza arroz integral cocido", 3, 37, 1),
+        food("150g brócoli", 4, 7, 0),
+        food("1 cda salsa de soja · 1 cdita sésamo", 1, 2, 1)
+      ], [
+        "Wok muy caliente con aceite. Salteá el pollo 4 min. Sumá brócoli y la soja.",
+        "Incorporá el arroz integral y el sésamo. Salteá 2 min más."
+      ])),
+
+      meal("23:30", "Antes de dormir", "Cottage o leche tibia", "Cierre proteico del día", 0, [
+        food("100g cottage con miel o 250ml leche", 11, 11, 4)
+      ], ["Opcional según proteína del día."], "Opcional.")
+    ]
+  },
+
+  // ===== SÁBADO · DESCANSO =====
+  {
+    id: "sab", tab: "Sáb", dayIndex: 6, title: "Sábado",
+    type: "Día de descanso activo",
+    workout: { name: "Descanso", duration: "—", icon: "🚶", primary: [] },
+    isRestDay: true, kcal: 2600, protein: 150, carbs: 290, fats: 80,
+    tags: ["Descanso", "Criolla", "Fin de semana"],
+    tip: "Sábado potencia criolla. El asado es la proteína del fin de semana.",
+    meals: [
+      meal("10:00", "Desayuno", "Tostadas con queso crema, salmón ahumado y huevo duro", "2 tostadas · queso crema · salmón ahumado · huevo · alcaparras", 0, [
+        food("2 tostadas de centeno o integral", 8, 26, 2),
+        food("3 cdas queso crema natural", 3, 2, 9),
+        food("60g salmón ahumado", 13, 0, 5),
+        food("1 huevo duro", 6, 0, 5),
+        food("Alcaparras o cebolla morada (opcional)", 0, 2, 0)
+      ], [
+        "Untá las tostadas con queso crema. Poné el salmón ahumado encima.",
+        "Cortá el huevo duro en rodajas y terminá con alcaparras o cebolla morada en pluma fina.",
+        "El desayuno más gourmet de las 4 semanas — salmón ahumado en casa es un lujo accesible."
+      ], null),
+
+      meal("12:30", "Media mañana", "Bol de frutas con granola y yogur", "200g yogur · granola · frutas de estación · miel", 0, [
+        food("200g yogur natural", 8, 10, 8),
+        food("30g granola", 3, 20, 4),
+        food("100g frutas variadas (banana, manzana, naranja)", 1, 25, 0),
+        food("1 cdita miel", 0, 8, 0)
+      ], ["Bol fresco de frutas con granola. El contraste con el desayuno es total."], null),
+
+      meal("14:00", "Almuerzo", "Asado completo con ensaladas", "200g asado vacío · chorizo · morcilla · ensalada · pan", 0, [
+        food("200g asado de vacío", 44, 0, 20),
+        food("1 chorizo colorado asado", 11, 2, 20),
+        food("50g morcilla (pequeña, ocasional)", 5, 2, 14),
+        food("Ensalada mixta grande", 3, 12, 0),
+        food("1 pan francés", 4, 17, 1)
+      ], [
+        "El asado del sábado es diferente al asado rápido del lunes — acá tenés tiempo para hacerlo bien.",
+        "Fuego indirecto para el asado, cociná 40-50 min. Chorizo a fuego directo 10-15 min.",
+        "Las ensaladas equilibran la pesadez del asado completo."
+      ], "El asado del sábado es sagrado. Disfrutalo con tiempo.",
+      altMeal("Bondiola al horno con papas rústicas", "350g bondiola · papas · ajo · romero · mostaza", [
+        food("350g bondiola de cerdo", 50, 0, 28),
+        food("300g papas rústicas", 6, 60, 0),
+        food("2 cdas aceite de oliva", 0, 0, 28)
+      ], [
+        "Salpimentá la bondiola, untala con mostaza y ajo. Cubrí con aluminio y horneá a 180°C por 1h.",
+        "Los últimos 20 min sin aluminio para que dore. Papas en gajos con oliva al horno también 40 min."
+      ])),
+
+      meal("17:30", "Merienda", "Mate con alfajores caseros de avena", "Mate + 2 alfajores avena y dulce de leche", 0, [
+        food("2 alfajores de avena caseros (o comprados)", 5, 36, 7),
+        food("Mate", 0, 0, 0)
+      ], ["La merienda criolla del sábado. Mate con alfajores."], null),
+
+      meal("22:00", "Cena", "Fideos al pomodoro con carne molida y parmesano", "80g pasta · 120g carne molida · tomate · parmesano", 0, [
+        food("80g penne o tallarines", 10, 58, 2),
+        food("120g carne molida magra", 24, 0, 9),
+        food("200ml tomate triturado", 2, 10, 0),
+        food("1 cda aceite de oliva", 0, 0, 14),
+        food("30g parmesano rallado", 9, 0, 9)
+      ], [
+        "La carne al pomodoro: sofreí la carne con ajo, sumá tomate y cociná 15 min con albahaca.",
+        "Mezclá con la pasta al dente y el parmesano encima. La carne al tuco con parmesano es una cena italiana y sencilla."
+      ], null,
+      altMeal("Pollo grillado con morrones asados y quinoa", "160g pollo · quinoa · morrones · limón · oliva", [
+        food("160g pechuga grillada", 50, 0, 5),
+        food("3/4 taza quinoa cocida", 6, 30, 3),
+        food("2 morrones asados", 2, 16, 0),
+        food("1 cda aceite de oliva", 0, 0, 14)
+      ], [
+        "Grillá el pollo con limón y oliva. Asá los morrones en el horno o a la llama.",
+        "Armá el plato con quinoa de base, los morrones y el pollo encima."
+      ])),
+
+      meal("23:30", "Antes de dormir", "Cottage o leche tibia", "Cierre del sábado", 0, [
+        food("250ml leche entera tibia", 8, 12, 9)
+      ], ["Opcional. Un vaso de leche tibia cierra bien el sábado."], "Opcional.")
+    ]
+  },
+
+  // ===== DOMINGO · DESCANSO =====
+  {
+    id: "dom", tab: "Dom", dayIndex: 0, title: "Domingo",
+    type: "Día de descanso completo",
+    workout: { name: "Descanso total", duration: "—", icon: "🛌", primary: [] },
+    isRestDay: true, kcal: 2500, protein: 145, carbs: 275, fats: 78,
+    tags: ["Descanso total", "Criolla", "Domingo"],
+    tip: "Domingo criolla. Comida que alimenta el alma.",
+    meals: [
+      meal("10:00", "Desayuno", "French toast con dulce de leche light y banana", "2 rebanadas · 2 huevos · leche · dulce de leche · banana", 0, [
+        food("2 rebanadas pan brioche o lactal", 6, 32, 4),
+        food("2 huevos", 12, 0, 10),
+        food("100ml leche", 3, 5, 4),
+        food("1 cda dulce de leche light", 2, 12, 2),
+        food("1 banana", 1, 27, 0)
+      ], [
+        "Batí los huevos con leche y vainilla. Remojá el pan 10 seg de cada lado y cocinalo en manteca.",
+        "Untá con el dulce de leche mientras está caliente y poné la banana en rodajas. Un capricho dominical controlado."
+      ], "Un domingo sin excesos pero con placer."),
+
+      meal("13:30", "Almuerzo", "Pollo al disco con papas y vegetales", "250g pollo · papas · morrón · cebolla · vino blanco", 0, [
+        food("250g pollo en presas", 56, 0, 14),
+        food("2 papas medianas", 4, 40, 0),
+        food("1 morrón + 1 cebolla + 2 tomates", 2, 18, 0),
+        food("50ml vino blanco (para cocinar)", 0, 2, 0),
+        food("1 cda aceite de oliva", 0, 0, 14)
+      ], [
+        "En sartén grande o disco, dorá el pollo a fuego fuerte. Sumá cebolla, morrón, papas en rodajas y tomate.",
+        "Bañá con el vino y tapá. Cociná 30-35 min a fuego medio hasta que las papas estén tiernas.",
+        "El pollo al disco es el plato criolla definitivo del domingo."
+      ], null,
+      altMeal("Estofado de carne con papas y zanahorias", "200g carne · papas · zanahoria · pimiento · caldo", [
+        food("200g cuadrada o nalga en cubos", 40, 0, 12),
+        food("2 papas · 2 zanahorias · 1 pimiento", 4, 46, 0),
+        food("200ml caldo de carne", 2, 4, 2)
+      ], [
+        "Dorá la carne en cubos con cebolla y ajo. Sumá las papas, zanahoria, pimiento y el caldo.",
+        "Tapá y cociná a fuego lento 35-40 min hasta que la carne quede tierna. El estofado se hace solo."
+      ])),
+
+      meal("17:30", "Merienda", "Mate con sándwich casero de queso y tomate", "Mate + pan integral + queso + tomate + orégano", 0, [
+        food("2 rodajas pan integral", 8, 28, 2),
+        food("60g queso fresco o en barra", 7, 1, 6),
+        food("1 tomate", 1, 5, 0)
+      ], ["Sándwich de queso y tomate con mate. La merienda dominguera simple y buena."], null),
+
+      meal("22:00", "Cena", "Pechuga rellena con jamón y queso + ensalada", "180g pechuga · jamón · queso · ensalada · papas noisette", 0, [
+        food("180g pechuga rellena", 56, 0, 12),
+        food("40g jamón natural", 8, 0, 3),
+        food("50g mozzarella", 9, 1, 7),
+        food("Ensalada mixta", 2, 7, 0),
+        food("100g papas noisette al horno", 2, 20, 4)
+      ], [
+        "Abrí la pechuga en libro (cortá a la mitad sin separar). Rellená con jamón y mozzarella. Cerrá con palillos.",
+        "Sellá en sartén 3 min y terminá en horno a 200°C por 15 min. Papas noisette congeladas al horno son atajo válido.",
+        "La pechuga rellena es fácil de hacer y parece plato de restaurante."
+      ], null,
+      altMeal("Pasta con ricota y espinaca al limón", "80g pasta · ricota · espinaca · limón · oliva · queso", [
+        food("80g pasta larga (linguini o espagueti)", 10, 58, 2),
+        food("5 cdas ricota", 15, 5, 9),
+        food("100g espinaca saltada con ajo", 3, 4, 2),
+        food("Limón + oliva + queso parmesano", 2, 2, 10)
+      ], [
+        "Herví la pasta. Salteá espinaca con ajo en oliva 2 min.",
+        "Mezclá pasta caliente con ricota + espinaca + ralladura de limón + parmesano. Cremoso sin crema real."
+      ])),
+
+      meal("23:30", "Antes de dormir", "Shake o leche", "Cierre dominical", 0, [
+        food("1 scoop whey con 200ml leche o leche sola", 20, 10, 8)
+      ], ["Cerrá la semana 2 con proteína. Que descanses."], "Opcional.")
+    ]
+  }
+], // fin Semana 2
+
+// ╔══════════════════════════════════════╗
+// ║  SEMANA 3 · "Internacional Mix"      ║
+// ╚══════════════════════════════════════╝
+[
+  // ===== LUNES · PECHO + TRÍCEPS =====
+  {
+    id: "lun", tab: "Lun", dayIndex: 1, title: "Lunes",
+    type: "Día de gym · Pecho + tríceps",
+    workout: { name: "Pecho · Tríceps", duration: "60 min", icon: "🏋️", primary: ["Pecho", "Tríceps"] },
+    isRestDay: false, kcal: 2900, protein: 170, carbs: 330, fats: 80,
+    tags: ["Pecho", "Tríceps", "Sabores del mundo"],
+    tip: "Semana de sabores internacionales. Todo distinto a las semanas anteriores.",
+    meals: [
+      meal("10:00", "Desayuno", "Smoothie bowl proteico con banana y frutos del bosque", "Avena · banana · leche · whey · frutos rojos · granola", 0, [
+        food("40g avena", 4, 27, 3),
+        food("1 banana congelada", 1, 27, 0),
+        food("150ml leche entera", 5, 8, 5),
+        food("1/2 scoop whey vainilla", 13, 1, 1),
+        food("80g frutos rojos", 1, 10, 0),
+        food("20g granola", 2, 13, 3)
+      ], [
+        "Licuá la avena + banana congelada + leche + whey hasta que quede espesa (textura tipo helado).",
+        "Volcá en un bol y poné los frutos rojos y la granola encima. Se come con cuchara — es la versión 'bowl' del licuado."
+      ], null),
+
+      meal("11:30", "Media mañana", "Tostadas con hummus y rodajas de pepino y tomate", "2 tostadas · 4 cdas hummus · pepino · tomate · oliva", 0, [
+        food("2 tostadas integrales", 8, 28, 2),
+        food("4 cdas hummus (garbanzos + sésamo + limón)", 6, 14, 8),
+        food("1/2 pepino + 1 tomate", 1, 8, 0)
+      ], [
+        "Untá el hummus sobre las tostadas. Poné rodajas de pepino y tomate encima.",
+        "El hummus reemplaza la manteca con grasa de calidad (garbanzos + sésamo). Podés comprarlo o hacerlo con lata de garbanzos + tahini + limón + ajo."
+      ], null),
+
+      meal("12:30", "Pre-entreno", "Banana + pasas de uva", "Carbo rápido", 0, [
+        food("1 banana", 1, 27, 0),
+        food("35g pasas de uva", 1, 27, 0)
+      ], ["Pre estándar para pecho."], null),
+
+      meal("14:30", "Post-entreno", "Shake proteico + banana + creatina", "Whey · banana · leche · creatina", 0, [
+        food("1 scoop whey", 25, 2, 2),
+        food("1 banana", 1, 27, 0),
+        food("200ml leche entera", 6, 10, 7),
+        food("5g creatina", 0, 0, 0)
+      ], ["Post-entreno estándar."], null),
+
+      meal("16:00", "Almuerzo", "Bowl de pollo teriyaki con arroz y choclo", "190g pollo · arroz · choclo · zanahoria · salsa teriyaki", 0, [
+        food("190g pechuga en tiras", 59, 0, 6),
+        food("1 taza arroz blanco cocido", 4, 50, 0),
+        food("1/2 choclo en granos", 2, 18, 1),
+        food("1/2 zanahoria rallada", 0, 5, 0),
+        food("2 cdas salsa teriyaki (soja + miel + jengibre)", 1, 8, 0)
+      ], [
+        "Salteá el pollo en tiras a fuego fuerte. Cuando dore, bañá con la salsa teriyaki y cocinalo 2 min más hasta que caramelice.",
+        "Armá el bowl: arroz de base, pollo teriyaki encima, choclo y zanahoria al costado.",
+        "El caramelizado de la salsa teriyaki sobre el pollo es completamente diferente a cualquier aderezo argentino."
+      ], null,
+      altMeal("Tacos de pollo suaves con palta y salsa", "3 tortillas · 160g pollo · palta · tomate · cebolla · limón", [
+        food("3 tortillas de harina chicas", 7, 45, 4),
+        food("160g pechuga salteada con comino y pimentón", 50, 0, 5),
+        food("1/4 palta", 1, 5, 8),
+        food("Tomate + cebolla + cilantro + limón", 1, 7, 0)
+      ], [
+        "Salteá el pollo en tiras con comino, pimentón y sal. Calentá las tortillas 30 seg en sartén seca.",
+        "Armá los tacos con palta, pollo, tomate y cebolla. Exprimí limón encima."
+      ])),
+
+      meal("19:30", "Merienda", "Yogur griego con manteca de maní y banana", "200g yogur griego · manteca de maní · banana · miel", 0, [
+        food("200g yogur griego", 20, 8, 10),
+        food("1 cda manteca de maní", 4, 3, 8),
+        food("1 banana", 1, 27, 0),
+        food("1 cdita miel", 0, 8, 0)
+      ], [
+        "Mezclá el yogur con la manteca de maní hasta integrar. Cortá la banana arriba y rociá con miel."
+      ], null),
+
+      meal("22:00", "Cena", "Fideos estilo pad thai con pollo y maní", "80g noodles o fideos · 160g pollo · huevo · maní · soja · limón", 0, [
+        food("80g fideos de arroz o espagueti", 8, 57, 1),
+        food("160g pechuga en tiras", 50, 0, 5),
+        food("1 huevo revuelto dentro del plato", 6, 0, 5),
+        food("20g maní tostado", 5, 3, 10),
+        food("2 cdas salsa de soja + limón", 2, 3, 0)
+      ], [
+        "Herví los fideos y reservá. En wok caliente, salteá el pollo 4 min. Sumá los fideos, la soja y el huevo revuelto.",
+        "Mezclá 2 min a fuego fuerte. Servís con el maní picado encima y rodajas de limón para exprimir.",
+        "El maní tostado y el limón al final son lo que define al pad thai — no te los salteés."
+      ], null,
+      altMeal("Pollo hoisin con arroz y brócoli salteado", "160g pollo · salsa hoisin · arroz · brócoli · sésamo", [
+        food("160g pechuga", 50, 0, 5),
+        food("1 taza arroz cocido", 4, 50, 0),
+        food("150g brócoli salteado", 4, 7, 0),
+        food("2 cdas salsa hoisin", 1, 10, 1),
+        food("1 cdita sésamo", 1, 1, 3)
+      ], [
+        "Salteá el pollo en tiras con la salsa hoisin 5 min. Salteá el brócoli aparte.",
+        "Servís con arroz, brócoli y el pollo encima con sésamo esparcido."
+      ])),
+
+      meal("23:30", "Antes de dormir", "Cottage con miel", "Proteína lenta", 0, [
+        food("100g cottage", 11, 3, 4),
+        food("1 cdita miel", 0, 8, 0)
+      ], ["Opcional."], "Opcional.")
+    ]
+  },
+
+  // ===== MARTES · ESPALDA + BÍCEPS =====
+  {
+    id: "mar", tab: "Mar", dayIndex: 2, title: "Martes",
+    type: "Día de gym · Espalda + bíceps",
+    workout: { name: "Espalda · Bíceps", duration: "60 min", icon: "🏋️", primary: ["Espalda", "Bíceps"] },
+    isRestDay: false, kcal: 2950, protein: 175, carbs: 335, fats: 80,
+    tags: ["Espalda", "Bíceps", "Mix internacional"],
+    tip: "Espalda + sabores distintos. Esta semana el almuerzo y la cena son completamente diferentes a todo lo anterior.",
+    meals: [
+      meal("10:00", "Desayuno", "Arepa de maíz con pollo desmenuzado y palta", "2 arepas · pollo · palta · tomate · queso", 0, [
+        food("2 arepas de maíz medianas (masa lista o P.A.N.)", 6, 36, 3),
+        food("80g pollo desmenuzado sazonado", 25, 0, 3),
+        food("1/4 palta", 1, 5, 8),
+        food("40g queso fresco", 5, 1, 4),
+        food("Café con leche 200ml", 6, 8, 6)
+      ], [
+        "Mezclá 1 taza de harina de maíz precocida + 1 taza agua tibia + sal. Formá bolas y aplanalás a 1.5cm. Cocinalo en sartén seca 5 min por lado.",
+        "Cortá las arepas y rellenálas con el pollo (condimentado con comino + ajo), la palta y el queso.",
+        "Las arepas son el pan colombiano/venezolano. Cambian completamente el desayuno."
+      ], "Si no conseguís harina P.A.N., usá tortillas de maíz gruesas."),
+
+      meal("11:30", "Media mañana", "Sándwich de pollo con palta y sriracha", "Pan · pechuga · palta · tomate · salsa picante", 0, [
+        food("2 rodajas pan integral", 8, 28, 2),
+        food("100g pechuga cocida laminada", 31, 0, 3),
+        food("1/4 palta", 1, 5, 8),
+        food("1 tomate + lechuga", 1, 5, 0),
+        food("1 cdita sriracha o picante suave", 0, 1, 0)
+      ], [
+        "Armá el sándwich con la pechuga laminada, palta, tomate y lechuga.",
+        "Un toque de sriracha o salsa picante cambia el sándwich de siempre."
+      ], null),
+
+      meal("12:30", "Pre-entreno", "Banana + miel", "Carbo espalda", 0, [
+        food("1 banana", 1, 27, 0),
+        food("1 cda miel", 0, 17, 0),
+        food("1 tostada", 4, 14, 1)
+      ], ["Pre para espalda."], null),
+
+      meal("14:30", "Post-entreno", "Shake proteico + banana + creatina", "Whey · banana · leche · creatina", 0, [
+        food("1 scoop whey", 25, 2, 2),
+        food("1 banana", 1, 27, 0),
+        food("200ml leche", 6, 10, 7),
+        food("5g creatina", 0, 0, 0)
+      ], ["Post-entreno estándar."], null),
+
+      meal("16:00", "Almuerzo", "Risotto de pollo y champiñones", "170g pollo · 80g arroz arbóreo · champiñones · caldo · queso", 0, [
+        food("170g pechuga en cubos", 53, 0, 5),
+        food("80g arroz arbóreo o blanco", 6, 64, 0),
+        food("150g champiñones frescos", 3, 4, 0),
+        food("200ml caldo de pollo", 2, 4, 1),
+        food("30g parmesano rallado", 9, 0, 9),
+        food("1 cda aceite de oliva", 0, 0, 14)
+      ], [
+        "Sofreí el pollo. Reservalo. En la misma sartén, sofreí cebolla + champiñones y el arroz.",
+        "Agregá el caldo caliente de a poco, revolviendo. Incorporá más caldo cuando se absorba (15-18 min total).",
+        "Al final, el pollo + parmesano + 1 cda manteca. El risotto pide paciencia pero el resultado es un almuerzo gourmet de verdad."
+      ], null,
+      altMeal("Carne salteada estilo mexicano con arroz", "160g carne · arroz · morrón · cebolla · comino · limón", [
+        food("160g carne magra en tiras finas", 32, 0, 10),
+        food("1 taza arroz cocido", 4, 50, 0),
+        food("1 morrón + 1/2 cebolla", 1, 10, 0),
+        food("Comino + pimentón + limón", 0, 2, 0)
+      ], [
+        "Salteá la carne a fuego muy fuerte con comino y pimentón (sin aceite extra — la carne tiene su grasa).",
+        "Sumá morrón y cebolla 3 min más. Exprimí limón al servir sobre el arroz."
+      ])),
+
+      meal("19:30", "Merienda", "Tostadas con manteca de maní y miel", "2 tostadas · manteca de maní · miel · banana", 0, [
+        food("2 tostadas integrales", 8, 28, 2),
+        food("2 cdas manteca de maní", 8, 6, 16),
+        food("1 banana", 1, 27, 0),
+        food("1 cdita miel", 0, 8, 0)
+      ], ["Clásico seguro para la merienda de martes."], null),
+
+      meal("22:00", "Cena", "Pollo tikka masala liviano con arroz basmati", "170g pollo · yogur · tomate · curry · garam masala · arroz", 0, [
+        food("170g pechuga en cubos", 53, 0, 5),
+        food("3/4 taza arroz basmati cocido", 3, 40, 0),
+        food("100ml tomate triturado", 1, 5, 0),
+        food("4 cdas yogur natural", 6, 5, 4),
+        food("1 cdita curry + 1/2 cdita garam masala", 0, 2, 1)
+      ], [
+        "Marinato el pollo en yogur + curry + sal 20 min. Doré en sartén caliente.",
+        "Sumá el tomate y las especias. Cociná 10 min a fuego bajo.",
+        "Apagá e incorporá más yogur para suavizar la salsa. La versión liviana del tikka masala — sin crema pero con todo el sabor."
+      ], null,
+      altMeal("Burrito de pollo con queso y arroz", "2 tortillas grandes · 150g pollo · arroz · queso · palta", [
+        food("2 tortillas de harina grande", 8, 60, 6),
+        food("150g pollo sazonado con comino y chile", 47, 0, 5),
+        food("1/2 taza arroz cocido", 2, 25, 0),
+        food("50g queso rallado", 10, 0, 12),
+        food("1/4 palta", 1, 5, 8)
+      ], [
+        "Calentá las tortillas. Poné arroz, pollo, queso y palta en el centro.",
+        "Doblá los extremos y enrollá apretando. Calentalo 1 min en sartén para que el queso se derrita."
+      ])),
+
+      meal("23:30", "Antes de dormir", "Shake nocturno", "Proteína nocturna", 0, [
+        food("1 scoop whey con 200ml leche", 25, 10, 9)
+      ], ["Opcional."], "Opcional.")
+    ]
+  },
+
+  // ===== MIÉRCOLES · HOMBROS =====
+  {
+    id: "mie", tab: "Mié", dayIndex: 3, title: "Miércoles",
+    type: "Día de gym · Hombros",
+    workout: { name: "Hombros · Abdomen", duration: "55 min", icon: "🏋️", primary: ["Hombros"] },
+    isRestDay: false, kcal: 2850, protein: 165, carbs: 320, fats: 78,
+    tags: ["Hombros", "Mix internacional"],
+    tip: "Menú con toques asiáticos y mediterráneos. Sabores completamente nuevos.",
+    meals: [
+      meal("10:00", "Desayuno", "Pancakes americanos con arándanos y miel", "50g harina avena · 2 huevos · leche · arándanos · miel", 0, [
+        food("50g harina de avena o avena licuada", 6, 33, 3),
+        food("2 huevos", 12, 0, 10),
+        food("100ml leche entera", 3, 5, 4),
+        food("80g arándanos frescos o congelados", 1, 14, 0),
+        food("1 cda miel o sirope", 0, 17, 0)
+      ], [
+        "Mezclá harina de avena + huevos + leche + sal hasta que quede lisa. No agites de más.",
+        "En sartén a fuego medio con manteca, cocinalo por cucharones. Cuando aparecen burbujas, dalo vuelta (2-3 min por lado).",
+        "Apilá los pancakes y poné los arándanos encima con miel. Los pancakes americanos esponjosos son completamente distintos a los finos."
+      ], null),
+
+      meal("11:30", "Media mañana", "Tostadas con ricota, frutillas y canela", "2 tostadas · ricota · frutillas · miel · canela", 0, [
+        food("2 tostadas integrales", 8, 28, 2),
+        food("4 cdas ricota", 12, 4, 7),
+        food("100g frutillas", 1, 8, 0),
+        food("1 cdita miel · pizca canela", 0, 8, 0)
+      ], [
+        "Batí la ricota con la miel. Poné sobre las tostadas con las frutillas cortadas y canela."
+      ], null),
+
+      meal("12:30", "Pre-entreno", "Banana + pasas", "Carbo para hombros", 0, [
+        food("1 banana", 1, 27, 0),
+        food("30g pasas", 1, 23, 0)
+      ], ["Pre estándar."], null),
+
+      meal("14:30", "Post-entreno", "Shake proteico + banana + creatina", "Whey · banana · leche · creatina", 0, [
+        food("1 scoop whey", 25, 2, 2),
+        food("1 banana", 1, 27, 0),
+        food("200ml leche", 6, 10, 7),
+        food("5g creatina", 0, 0, 0)
+      ], ["Post-entreno estándar."], null),
+
+      meal("16:00", "Almuerzo", "Curry de pollo y garbanzos con arroz basmati", "150g pollo · garbanzos · leche coco light · curry · arroz", 0, [
+        food("150g pechuga en cubos", 47, 0, 5),
+        food("1/2 taza garbanzos cocidos", 5, 15, 2),
+        food("100ml leche de coco light", 1, 3, 5),
+        food("100ml tomate triturado", 1, 5, 0),
+        food("3/4 taza arroz basmati cocido", 3, 40, 0),
+        food("1 cdita curry en polvo", 0, 2, 1)
+      ], [
+        "Sofreí cebolla + ajo + curry en polvo hasta que aromatice. Sumá el pollo y dorá.",
+        "Agregá tomate, leche de coco y garbanzos. Cociná 15 min a fuego medio.",
+        "El curry de pollo y garbanzos es el almuerzo más diferente de todas las semanas. Cambia completamente el paladar."
+      ], null,
+      altMeal("Pollo a la griega con papas al limón", "200g pollo · papas · orégano griego · limón · aceitunas · oliva", [
+        food("200g muslo de pollo", 46, 0, 14),
+        food("250g papas", 5, 50, 0),
+        food("Jugo de 2 limones + orégano + aceitunas", 0, 6, 6),
+        food("2 cdas aceite de oliva", 0, 0, 28)
+      ], [
+        "Macerá el pollo y las papas con limón, orégano, ajo y oliva. Todo en bandeja al horno 180°C por 45 min.",
+        "Agregá las aceitunas los últimos 10 min. El limón y el orégano griego son la clave del sabor."
+      ])),
+
+      meal("19:30", "Merienda", "Licuado de mango, banana y leche", "1 mango · banana · leche entera · miel", 0, [
+        food("1 mango maduro", 1, 25, 0),
+        food("1 banana", 1, 27, 0),
+        food("200ml leche entera", 6, 10, 7),
+        food("1 cdita miel", 0, 8, 0)
+      ], [
+        "Licuá todo junto hasta que quede cremoso. Tropical y delicioso.",
+        "Si el mango es de estación (verano): perfecto. Fuera de estación usá mango congelado."
+      ], null),
+
+      meal("22:00", "Cena", "Noodles de arroz con pollo y vegetales salteados", "80g noodles · 150g pollo · brócoli · zanahoria · soja", 0, [
+        food("80g fideos de arroz", 8, 57, 1),
+        food("150g pollo en tiras", 47, 0, 5),
+        food("100g brócoli + 1/2 zanahoria", 3, 9, 0),
+        food("2 cdas salsa de soja", 2, 3, 0),
+        food("1 cdita aceite de sésamo", 0, 0, 5)
+      ], [
+        "Remojá los noodles en agua caliente 3 min (si son finos). En wok, salteá el pollo + vegetales + soja.",
+        "Incorporá los noodles escurridos y saltea 2 min. El sésamo al final — da un sabor que no existe en ningún plato argentino."
+      ], null,
+      altMeal("Pizza bianca con pollo, rúcula y parmesano", "1 prepizza · pollo · rúcula · parmesano · oliva · limón", [
+        food("1 prepizza integral (200g)", 12, 54, 4),
+        food("120g pollo grillado laminado", 38, 0, 4),
+        food("60g rúcula fresca", 2, 3, 0),
+        food("30g parmesano en láminas", 9, 0, 9),
+        food("1 cda aceite de oliva + limón", 0, 1, 14)
+      ], [
+        "Horneá la prepizza con solo oliva y ajo 10 min a 220°C.",
+        "Sacala y poné encima el pollo + rúcula + parmesano + ralladura de limón. Pizza bianca: sin tomate, con carácter."
+      ])),
+
+      meal("23:30", "Antes de dormir", "Cottage con miel", "Proteína lenta", 0, [
+        food("100g cottage", 11, 3, 4),
+        food("1 cdita miel", 0, 8, 0)
+      ], ["Opcional."], "Opcional.")
+    ]
+  },
+
+  // ===== JUEVES · PIERNAS =====
+  {
+    id: "jue", tab: "Jue", dayIndex: 4, title: "Jueves",
+    type: "Día de gym · Piernas (día más pesado)",
+    workout: { name: "Piernas", duration: "70 min", icon: "🦵", primary: ["Cuádriceps", "Isquios", "Glúteos"] },
+    isRestDay: false, kcal: 3100, protein: 180, carbs: 360, fats: 85,
+    tags: ["Piernas", "Máximo combustible"],
+    tip: "El día más pesado. Menú internacional con máxima proteína.",
+    meals: [
+      meal("10:00", "Desayuno", "Burritos de huevo con queso y salsa", "3 huevos · 1 tortilla · queso · tomate · palta · salsa", 0, [
+        food("3 huevos revueltos", 18, 0, 15),
+        food("2 tortillas de harina", 8, 40, 4),
+        food("50g queso fresco", 6, 1, 5),
+        food("1 tomate en cubos", 1, 5, 0),
+        food("1/4 palta", 1, 5, 8),
+        food("Jugo de naranja 200ml", 2, 22, 0)
+      ], [
+        "Revolvé los huevos con el queso hasta casi cuajar.",
+        "Calentá las tortillas y rellenálas con los huevos, el tomate y la palta. Enrollá.",
+        "Los burritos de huevo son el desayuno con más carbo para el día de piernas."
+      ], null),
+
+      meal("11:30", "Media mañana", "Sándwich cubano de pollo y jamón", "Pan · pollo · jamón · queso · pepinillos · mostaza", 0, [
+        food("1 pan ciabatta o francés", 8, 34, 2),
+        food("80g pollo cocido laminado", 25, 0, 3),
+        food("60g jamón natural", 12, 0, 4),
+        food("40g queso fresco", 5, 1, 4),
+        food("Pepinillos + mostaza", 0, 3, 0)
+      ], [
+        "Armá el sándwich con todas las capas. Aplastalo con algo pesado y cocinalo en sartén 3 min por lado.",
+        "El cubano prensado tiene una combinación de sabores única — el pepinillo hace toda la diferencia."
+      ], null),
+
+      meal("12:30", "Pre-entreno", "Banana + dátiles + miel", "Máximo combustible piernas", 0, [
+        food("1 banana", 1, 30, 0),
+        food("35g dátiles", 0, 26, 0),
+        food("1 cda miel", 0, 17, 0)
+      ], ["Triple carbo. Piernas exige lo máximo."], "Obligatorio."),
+
+      meal("14:30", "Post-entreno", "Shake reforzado post-piernas", "2 scoops · banana · leche · creatina", 0, [
+        food("2 scoops whey", 50, 4, 4),
+        food("1 banana", 1, 30, 0),
+        food("200ml leche entera", 6, 10, 7),
+        food("5g creatina", 0, 0, 0)
+      ], ["2 scoops solo hoy."], null),
+
+      meal("16:00", "Almuerzo", "Carne agridulce estilo oriental con arroz", "180g carne · arroz · morrón · ananá · salsa agridulce", 0, [
+        food("180g carne magra en tiras", 47, 0, 8),
+        food("1 taza arroz blanco cocido", 4, 50, 0),
+        food("1 morrón rojo", 1, 8, 0),
+        food("80g ananá o piña en trozos", 0, 15, 0),
+        food("2 cdas salsa agridulce (soja + miel + vinagre)", 1, 10, 0),
+        food("1 cda aceite de girasol", 0, 0, 14)
+      ], [
+        "Salteá la carne a fuego muy fuerte sin aceite extra hasta dorar. Reservá.",
+        "Salteá el morrón y el ananá 2 min. Devolvé la carne y bañá con la salsa agridulce.",
+        "La combinación carne + ananá + salsa agridulce es el sabor más sorprendente del menú internacional."
+      ], null,
+      altMeal("Lomo saltado peruano con papas y arroz", "160g lomo · papas fritas · tomate · cebolla · soja · arroz", [
+        food("160g lomo o bife en tiras", 32, 0, 8),
+        food("200g papas tipo bastones al horno", 4, 40, 0),
+        food("1 taza arroz cocido", 4, 50, 0),
+        food("1/2 cebolla morada + 1 tomate", 1, 10, 0),
+        food("2 cdas soja + ají amarillo o pimentón", 2, 3, 0)
+      ], [
+        "Salteá la carne a fuego máximo 2 min. Sumá cebolla morada y tomate y saltea 1 min más.",
+        "Bañá con soja y sirve sobre el arroz con las papas al costado. El lomo saltado es el plato peruano más adictivo."
+      ])),
+
+      meal("19:30", "Merienda", "Tostadas con manteca de maní y banana", "2 tostadas · maní · banana · leche", 0, [
+        food("2 tostadas integrales", 8, 28, 2),
+        food("2 cdas manteca de maní", 8, 6, 16),
+        food("1 banana", 1, 27, 0),
+        food("250ml leche entera", 8, 12, 9)
+      ], ["Merienda densa para el día de piernas."], null),
+
+      meal("22:00", "Cena", "Cuscús marroquí con pollo especiado", "170g pollo · 60g cuscús · zanahoria · garbanzos · ras el hanout", 0, [
+        food("170g pechuga con especias marroquíes", 53, 0, 5),
+        food("60g cuscús seco (rinde 120g)", 7, 44, 1),
+        food("1/2 taza garbanzos cocidos", 5, 15, 2),
+        food("1 zanahoria en cubos", 1, 10, 0),
+        food("1 cdita ras el hanout o curry mixto", 0, 2, 1)
+      ], [
+        "Marinato el pollo con ras el hanout (mezcla de especias), ajo y oliva. Grillalo.",
+        "Para el cuscús: caldo hirviendo sobre el cuscús, tapá 5 min y esponjá con tenedor.",
+        "Mezclá los garbanzos y la zanahoria en el cuscús. El ras el hanout da un sabor norteafricano único."
+      ], null,
+      altMeal("Shawarma de pollo con pan árabe y tahini", "160g pollo marinado · 2 panes árabes · tahini · pepino · tomate", [
+        food("160g pechuga en tiras con comino y pimentón", 50, 0, 5),
+        food("2 panes árabes", 8, 36, 2),
+        food("2 cdas tahini", 4, 6, 10),
+        food("Pepino + tomate + lechuga", 1, 8, 0)
+      ], [
+        "Grillá las tiras de pollo. Untá los panes con tahini (pasta de sésamo).",
+        "Armá con el pollo, pepino, tomate y lechuga. Enrollá. El tahini es lo que hace al shawarma diferente de cualquier otro wrap."
+      ])),
+
+      meal("23:30", "Antes de dormir", "Shake nocturno (obligatorio hoy)", "Piernas exige proteína nocturna", 0, [
+        food("1 scoop whey con 200ml leche", 25, 10, 9)
+      ], ["Obligatorio hoy — piernas está en máximo daño muscular."], "Obligatorio.")
+    ]
+  },
+
+  // ===== VIERNES · FULL BODY =====
+  {
+    id: "vie", tab: "Vie", dayIndex: 5, title: "Viernes",
+    type: "Full body opcional · Cardio o descanso",
+    workout: { name: "Full Body", duration: "50 min", icon: "⚡", optional: true, primary: ["Full body"] },
+    isRestDay: false, kcal: 2700, protein: 160, carbs: 305, fats: 75,
+    tags: ["Full body", "Opcional"],
+    tip: "Viernes liviano con el menú más fresco de la semana.",
+    meals: [
+      meal("10:00", "Desayuno", "Waffle proteico de avena con banana y maní", "2 waffles · avena · huevo · banana · manteca maní", 0, [
+        food("50g avena", 6, 33, 3),
+        food("2 huevos", 12, 0, 10),
+        food("100ml leche", 3, 5, 4),
+        food("1 banana", 1, 27, 0),
+        food("1 cda manteca de maní", 4, 3, 8)
+      ], [
+        "Licuá avena + huevos + leche hasta obtener una mezcla espesa. Cocinalo en wafflera o sartén.",
+        "Serví con banana en rodajas y manteca de maní por encima. Los waffles de avena son una variación del panqueque con otra textura."
+      ], "Si no tenés wafflera, hacélo como panqueques gruesos."),
+
+      meal("12:00", "Media mañana", "Bol de frutas con yogur y granola", "Frutas variadas · yogur natural · granola · miel", 0, [
+        food("150g frutas (banana + manzana + naranja)", 1, 35, 0),
+        food("150g yogur natural", 6, 8, 6),
+        food("25g granola", 2, 17, 3),
+        food("1 cdita miel", 0, 8, 0)
+      ], ["Bol de frutas con yogur. Fresco y liviano para el viernes."], null),
+
+      meal("13:30", "Almuerzo", "Salmón teriyaki con arroz y brócoli", "200g salmón · salsa teriyaki · arroz · brócoli · sésamo", 0, [
+        food("200g filet de salmón", 50, 0, 26),
+        food("1 taza arroz blanco cocido", 4, 50, 0),
+        food("150g brócoli al vapor", 4, 7, 0),
+        food("2 cdas salsa teriyaki", 1, 8, 0),
+        food("1 cdita sésamo negro", 1, 1, 3)
+      ], [
+        "Marinato el salmón con la salsa teriyaki 15 min. Cocinalo en sartén 4 min por lado.",
+        "Bañalo con el exceso de la marinada en el último minuto para que caramelice.",
+        "Salmón + teriyaki + sésamo = el plato más japonés del menú. El sésamo negro da presentación y sabor a tostado."
+      ], null,
+      altMeal("Bowl de atún con arroz, palta y sésamo", "2 latas atún · arroz · palta · zanahoria · soja · sésamo", [
+        food("2 latas atún al natural", 56, 0, 4),
+        food("1 taza arroz cocido", 4, 50, 0),
+        food("1/4 palta", 1, 5, 8),
+        food("1/2 zanahoria rallada", 0, 5, 0),
+        food("2 cdas soja + sésamo", 2, 3, 2)
+      ], [
+        "Armá el bowl: arroz de base, atún bien escurrido encima, palta en rodajas, zanahoria rallada.",
+        "Rociá con soja y sésamo. El poke bowl casero — sin necesidad de pescado crudo."
+      ])),
+
+      meal("17:00", "Merienda", "Mate con galletitas de avena y maní caseras", "Mate + galletitas avena + banana", 0, [
+        food("8 galletitas de avena y maní", 6, 32, 8),
+        food("1 banana", 1, 27, 0)
+      ], ["Merienda liviana del viernes."], null),
+
+      meal("22:00", "Cena", "Falafel casero con arroz y ensalada", "Falafel de garbanzos · arroz · ensalada · yogur · limón", 0, [
+        food("6 falafeles caseros (garbanzos+especias+harina)", 10, 28, 8),
+        food("3/4 taza arroz cocido", 3, 37, 0),
+        food("3 cdas yogur natural", 5, 4, 3),
+        food("Ensalada (pepino+tomate+cebolla+perejil)", 2, 10, 0)
+      ], [
+        "Para falafel: procesá garbanzos en lata escurridos + ajo + perejil + comino + sal + 2 cdas harina. Formá bolitas y horneá a 200°C por 20 min.",
+        "Servís con arroz, ensalada y yogur condimentado con limón. Los falafeles al horno son crujientes y sanos."
+      ], null,
+      altMeal("Pollo con especias marroquíes y couscous", "160g pollo · cuscús · zanahoria · garbanzos · canela", [
+        food("160g pechuga especiada (comino+canela+pimentón)", 50, 0, 5),
+        food("60g cuscús seco", 7, 44, 1),
+        food("Garbanzos + zanahoria + oliva", 5, 18, 6)
+      ], [
+        "Grillá el pollo con las especias. Hidratá el cuscús con caldo hirviendo.",
+        "Mezclá el cuscús con los garbanzos y la zanahoria. Servís el pollo encima."
+      ])),
+
+      meal("23:30", "Antes de dormir", "Cottage o leche tibia", "Cierre del viernes", 0, [
+        food("100g cottage con miel o leche tibia 250ml", 11, 11, 4)
+      ], ["Opcional."], "Opcional.")
+    ]
+  },
+
+  // ===== SÁBADO · DESCANSO =====
+  {
+    id: "sab", tab: "Sáb", dayIndex: 6, title: "Sábado",
+    type: "Día de descanso activo",
+    workout: { name: "Descanso", duration: "—", icon: "🚶", primary: [] },
+    isRestDay: true, kcal: 2600, protein: 150, carbs: 290, fats: 80,
+    tags: ["Descanso", "Mix internacional"],
+    tip: "Sábado internacional. Cenas y almuerzos con carácter.",
+    meals: [
+      meal("10:00", "Desayuno", "Eggs benedict sin holandesa: huevos poché con jamón y tostadas", "2 huevos poché · jamón · 2 tostadas · espinaca · café", 0, [
+        food("2 huevos pochados", 12, 0, 10),
+        food("60g jamón natural", 12, 0, 4),
+        food("2 tostadas integrales", 8, 28, 2),
+        food("Espinaca salteada con ajo", 2, 3, 2),
+        food("Café con leche 200ml", 6, 8, 6)
+      ], [
+        "Hacé los huevos pochados (ver técnica semana 2). Tostand el pan.",
+        "Base: tostada + espinaca salteada + jamón + el huevo pochado encima.",
+        "Sin holandesa (demasiada grasa) pero con toda la presentación del plato."
+      ], null),
+
+      meal("12:30", "Media mañana", "Tostadas con palta y semillas", "2 tostadas · palta · chía · girasol · limón", 0, [
+        food("2 tostadas integrales", 8, 28, 2),
+        food("1/3 palta", 1, 7, 11),
+        food("2 cditas semillas mixtas", 2, 4, 4)
+      ], ["Palta con semillas. Simple."], null),
+
+      meal("14:00", "Almuerzo", "Pollo asado con cinco especias y arroz integral", "250g pollo · 5 especias chinas · arroz integral · pepino", 0, [
+        food("250g pollo en presas", 56, 0, 14),
+        food("3/4 taza arroz integral cocido", 3, 37, 1),
+        food("1/2 pepino en rodajas", 0, 4, 0),
+        food("Mezcla 5 especias + soja + miel + ajo", 1, 6, 0),
+        food("1 cda aceite de sésamo", 0, 0, 14)
+      ], [
+        "Marinato el pollo con la mezcla de cinco especias (anís + clavo + canela + pimienta + hinojo), soja y miel. Mínimo 30 min.",
+        "Horneá a 200°C por 35-40 min, bañando con la marinada a mitad.",
+        "El pollo con cinco especias chinas es el sabor más diferente de las 4 semanas."
+      ], null,
+      altMeal("Costillitas de cerdo agridulces con ensalada", "350g costillas · miel + soja + ajo + jengibre", [
+        food("350g costillitas de cerdo", 45, 0, 20),
+        food("Glaze (miel + soja + ajo + jengibre)", 2, 18, 1),
+        food("Ensalada coleslaw liviana (repollo + zanahoria + yogur)", 3, 12, 3)
+      ], [
+        "Cociná las costillas tapadas con aluminio a 180°C por 45 min. Bañálas con el glaze y destapá 15 min más.",
+        "El glaze de miel y soja carameliza y las hace absolutamente distintas a las costillas simples."
+      ])),
+
+      meal("17:30", "Merienda", "Mate con sándwich mixto", "Mate + pan + queso + tomate", 0, [
+        food("2 rodajas pan integral", 8, 28, 2),
+        food("60g queso fresco", 7, 1, 6),
+        food("1 tomate", 1, 5, 0)
+      ], ["Mate con sándwich de queso y tomate."], null),
+
+      meal("22:00", "Cena", "Gyozas de pollo caseras con arroz", "12 gyozas rellenas de pollo · arroz · salsa de soja", 0, [
+        food("12 tapas de wonton o obleas", 6, 42, 2),
+        food("150g pollo molido o muy picado con jengibre y soja", 47, 0, 5),
+        food("3/4 taza arroz cocido", 3, 37, 0),
+        food("Salsa ponzu o soja + limón para mojar", 1, 3, 0)
+      ], [
+        "Para el relleno: procesá el pollo con jengibre rallado, cebolla de verdeo y soja.",
+        "Rellená cada oblea con 1 cdita, mojá los bordes con agua y cerrá en pliegues. Cocinalo en sartén con aceite 3 min y agregá 50ml agua, tapá 5 min.",
+        "Las gyozas caseras son un proyecto de cocina diferente — impresionan y saben a restaurante."
+      ], null,
+      altMeal("Pasta fría con atún, palta y limón", "80g pasta · atún · palta · cherry · limón · oliva", [
+        food("80g fusilli cocidos y fríos", 10, 58, 2),
+        food("1 lata atún", 28, 0, 2),
+        food("1/4 palta", 1, 5, 8),
+        food("100g cherry + aceitunas", 1, 8, 4),
+        food("Limón + oliva", 0, 2, 10)
+      ], [
+        "Mezclá la pasta fría con el atún, la palta en cubos, los cherry y las aceitunas.",
+        "Aderezá con limón, oliva y sal. La pasta fría en verano es un plato que cambia todo."
+      ])),
+
+      meal("23:30", "Antes de dormir", "Leche tibia o cottage", "Cierre del sábado", 0, [
+        food("250ml leche entera tibia", 8, 12, 9)
+      ], ["Opcional."], "Opcional.")
+    ]
+  },
+
+  // ===== DOMINGO · DESCANSO =====
+  {
+    id: "dom", tab: "Dom", dayIndex: 0, title: "Domingo",
+    type: "Día de descanso completo",
+    workout: { name: "Descanso total", duration: "—", icon: "🛌", primary: [] },
+    isRestDay: true, kcal: 2500, protein: 145, carbs: 275, fats: 78,
+    tags: ["Descanso", "Domingo especial"],
+    tip: "Domingo de recargar energía para la semana que viene.",
+    meals: [
+      meal("10:00", "Desayuno", "Pancakes de banana con chips de chocolate", "50g avena · 2 huevos · banana · 15g chocolate negro · leche", 0, [
+        food("50g avena", 6, 33, 3),
+        food("2 huevos", 12, 0, 10),
+        food("1 banana", 1, 27, 0),
+        food("100ml leche", 3, 5, 4),
+        food("15g chips de chocolate negro", 2, 10, 5),
+        food("1 cda miel", 0, 17, 0)
+      ], [
+        "Licuá avena + huevos + banana + leche. Poné los chips de chocolate en la mezcla ya fuera del mixer.",
+        "Cocinalo en sartén. Los chips se derriten un poco y crean bolsas de chocolate — el desayuno dominical definitivo."
+      ], null),
+
+      meal("13:30", "Almuerzo", "Paella simplificada de pollo y mariscos", "200g pollo · 100g langostinos · arroz · pimentón · azafrán · guisantes", 0, [
+        food("200g muslo o pechuga", 46, 0, 10),
+        food("100g langostinos o camarones", 18, 0, 1),
+        food("1.5 tazas arroz para paella", 6, 75, 0),
+        food("1 taza guisantes (arvejas) + morrón", 4, 18, 0),
+        food("Azafrán o cúrcuma + pimentón + caldo", 1, 4, 0),
+        food("2 cdas aceite de oliva", 0, 0, 28)
+      ], [
+        "Sofreí el pollo en dados, luego el morrón. Sumá el arroz y el pimentón, sofreí 1 min.",
+        "Cubrí con caldo (doble del arroz) y el azafrán. Cociná 18 min a fuego medio sin revolver.",
+        "Los últimos 5 min sumá los langostinos y guisantes. Dejá reposar tapado 5 min. El socarrat (fondo tostado) es el tesoro."
+      ], "La paella pide paciencia y no mezclar. Una vez por semana vale el esfuerzo.",
+      altMeal("Pollo al vino blanco con papas salteadas", "250g pollo · vino blanco · papas · ajo · perejil", [
+        food("250g pollo en presas", 56, 0, 14),
+        food("200g papas en cubos salteadas", 4, 40, 4),
+        food("100ml vino blanco seco", 0, 4, 0),
+        food("Ajo + perejil + oliva", 0, 2, 10)
+      ], [
+        "Dorá el pollo en sartén. Sumá ajo y el vino — dejá que evapore el alcohol 2 min.",
+        "Tapá y cociná 25 min. Las papas salteadas aparte en oliva con ajo y perejil."
+      ])),
+
+      meal("17:30", "Merienda", "Mate con medialunas o tostadas", "Mate + 2 medialunas o tostadas", 0, [
+        food("2 medialunas de manteca", 6, 30, 10),
+        food("Mate", 0, 0, 0)
+      ], ["La merienda más simple del domingo. Mate y lo que tengas ganas."], null),
+
+      meal("22:00", "Cena", "Pollo con salsa de maní estilo satay + arroz", "160g pollo · salsa satay · arroz · pepino · limón", 0, [
+        food("160g pechuga en bastones", 50, 0, 5),
+        food("3/4 taza arroz jazmín o blanco", 3, 40, 0),
+        food("Salsa satay (manteca maní + soja + limón + jengibre + miel)", 8, 10, 16),
+        food("1/2 pepino en juliana", 0, 4, 0)
+      ], [
+        "Para el satay: 3 cdas manteca de maní + 2 cdas soja + jugo de limón + ralladura de jengibre + 1 cdita miel + agua tibia para aflojar la consistencia.",
+        "Pinchá el pollo en palitos y grillalo. Bañalo con la mitad de la salsa al servir.",
+        "Poné el pepino fresco al costado como contraste. La salsa de maní satay es única en su sabor."
+      ], null,
+      altMeal("Hamburguesas de salmón con ensalada fresca", "2 hamburguesas salmón · 2 panes · palta · lechuga · limón", [
+        food("2 hamburguesas de salmón (200g salmón+pan rallado+huevo)", 36, 6, 14),
+        food("2 panes integrales", 10, 40, 4),
+        food("1/4 palta", 1, 5, 8),
+        food("Lechuga + tomate + limón", 2, 6, 0)
+      ], [
+        "Procesá el salmón con pan rallado, huevo, cebolla de verdeo y limón. Formá 2 burgers y grillá 4 min por lado.",
+        "Armá con palta, lechuga y tomate. Las hamburguesas de salmón son una versión completamente diferente al clásico."
+      ])),
+
+      meal("23:30", "Antes de dormir", "Shake de cierre", "Proteína nocturna semanal", 0, [
+        food("1 scoop whey con 200ml leche", 25, 10, 9)
+      ], ["Cerrá la semana 3 con proteína. Excelente trabajo."], "Opcional.")
+    ]
+  }
+], // fin Semana 3
+
+// ╔══════════════════════════════════════╗
+// ║  SEMANA 4 · "Proteico puro"          ║
+// ╚══════════════════════════════════════╝
+[
+  // ===== LUNES · PECHO + TRÍCEPS =====
+  {
+    id: "lun", tab: "Lun", dayIndex: 1, title: "Lunes",
+    type: "Día de gym · Pecho + tríceps",
+    workout: { name: "Pecho · Tríceps", duration: "60 min", icon: "🏋️", primary: ["Pecho", "Tríceps"] },
+    isRestDay: false, kcal: 2900, protein: 175, carbs: 325, fats: 78,
+    tags: ["Pecho", "Tríceps", "Alto proteína"],
+    tip: "Semana 4 — foco en proteína. Cada comida tiene más proteína que en semanas anteriores. Ideal para quien quiere maximizar la recomposición.",
+    meals: [
+      meal("10:00", "Desayuno", "Omelette blanca con claras, queso y espárragos", "5 claras + 1 huevo · espárragos · queso fresco · jugo · tostadas", 0, [
+        food("5 claras de huevo + 1 huevo entero", 26, 0, 5),
+        food("80g espárragos salteados", 2, 4, 0),
+        food("50g queso fresco bajo en grasas", 9, 1, 4),
+        food("2 tostadas integrales", 8, 28, 2),
+        food("Jugo de naranja 200ml", 2, 22, 0)
+      ], [
+        "Batí las claras y el huevo. Salteá los espárragos en oliva 2 min.",
+        "Volcá los huevos sobre los espárragos. Cuando casi cuaje, poné el queso y doblá.",
+        "El desayuno más proteico: 45g de proteína limpia con poca grasa."
+      ], null),
+
+      meal("11:30", "Media mañana", "Queso cottage con tomate y semillas", "200g cottage · tomate · pepino · chía · oliva", 0, [
+        food("200g queso cottage", 22, 6, 8),
+        food("1 tomate", 1, 5, 0),
+        food("1/2 pepino", 0, 4, 0),
+        food("1 cdita chía", 1, 2, 2),
+        food("Sal + orégano + oliva", 0, 0, 5)
+      ], [
+        "Poné el cottage en un bol. Cortá el tomate y el pepino en cubos encima.",
+        "Esparcí la chía, el orégano y un hilo de oliva. El cottage como snack salado — completamente diferente a usarlo solo dulce."
+      ], null),
+
+      meal("12:30", "Pre-entreno", "Banana + pasas de uva", "Carbo rápido para pecho", 0, [
+        food("1 banana", 1, 27, 0),
+        food("35g pasas", 1, 27, 0)
+      ], ["Pre estándar."], null),
+
+      meal("14:30", "Post-entreno", "Shake proteico + banana + creatina", "Whey · banana · leche · creatina", 0, [
+        food("1 scoop whey", 25, 2, 2),
+        food("1 banana", 1, 27, 0),
+        food("200ml leche entera", 6, 10, 7),
+        food("5g creatina", 0, 0, 0)
+      ], ["Post-entreno estándar."], null),
+
+      meal("16:00", "Almuerzo", "Pechuga doble grillada con batata y espinaca", "200g pechuga · batata · espinaca · ajo · oliva", 0, [
+        food("200g pechuga de pollo", 62, 0, 6),
+        food("200g batata", 4, 48, 0),
+        food("100g espinaca salteada", 3, 3, 0),
+        food("1 cda aceite de oliva", 0, 0, 14)
+      ], [
+        "Macerá la pechuga con ajo, orégano, oliva y sal 20 min. Grillala a fuego fuerte 5 min por lado.",
+        "Batata al horno a 200°C por 30 min. Espinaca salteada con ajo 2 min.",
+        "El plato más proteico del menú — 65g de proteína limpia en un almuerzo."
+      ], "62g de proteína + batata que mantiene la glucosa estable.",
+      altMeal("Ensalada proteica de atún, huevo y garbanzos", "2 latas atún · 2 huevos duros · garbanzos · mix vegetales · oliva", [
+        food("2 latas atún al natural", 56, 0, 4),
+        food("2 huevos duros", 12, 0, 10),
+        food("1/2 taza garbanzos cocidos", 5, 15, 2),
+        food("Lechuga + tomate + oliva + limón", 2, 8, 10)
+      ], [
+        "Armá la ensalada con todo junto. El atún + huevo + garbanzo es la triada proteica perfecta.",
+        "Adereza con oliva y limón. Podés agregar rodajas de pan integral al costado."
+      ])),
+
+      meal("19:30", "Merienda", "Yogur griego natural con nueces y fruta", "200g yogur griego · 25g nueces · banana · miel", 0, [
+        food("200g yogur griego natural", 20, 8, 10),
+        food("25g nueces", 4, 4, 16),
+        food("1 banana", 1, 27, 0),
+        food("1 cdita miel", 0, 8, 0)
+      ], ["Yogur griego con nueces y banana. Alta proteína + grasas buenas."], null),
+
+      meal("22:00", "Cena", "Carne magra al horno con vegetales asados", "180g peceto · zapallito · morrón · zanahoria · ajo · romero", 0, [
+        food("180g peceto al horno", 47, 0, 6),
+        food("1 zucchini + 1 morrón + 1 zanahoria", 2, 16, 0),
+        food("1 papa mediana al horno", 2, 20, 0),
+        food("2 cdas aceite de oliva", 0, 0, 28)
+      ], [
+        "Condimentá el peceto con romero, ajo, sal y oliva. Cubrí con aluminio y horneá 35 min a 180°C.",
+        "En la misma bandeja los vegetales. Destapá los últimos 10 min para dorar.",
+        "Todo asado en una bandeja = menos platos + máximo sabor."
+      ], null,
+      altMeal("Pollo al horno con cebolla y papas rústicas", "200g pollo · papas · cebolla · laurel · vino blanco", [
+        food("200g muslo deshuesado", 46, 0, 10),
+        food("250g papas rústicas", 5, 50, 0),
+        food("1 cebolla grande", 1, 12, 0),
+        food("50ml vino blanco + laurel + oliva", 0, 2, 10)
+      ], [
+        "Todo en bandeja con el vino blanco en el fondo. Laurel + ajo + oliva.",
+        "Horneá tapado 30 min, destapá 15 min más. El vino se evapora y deja un sabor profundo."
+      ])),
+
+      meal("23:30", "Antes de dormir", "Shake proteico nocturno", "Proteína de caseinado lento", 0, [
+        food("1 scoop whey con 200ml leche entera", 25, 10, 9)
+      ], ["El shake con leche tiene caseína natural — proteína de digestión lenta para la noche."], "Recomendado esta semana.")
+    ]
+  },
+
+  // ===== MARTES · ESPALDA + BÍCEPS =====
+  {
+    id: "mar", tab: "Mar", dayIndex: 2, title: "Martes",
+    type: "Día de gym · Espalda + bíceps",
+    workout: { name: "Espalda · Bíceps", duration: "60 min", icon: "🏋️", primary: ["Espalda", "Bíceps"] },
+    isRestDay: false, kcal: 2950, protein: 180, carbs: 335, fats: 78,
+    tags: ["Espalda", "Bíceps", "Alto proteína"],
+    tip: "Espalda con foco máximo en proteína. Hoy llegamos a 180g.",
+    meals: [
+      meal("10:00", "Desayuno", "Bol proteico: yogur griego + whey + avena + banana", "Yogur griego · whey · avena · banana · miel", 0, [
+        food("200g yogur griego", 20, 8, 10),
+        food("1/2 scoop whey vainilla", 13, 1, 1),
+        food("40g avena cruda", 4, 27, 3),
+        food("1 banana", 1, 27, 0),
+        food("1 cdita miel", 0, 8, 0)
+      ], [
+        "Mezclá el yogur con el whey y la miel hasta que no haya grumos.",
+        "Sumá la avena y cortá la banana encima. El desayuno más proteico del lunes: 38g en un bol.",
+        "La avena cruda se digiere bien mezclada con el yogur — no hace falta cocinarla."
+      ], null),
+
+      meal("11:30", "Media mañana", "Sándwich de pechuga con palta y tomate", "2 rodajas pan · 100g pechuga laminada · palta · tomate", 0, [
+        food("2 rodajas pan integral", 8, 28, 2),
+        food("100g pechuga cocida laminada", 31, 0, 3),
+        food("1/4 palta", 1, 5, 8),
+        food("1 tomate + lechuga", 1, 5, 0)
+      ], [
+        "Pechuga laminada fría con palta y tomate. El sándwich más limpio en términos de proteína."
+      ], null),
+
+      meal("12:30", "Pre-entreno", "Banana + miel + tostada", "Carbo para espalda", 0, [
+        food("1 banana", 1, 27, 0),
+        food("1 cda miel", 0, 17, 0),
+        food("1 tostada", 4, 14, 1)
+      ], ["Pre estándar para espalda."], null),
+
+      meal("14:30", "Post-entreno", "Shake proteico + banana + creatina", "Whey · banana · leche · creatina", 0, [
+        food("1 scoop whey", 25, 2, 2),
+        food("1 banana", 1, 27, 0),
+        food("200ml leche", 6, 10, 7),
+        food("5g creatina", 0, 0, 0)
+      ], ["Post-entreno estándar."], null),
+
+      meal("16:00", "Almuerzo", "Peceto en salsa de hongos con arroz y brócoli", "180g peceto · champiñones · crema light · arroz · brócoli", 0, [
+        food("180g peceto al horno", 47, 0, 6),
+        food("150g champiñones frescos", 3, 4, 0),
+        food("4 cdas crema light", 3, 2, 8),
+        food("1 taza arroz cocido", 4, 50, 0),
+        food("150g brócoli", 4, 7, 0)
+      ], [
+        "Sellá el peceto en sartén caliente y pasalo al horno 20 min a 200°C.",
+        "En la misma sartén, sofreí los champiñones con ajo. Sumá la crema light y reducí 3 min.",
+        "Cortá el peceto en medallones y serví con la salsa encima, el arroz y el brócoli al vapor."
+      ], null,
+      altMeal("Pollo al curry liviano con quinoa y vegetales", "180g pollo · quinoa · brócoli · leche coco light · curry", [
+        food("180g pechuga", 56, 0, 5),
+        food("3/4 taza quinoa cocida", 6, 30, 3),
+        food("150g brócoli", 4, 7, 0),
+        food("3 cdas leche de coco light", 0, 2, 3),
+        food("1 cdita curry", 0, 2, 1)
+      ], [
+        "Salteá el pollo con cebolla y curry. Sumá la leche de coco y cociná 10 min.",
+        "Servís con quinoa y brócoli al vapor. Curry liviano: todo el sabor, sin la pesadez."
+      ])),
+
+      meal("19:30", "Merienda", "2 huevos duros con tostadas y palta", "2 huevos duros · 2 tostadas · palta · sal · pimienta", 0, [
+        food("2 huevos duros", 12, 0, 10),
+        food("2 tostadas integrales", 8, 28, 2),
+        food("1/4 palta", 1, 5, 8)
+      ], [
+        "Huevos duros con palta y tostadas. Merienda alta en proteína y baja en carbo.",
+        "Ideal para la tarde de un día de espalda."
+      ], null),
+
+      meal("22:00", "Cena", "Wok de carne y vegetales con arroz integral", "160g carne · brócoli · morrón · soja · arroz integral", 0, [
+        food("160g carne magra en tiras finas", 32, 0, 10),
+        food("150g brócoli + 1 morrón", 4, 15, 0),
+        food("3/4 taza arroz integral cocido", 3, 37, 1),
+        food("2 cdas salsa de soja", 2, 3, 0),
+        food("1 cda aceite de girasol", 0, 0, 14)
+      ], [
+        "Wok o sartén muy caliente. Carne primero — 3 min a fuego máximo. Reservá.",
+        "Salteá el brócoli y morrón 3 min. Devolvé la carne, sumá el arroz integral y la soja.",
+        "Mezcla rápida 2 min. El arroz integral en el wok absorbe la soja y queda mucho mejor que hervido."
+      ], null,
+      altMeal("Cena proteica directa: atún + papa + ensalada", "2 latas atún · 1 papa hervida · tomate · pepino · oliva", [
+        food("2 latas atún al natural", 56, 0, 4),
+        food("1 papa mediana hervida", 2, 20, 0),
+        food("Tomate + pepino + lechuga + oliva", 2, 9, 10)
+      ], [
+        "Hervite la papa en rodajas. Armá el plato con el atún encima, la ensalada al costado y la papa.",
+        "La cena más directa del menú: sin cocción elaborada, máxima proteína limpia."
+      ])),
+
+      meal("23:30", "Antes de dormir", "Shake nocturno", "Recuperación espalda", 0, [
+        food("1 scoop whey con 200ml leche", 25, 10, 9)
+      ], ["Proteína nocturna recomendada después de espalda."], "Recomendado.")
+    ]
+  },
+
+  // ===== MIÉRCOLES · HOMBROS =====
+  {
+    id: "mie", tab: "Mié", dayIndex: 3, title: "Miércoles",
+    type: "Día de gym · Hombros",
+    workout: { name: "Hombros · Abdomen", duration: "55 min", icon: "🏋️", primary: ["Hombros"] },
+    isRestDay: false, kcal: 2850, protein: 165, carbs: 315, fats: 78,
+    tags: ["Hombros", "Alto proteína"],
+    tip: "Hombros con desayuno alto en proteína. El batido de media mañana suma 35g extra.",
+    meals: [
+      meal("10:00", "Desayuno", "Huevos revueltos (4) con tostadas y jugo de naranja", "4 huevos · 2 tostadas · jugo naranja · café · aceite oliva", 0, [
+        food("4 huevos enteros", 24, 0, 20),
+        food("2 tostadas integrales", 8, 28, 2),
+        food("Jugo de 2 naranjas frescas", 2, 22, 0),
+        food("Café con leche 200ml", 6, 8, 6),
+        food("1 cda aceite de oliva", 0, 0, 14)
+      ], [
+        "4 huevos revueltos a fuego suave con oliva. Retiralos del fuego cuando todavía estén brillantes — el calor residual termina.",
+        "Serví con el jugo y el café con leche. 4 huevos = 24g de proteína solo en el desayuno."
+      ], null),
+
+      meal("11:30", "Media mañana", "Batido proteico de frutas (banana, leche, maní, whey)", "Banana · leche · manteca maní · whey · miel", 0, [
+        food("1 banana", 1, 27, 0),
+        food("250ml leche entera", 8, 12, 9),
+        food("2 cdas manteca de maní", 8, 6, 16),
+        food("1/2 scoop whey", 13, 1, 1),
+        food("1 cdita miel", 0, 8, 0)
+      ], [
+        "Licuá todo junto. Un batido de media mañana con 30g de proteína — alternativa líquida al sándwich."
+      ], null),
+
+      meal("12:30", "Pre-entreno", "Banana + pasas", "Carbo para hombros", 0, [
+        food("1 banana", 1, 27, 0),
+        food("30g pasas", 1, 23, 0)
+      ], ["Pre estándar."], null),
+
+      meal("14:30", "Post-entreno", "Shake proteico + banana + creatina", "Whey · banana · leche · creatina", 0, [
+        food("1 scoop whey", 25, 2, 2),
+        food("1 banana", 1, 27, 0),
+        food("200ml leche", 6, 10, 7),
+        food("5g creatina", 0, 0, 0)
+      ], ["Post estándar."], null),
+
+      meal("16:00", "Almuerzo", "Carne magra a la plancha con papas al horno y ensalada", "180g bife · papas al horno · ensalada completa · chimichurri", 0, [
+        food("180g bife de cuadrada o peceto", 40, 0, 10),
+        food("250g papas al horno en gajos", 5, 50, 0),
+        food("Ensalada mixta grande (lechuga, tomate, rúcula)", 2, 8, 0),
+        food("Chimichurri casero (perejil + oliva + ajo)", 0, 1, 8)
+      ], [
+        "Papas en gajos con oliva y sal, 25 min a 200°C. Grillá el bife a fuego fuerte.",
+        "Chimichurri: perejil + ajo + orégano + oliva + vinagre + sal.",
+        "Un plato completo — carbo + proteína + grasas y fibra de la ensalada."
+      ], null,
+      altMeal("Milanesa de pollo al horno con arroz salteado", "180g pechuga rebozada · arroz con vegetales · ensalada", [
+        food("180g pechuga rebozada al horno", 44, 8, 8),
+        food("1 taza arroz salteado con oliva y vegetales", 5, 52, 5),
+        food("Ensalada verde", 2, 6, 0)
+      ], [
+        "Milanesa al horno: rebozá + 200°C por 18-20 min. Para el arroz salteado: arroz cocido en sartén con un hilo de oliva y ajo."
+      ])),
+
+      meal("19:30", "Merienda", "Pan con manteca de maní, banana y leche", "2 tostadas · maní · banana · 250ml leche", 0, [
+        food("2 tostadas integrales", 8, 28, 2),
+        food("2 cdas manteca de maní", 8, 6, 16),
+        food("1 banana", 1, 27, 0),
+        food("250ml leche entera", 8, 12, 9)
+      ], ["El clásico merienda energética."], null),
+
+      meal("22:00", "Cena", "Sopa proteica de pollo con fideos y vegetales", "200g pollo · fideos · zanahoria · apio · espinaca", 0, [
+        food("200g pechuga en hebras", 62, 0, 6),
+        food("60g fideos cortos o cabello", 8, 44, 1),
+        food("1 zanahoria + 1 papa + 1 rama apio", 3, 25, 0),
+        food("50g espinaca fresca", 1, 1, 0)
+      ], [
+        "Herví la pechuga entera con ajo, cebolla, apio y sal 20 min. Sacala y desmenuzala.",
+        "Al caldo, agregá zanahoria y papa en cubos 10 min. Sumá fideos y espinaca 4 min.",
+        "Devolvé el pollo. La sopa proteica es diferente a la sopa tradicional — se siente como plato completo."
+      ], null,
+      altMeal("Tarta de pollo y queso al horno", "1 tapa tarta · 160g pollo · queso · huevos · cebolla", [
+        food("1 tapa de tarta", 8, 38, 8),
+        food("160g pollo cocido y desmenuzado", 50, 0, 5),
+        food("60g queso fresco", 7, 1, 6),
+        food("2 huevos batidos", 12, 0, 10),
+        food("1/2 cebolla salteada", 0, 4, 0)
+      ], [
+        "Rellená la tapa con la mezcla de pollo + queso + huevos + cebolla. Horneá a 180°C por 25 min."
+      ])),
+
+      meal("23:30", "Antes de dormir", "Cottage con miel", "Proteína lenta", 0, [
+        food("100g cottage", 11, 3, 4),
+        food("1 cdita miel", 0, 8, 0)
+      ], ["Opcional."], "Opcional.")
+    ]
+  },
+
+  // ===== JUEVES · PIERNAS =====
+  {
+    id: "jue", tab: "Jue", dayIndex: 4, title: "Jueves",
+    type: "Día de gym · Piernas (día más pesado)",
+    workout: { name: "Piernas", duration: "70 min", icon: "🦵", primary: ["Cuádriceps", "Isquios", "Glúteos"] },
+    isRestDay: false, kcal: 3100, protein: 185, carbs: 360, fats: 85,
+    tags: ["Piernas", "Alto proteína", "+200 kcal"],
+    tip: "El día más pesado con el menú más proteico. Llegamos a los 185g hoy.",
+    meals: [
+      meal("10:00", "Desayuno", "Tortilla de 4 huevos con papa y jamón", "4 huevos · 1 papa · jamón · cebolla · queso · jugo", 0, [
+        food("4 huevos enteros", 24, 0, 20),
+        food("1 papa mediana en cubos cocida", 2, 20, 0),
+        food("60g jamón natural", 12, 0, 4),
+        food("30g queso rallado", 6, 0, 9),
+        food("1/4 cebolla", 0, 3, 0),
+        food("Jugo de naranja 200ml", 2, 22, 0)
+      ], [
+        "Cocina la papa en cubos hervida 8 min. Sofreí con cebolla hasta dorar.",
+        "Batí los 4 huevos con sal y pimienta. Mezclá con jamón, papa y cebolla. Cocinalo como tortilla.",
+        "Queso rallado encima al final. La tortilla de 4 huevos = 44g de proteína en el desayuno."
+      ], null),
+
+      meal("11:30", "Media mañana", "Sándwich de pavita con queso y palta", "Pan · pavita · queso · palta · tomate", 0, [
+        food("2 rodajas pan integral", 8, 28, 2),
+        food("80g pavita o pollo feteado", 19, 0, 2),
+        food("40g queso fresco", 5, 1, 4),
+        food("1/4 palta", 1, 5, 8)
+      ], ["El sándwich proteico del mediodía."], null),
+
+      meal("12:30", "Pre-entreno", "Banana + pasas + miel (triple carbo)", "Máximo combustible piernas", 0, [
+        food("1 banana grande", 1, 30, 0),
+        food("35g pasas", 1, 27, 0),
+        food("1 cda miel", 0, 17, 0)
+      ], ["Triple carbo. No negociable."], "Obligatorio."),
+
+      meal("14:30", "Post-entreno", "Shake doble post-piernas", "2 scoops · banana · leche · creatina", 0, [
+        food("2 scoops whey", 50, 4, 4),
+        food("1 banana", 1, 30, 0),
+        food("200ml leche entera", 6, 10, 7),
+        food("5g creatina", 0, 0, 0)
+      ], ["2 scoops solo hoy."], null),
+
+      meal("16:00", "Almuerzo", "Lomo al horno con puré de batata y morrón asado", "180g lomo · batata · morrón · ajo · romero", 0, [
+        food("180g lomo al horno", 47, 0, 8),
+        food("200g puré de batata", 4, 48, 2),
+        food("1 morrón asado", 1, 8, 0),
+        food("1 cda aceite de oliva", 0, 0, 14)
+      ], [
+        "Condimentá el lomo con romero, ajo y sal. Sellálo en sartén caliente y pasá al horno 180°C por 15-18 min.",
+        "Puré de batata: batata hervida + pisada con oliva, sal y pizca de nuez moscada.",
+        "El morrón asado directamente en la llama o en el horno — pelalo cuando se enfríe."
+      ], "El lomo con puré de batata es una versión elegante del clásico carne+papa.",
+      altMeal("Bife con puré de batata y ensalada", "180g bife de vacío · puré batata · ensalada verde", [
+        food("180g bife de vacío", 40, 0, 12),
+        food("200g puré de batata", 4, 48, 2),
+        food("Ensalada verde", 2, 6, 0)
+      ], [
+        "Grillá el bife 4 min por lado. Puré de batata con oliva.",
+        "La batata es la guarnición más nutritiva — fibra, potasio y vitamina A."
+      ])),
+
+      meal("19:30", "Merienda", "Licuado doble proteico (leche + banana + whey + avena)", "Banana · leche · whey · avena · miel", 0, [
+        food("1 banana", 1, 27, 0),
+        food("250ml leche entera", 8, 12, 9),
+        food("1 scoop whey", 25, 2, 2),
+        food("30g avena", 3, 20, 2),
+        food("1 cdita miel", 0, 8, 0)
+      ], [
+        "Licuá todo junto. La merienda más calórica y proteica del plan — ideal para el día de piernas.",
+        "Si querés espesar: sumá 1 cda de manteca de maní."
+      ], null),
+
+      meal("22:00", "Cena", "Pollo al tomillo con arroz y ensalada completa", "180g pollo · arroz · tomillo · ajo · ensalada grande", 0, [
+        food("180g pechuga al horno con tomillo", 56, 0, 5),
+        food("1 taza arroz blanco cocido", 4, 50, 0),
+        food("Ensalada grande (rúcula + cherry + zanahoria)", 2, 10, 0),
+        food("1 cda aceite de oliva", 0, 0, 14)
+      ], [
+        "Salpimentá el pollo con tomillo fresco o seco, ajo y oliva. Horneá a 200°C por 25 min.",
+        "El tomillo es una hierba subestimada — le da al pollo un sabor aromático completamente diferente al orégano."
+      ], null,
+      altMeal("Fideos integrales con pechuga al pesto", "80g pasta integral · 160g pechuga · pesto · parmesano", [
+        food("80g pasta integral", 10, 54, 2),
+        food("160g pechuga grillada", 50, 0, 5),
+        food("4 cdas pesto (albahaca + nueces + parmesano + oliva)", 5, 3, 18),
+        food("20g parmesano rallado", 6, 0, 6)
+      ], [
+        "Herví la pasta integral al dente. Cortá la pechuga grillada en tiras.",
+        "Mezclá pasta + pesto + pollo. Parmesano encima. Simple, completo y muy proteico."
+      ])),
+
+      meal("23:30", "Antes de dormir", "Shake nocturno obligatorio", "Piernas + semana proteica = máxima síntesis nocturna", 0, [
+        food("1 scoop whey con 250ml leche entera", 25, 12, 9)
+      ], ["Hoy el shake nocturno es obligatorio. El músculo sintetiza proteína hasta 48hs después de piernas."], "Obligatorio.")
+    ]
+  },
+
+  // ===== VIERNES · FULL BODY =====
+  {
+    id: "vie", tab: "Vie", dayIndex: 5, title: "Viernes",
+    type: "Full body opcional · Cardio o descanso",
+    workout: { name: "Full Body", duration: "50 min", icon: "⚡", optional: true, primary: ["Full body"] },
+    isRestDay: false, kcal: 2700, protein: 165, carbs: 300, fats: 72,
+    tags: ["Full body", "Proteico"],
+    tip: "Viernes proteico puro. El menú más limpio y directo de las 4 semanas.",
+    meals: [
+      meal("10:00", "Desayuno", "Porridge proteico de avena con whey, fruta y miel", "60g avena · 1 scoop whey · leche · banana · miel", 0, [
+        food("60g avena", 7, 40, 4),
+        food("1 scoop whey vainilla", 25, 2, 2),
+        food("250ml leche entera", 8, 12, 9),
+        food("1 banana", 1, 27, 0),
+        food("1 cdita miel", 0, 8, 0)
+      ], [
+        "Herví la leche con la avena 3 min revolviendo. Retirá del fuego y esperá 1 min.",
+        "Incorporá el whey revolviendo (apagá bien el fuego antes — el calor destruye parte de la proteína).",
+        "Cortá la banana encima y bañá con miel. El porridge proteico = 40g de proteína en el desayuno."
+      ], null),
+
+      meal("12:00", "Media mañana", "Tostadas con ricota, tomate y jamón", "2 tostadas · ricota · tomate · jamón · orégano", 0, [
+        food("2 tostadas integrales", 8, 28, 2),
+        food("4 cdas ricota", 12, 4, 7),
+        food("60g jamón natural", 12, 0, 4),
+        food("1 tomate", 1, 5, 0)
+      ], [
+        "Untá la ricota, poné el jamón y el tomate. Orégano encima.",
+        "La ricota + jamón juntos dan 24g de proteína en la media mañana."
+      ], null),
+
+      meal("13:30", "Almuerzo", "Salmón con espárragos y quinoa proteica", "200g salmón · quinoa · espárragos · limón · oliva", 0, [
+        food("200g salmón al horno", 50, 0, 26),
+        food("3/4 taza quinoa cocida", 6, 30, 3),
+        food("150g espárragos asados", 4, 6, 0),
+        food("1 cda aceite de oliva", 0, 0, 14),
+        food("Limón + eneldo", 0, 2, 0)
+      ], [
+        "Condimentá el salmón con eneldo, limón y oliva. Horneá a 200°C por 15 min.",
+        "Espárragos con oliva y sal en el horno los últimos 10 min del salmón.",
+        "Quinoa y salmón juntos = los dos alimentos con mejor perfil de aminoácidos completos."
+      ], null,
+      altMeal("Carne molida con arroz y vegetales salteados", "180g carne magra molida · arroz · zapallito · cebolla · morrón", [
+        food("180g carne molida magra", 36, 0, 14),
+        food("1 taza arroz cocido", 4, 50, 0),
+        food("1 zapallito + 1 morrón + 1/2 cebolla", 2, 12, 0),
+        food("1 cda aceite de oliva", 0, 0, 14)
+      ], [
+        "Sofreí la carne molida con cebolla y ajo. Sumá los vegetales y salteá 4 min.",
+        "Mezclá con el arroz caliente. Opción práctica y súper proteica para el viernes."
+      ])),
+
+      meal("17:00", "Merienda", "Mate con tostadas y manteca de maní", "Mate + 2 tostadas + maní + banana", 0, [
+        food("2 tostadas integrales", 8, 28, 2),
+        food("2 cdas manteca de maní", 8, 6, 16),
+        food("1 banana", 1, 27, 0)
+      ], ["Merienda clásica del viernes."], null),
+
+      meal("22:00", "Cena", "Pechuga grillada con morrones y papas al horno", "180g pechuga · morrones · papas · ajo · oliva", 0, [
+        food("180g pechuga al grill", 56, 0, 5),
+        food("2 morrones asados", 2, 16, 0),
+        food("200g papas al horno", 4, 40, 0),
+        food("1 cda aceite de oliva", 0, 0, 14)
+      ], [
+        "Papas en gajos a 200°C por 25 min con oliva y sal. Grillá la pechuga.",
+        "Asá los morrones en el horno o a la llama — pelálos cuando se enfríen para sacar la piel.",
+        "La combinación morrón asado + pechuga es simple pero increíblemente sabrosa."
+      ], null,
+      altMeal("Pasta con atún y crema de ricota", "80g pasta · 1 lata atún · ricota · limón · perejil", [
+        food("80g pasta larga", 10, 58, 2),
+        food("1 lata atún", 28, 0, 2),
+        food("5 cdas ricota", 15, 5, 9),
+        food("Limón + perejil + oliva", 0, 2, 10)
+      ], [
+        "Herví la pasta. Mezclá el atún con ricota + ralladura de limón + perejil picado.",
+        "Incorporá la pasta caliente y revolvé. Cremoso sin crema real — 53g de proteína en una cena de pasta."
+      ])),
+
+      meal("23:30", "Antes de dormir", "Cottage con miel", "Cierre proteico del viernes", 0, [
+        food("100g cottage", 11, 3, 4),
+        food("1 cdita miel", 0, 8, 0)
+      ], ["Hoy el cottage sí está recomendado — la semana proteica necesita cierre nocturno."], "Recomendado esta semana.")
+    ]
+  },
+
+  // ===== SÁBADO · DESCANSO =====
+  {
+    id: "sab", tab: "Sáb", dayIndex: 6, title: "Sábado",
+    type: "Día de descanso activo",
+    workout: { name: "Descanso", duration: "—", icon: "🚶", primary: [] },
+    isRestDay: true, kcal: 2600, protein: 155, carbs: 285, fats: 78,
+    tags: ["Descanso", "Alto proteína"],
+    tip: "Sábado proteico. El asado sigue siendo el plato rey del fin de semana.",
+    meals: [
+      meal("10:00", "Desayuno", "Desayuno proteico completo: huevos, jamón, tostadas y fruta", "4 huevos · jamón · 2 tostadas · manzana · café", 0, [
+        food("4 huevos revueltos", 24, 0, 20),
+        food("80g jamón natural", 16, 0, 5),
+        food("2 tostadas integrales", 8, 28, 2),
+        food("1 manzana", 0, 20, 0),
+        food("Café con leche 200ml", 6, 8, 6)
+      ], [
+        "Revolvé los 4 huevos con el jamón picado. Queda un revuelto con más sabor y proteína.",
+        "El desayuno del sábado más cargado de proteína de las 4 semanas: 54g."
+      ], null),
+
+      meal("12:30", "Media mañana", "Yogur griego con nueces y miel", "200g yogur griego · nueces · miel", 0, [
+        food("200g yogur griego", 20, 8, 10),
+        food("25g nueces", 4, 4, 16),
+        food("1 cda miel", 0, 17, 0)
+      ], ["Yogur con nueces y miel. Simple y alta proteína."], null),
+
+      meal("14:00", "Almuerzo", "Asado proteico de carne magra con ensalada grande", "250g vacío o cuadrada · chorizo pequeño · ensalada · pan", 0, [
+        food("250g vacío o cuadrada a la parrilla", 50, 0, 18),
+        food("1 chorizo colorado pequeño", 7, 1, 12),
+        food("Ensalada grande (lechuga+rúcula+tomate+zanahoria)", 3, 12, 0),
+        food("2 rodajas pan integral", 8, 28, 2),
+        food("Chimichurri casero", 0, 2, 8)
+      ], [
+        "La diferencia de la semana 4: elegimos los cortes más magros (vacío, cuadrada, peceto).",
+        "Parrilla a fuego medio. Dejá reposar la carne 5 min antes de cortar.",
+        "La ensalada grande equilibra el asado y suma fibra y micronutrientes."
+      ], null,
+      altMeal("Costillitas de cordero al horno con papas", "350g costillitas cordero · papas · ajo · romero", [
+        food("350g costillitas de cordero", 55, 0, 22),
+        food("250g papas rústicas", 5, 50, 0),
+        food("2 cdas aceite de oliva · ajo · romero", 0, 1, 28)
+      ], [
+        "Condimentá con romero, ajo, oliva y sal. Horneá tapado a 180°C por 50 min, destapá 15 min.",
+        "El cordero tiene un sabor completamente diferente a la vaca — vale la pena probarlo."
+      ])),
+
+      meal("17:30", "Merienda", "Mate con alfajores de avena caseros", "Mate + alfajores avena", 0, [
+        food("2 alfajores de avena caseros", 5, 36, 7)
+      ], ["Mate con alfajores. El cierre dulce del sábado."], null),
+
+      meal("22:00", "Cena", "Pollo relleno con espinaca y ricota", "180g pechuga rellena · espinaca · ricota · queso · ensalada", 0, [
+        food("180g pechuga rellena", 56, 0, 8),
+        food("80g espinaca cocida", 2, 3, 1),
+        food("3 cdas ricota", 9, 3, 5),
+        food("40g queso mozzarella", 8, 1, 8),
+        food("Ensalada mixta", 2, 7, 0)
+      ], [
+        "Abrí la pechuga en libro. Rellená con espinaca salteada + ricota + mozzarella. Cerrá con palillos.",
+        "Sellá en sartén 3 min y terminá en horno a 200°C por 15 min.",
+        "El relleno de ricota y espinaca suma proteína y hace que el plato parezca de restaurante."
+      ], null,
+      altMeal("Pasta con jamón, queso y guisantes", "80g pasta · jamón · queso · arvejas · crema light", [
+        food("80g pasta larga", 10, 58, 2),
+        food("80g jamón natural", 16, 0, 5),
+        food("50g queso fresco", 6, 1, 5),
+        food("1/2 taza arvejas", 4, 13, 0),
+        food("3 cdas crema light", 2, 2, 7)
+      ], [
+        "Herví la pasta. Sofreí jamón en cubos 2 min. Sumá arvejas y crema.",
+        "Mezclá con la pasta caliente y el queso desmenuzado."
+      ])),
+
+      meal("23:30", "Antes de dormir", "Cottage con miel", "Cierre proteico del sábado", 0, [
+        food("100g cottage", 11, 3, 4),
+        food("1 cdita miel", 0, 8, 0)
+      ], ["Recomendado en la semana proteica."], "Recomendado.")
+    ]
+  },
+
+  // ===== DOMINGO · DESCANSO =====
+  {
+    id: "dom", tab: "Dom", dayIndex: 0, title: "Domingo",
+    type: "Día de descanso completo",
+    workout: { name: "Descanso total", duration: "—", icon: "🛌", primary: [] },
+    isRestDay: true, kcal: 2500, protein: 150, carbs: 270, fats: 76,
+    tags: ["Descanso", "Proteico puro"],
+    tip: "El cierre de la semana proteica. Mañana empieza la semana 1 de nuevo — renovada.",
+    meals: [
+      meal("10:00", "Desayuno", "Pancakes proteicos de avena y huevo con miel", "50g avena · 2 huevos · 1 clara · banana · miel · leche", 0, [
+        food("50g avena", 6, 33, 3),
+        food("2 huevos + 1 clara", 16, 0, 10),
+        food("1 banana", 1, 27, 0),
+        food("100ml leche", 3, 5, 4),
+        food("1 cda miel", 0, 17, 0)
+      ], [
+        "Licuá avena + huevos + clara + banana + leche. Cocinalo en sartén.",
+        "Con 3 huevos los pancakes quedan más proteicos y menos elásticos. Miel encima."
+      ], null),
+
+      meal("13:30", "Almuerzo", "Pechuga asada al horno con vegetales italianos", "200g pechuga · zapallito · morrón · tomate · albahaca · oliva", 0, [
+        food("200g pechuga al horno con hierbas", 62, 0, 6),
+        food("1 zapallito + 1 morrón + 2 tomates", 2, 14, 0),
+        food("1 taza arroz cocido", 4, 50, 0),
+        food("1 cda aceite de oliva + albahaca", 0, 1, 14)
+      ], [
+        "Condimentá la pechuga con hierbas italianas (orégano + tomillo + albahaca), ajo y oliva.",
+        "Ponela en bandeja con los vegetales cortados y horneá a 200°C por 25 min.",
+        "Los tomates asados en el horno se transforman — sueltan un jugo dulce que impregna todo."
+      ], null,
+      altMeal("Peceto con salsa de champiñones y arroz integral", "180g peceto · champiñones · crema light · arroz integral", [
+        food("180g peceto sellado y horneado", 47, 0, 6),
+        food("150g champiñones", 3, 4, 0),
+        food("4 cdas crema light", 3, 2, 8),
+        food("3/4 taza arroz integral", 3, 37, 1)
+      ], [
+        "Sellá el peceto y horneá 20 min. Para la salsa: champiñones salteados + crema + ajo.",
+        "Servís en medallones con la salsa encima y el arroz integral al costado."
+      ])),
+
+      meal("17:30", "Merienda", "Mate con tostadas y ricota", "Mate + 2 tostadas + ricota + miel", 0, [
+        food("2 tostadas integrales", 8, 28, 2),
+        food("4 cdas ricota", 12, 4, 7),
+        food("1 cdita miel", 0, 8, 0)
+      ], ["Cierre tranquilo con ricota y miel."], null),
+
+      meal("22:00", "Cena", "Hamburguesas dobles de carne magra con palta", "2 hamburguesas · panes integrales · palta · tomate · ensalada", 0, [
+        food("2 hamburguesas magras 180g total", 40, 0, 14),
+        food("2 panes de hamburguesa integral", 10, 40, 4),
+        food("1/4 palta", 1, 5, 8),
+        food("Lechuga + tomate + cebolla morada", 2, 8, 0),
+        food("1 cda mostaza + 1 cda ketchup suave", 1, 5, 0)
+      ], [
+        "Condimentá la carne con sal, pimienta, ajo en polvo y 1 cda pan rallado para ligar.",
+        "Grillá 4 min por lado a fuego fuerte. Armá con palta, tomate y cebolla morada.",
+        "La hamburguesa casera siempre es mejor que la comprada. La cebolla morada en pluma le da el toque final."
+      ], null,
+      altMeal("Pollo mediterráneo con papas y aceitunas", "200g pollo · papas · aceitunas · cherry · orégano · oliva", [
+        food("200g muslo de pollo", 46, 0, 14),
+        food("200g papas en cubos", 4, 40, 0),
+        food("60g aceitunas mixtas", 0, 3, 12),
+        food("100g cherry + orégano + oliva", 1, 8, 10)
+      ], [
+        "Todo en bandeja con oliva, orégano y ajo. Horneá a 200°C por 35 min.",
+        "Las aceitunas y los cherry le dan al plato un sabor mediterráneo que cierra perfectamente la semana."
+      ])),
+
+      meal("23:30", "Antes de dormir", "Shake final de semana", "Cierre de las 4 semanas", 0, [
+        food("1 scoop whey con 200ml leche entera", 25, 10, 9)
+      ], ["El cierre de la semana 4. Mañana empieza la semana 1 de nuevo, renovada. Seguís."], "Recomendado.")
+    ]
+  }
+] // fin Semana 4
+
+]; // fin allWeeks
+
+// =====================================================
+// SEMANA ACTUAL · Selección automática por semana ISO
+// =====================================================
+function getWeekIndex() { return (getISOWeekNumber() - 1) % 4; }
+let weekIndex = getWeekIndex();
+let days = allWeeks[weekIndex];
+const weekNames = ["Semana 1 · Mediterránea", "Semana 2 · Potencia criolla", "Semana 3 · Internacional mix", "Semana 4 · Proteico puro"];
+let currentWeekName = weekNames[weekIndex];
+
+
+// SUPLEMENTOS
+// =====================================================
+const supplementsBase = [
+  {
+    name: "Whey protein",
+    detail: "1 scoop cuando falte proteína. 2 scoops solo si ese día venís corto o salís del gym sin poder comer.",
+    when: "Post-entreno o antes de dormir · con agua o leche según calorías y tolerancia"
+  },
+  {
+    name: "Creatina monohidrato",
+    detail: "3-5g por día, todos los días (incluso los de descanso). No hace falta ciclarla ni tomarla exactamente post-entreno. La constancia es lo que importa.",
+    when: "Gym: cuando te quede cómodo · Descanso: con cualquier comida"
+  }
+];
+
+const supplementsOptional = [
+  {
+    name: "Omega 3 (EPA + DHA)",
+    detail: "1-2g por día con almuerzo o cena. Reduce inflamación, mejora la recuperación post-gym y la salud cardiovascular. Más útil si comés poco pescado.",
+    when: "Con comida que contenga grasa (mejor absorción)"
+  },
+  {
+    name: "Vitamina D3",
+    detail: "1000-2000 UI por día con desayuno o almuerzo. Importante en otoño/invierno o si no tomás sol todos los días. Influye en la testosterona y la fuerza.",
+    when: "Con comida grasa · una sola toma diaria"
+  },
+  {
+    name: "Magnesio o ZMA",
+    detail: "300-400mg de magnesio antes de dormir. Mejora la calidad del sueño, ayuda en la recuperación y previene calambres post-piernas. ZMA suma zinc + B6.",
+    when: "30 min antes de dormir, alejado de lácteos"
+  },
+  {
+    name: "Multivitamínico (opcional)",
+    detail: "1 al día con desayuno. Cobertura básica si la dieta no es muy variada. No reemplaza comer bien, pero ayuda en huecos.",
+    when: "Con la primera comida del día"
+  }
+];
+
+// =====================================================
+// REGLAS
+// =====================================================
+const rules = [
+  ["⚖️", "Mantenimiento 78-80kg", "Pesate cada lunes en ayunas. Si pasás de 80kg, achicá 1 porción de carbo en almuerzo/cena. Si bajás de 77kg, sumá 200 kcal/día. El objetivo es recomposición, no subir."],
+  ["🥩", "Proteína primero", "150-185g/día, distribuida en 5-6 comidas. Es lo que mantiene el músculo aunque las kcal estén en mantenimiento. Si una comida queda corta, sumá un huevo, 1 lata de atún o 1 scoop whey."],
+  ["🥛", "Leche entera si la tolerás", "Densa en calorías y útil. Si te cae pesada, usá agua para el whey. Para 78-80kg, no hace falta forzar más calorías."],
+  ["💧", "Hidratación 3L+", "Mínimo 2.5L. En días de gym (especialmente piernas) o calor: 3-3.5L. La sed es señal tardía. La app te recuerda cada 90 min."],
+  ["💊", "Creatina TODOS los días", "3-5g, incluso días de descanso. Lo que importa es que esté siempre presente en el músculo. Saltearla 1 día no rompe nada, pero la constancia es la clave."],
+  ["🛌", "Dormir 8-9 horas", "El músculo crece cuando dormís. Con menos de 7h, perdés progreso aunque comas perfecto. Establecé una hora fija."],
+  ["🦵", "Día de piernas = +200 kcal", "El jueves sigue siendo el día más fuerte (3100 kcal vs 2800-2950 los otros). Si te sentís muerto el viernes, comiste poco el jueves."],
+  ["🏃", "Cardio moderado", "Con tu objetivo (mantener 78-80kg), 2-3 sesiones de 20-30 min de cardio por semana ayudan a definir sin perder músculo. Caminatas, bici suave o intervalos."],
+  ["📸", "Medí más allá de la balanza", "Balanza + cintura + foto sin remera cada 4 semanas. En recomposición la balanza no se mueve mucho pero el cuerpo cambia: más músculo, menos grasa."],
+  ["🥦", "Fibra todos los días", "Frutas y verduras en cada comida principal. Mejora digestión, energía y absorción de proteína. Importante en mantenimiento para sentirte saciado."]
+];
+
+// =====================================================
+// LISTA DE COMPRAS
+// =====================================================
+const shopping = {
+  "Carnes y proteínas": [
+    "Pechuga de pollo · 1kg (varios días)",
+    "Muslo de pollo deshuesado · 200g",
+    "Carne magra molida · 350g",
+    "Carne magra (peceto/cuadrada) · 400g",
+    "Bife (cuadrada o vacío) · 400g (lun + sáb)",
+    "Lomo · 200g",
+    "Asado (vacío o cuadrada) · 250g (domingo)",
+    "Pavita o jamón natural · 250g",
+    "Bondiola o jamón crudo · 80g (domingo)",
+    "Atún al natural · 4 latas",
+    "Salmón fresco · 200g (viernes)"
+  ],
+  "Huevos y lácteos": [
+    "Huevos · 2.5 docenas",
+    "Leche entera · 3 litros",
+    "Queso fresco en fetas · 300g",
+    "Ricota · 250g",
+    "Queso cottage · 300g",
+    "Queso rallado · 150g",
+    "Manteca · 100g"
+  ],
+  "Carbohidratos": [
+    "Pan integral · 2 paquetes",
+    "Pan árabe · 4 unidades (lunes wrap)",
+    "Pan hamburguesa · 3 unidades (viernes)",
+    "Fideos secos · 500g",
+    "Arroz blanco · 750g",
+    "Arroz integral · 250g",
+    "Quinoa · 200g (domingo)",
+    "Polenta · 250g (martes)",
+    "Papas · 2kg",
+    "Batatas · 1 mediana (mar/vie)",
+    "Calabaza · 1 mediana (lunes puré)",
+    "Tapa de tarta · 1",
+    "Harina común · 500g",
+    "Pan rallado · 250g (milanesas)"
+  ],
+  "Grasas y almacén": [
+    "Aceite de oliva · 500ml",
+    "Manteca de maní · 1 frasco grande",
+    "Nueces · 200g",
+    "Almendras · 150g",
+    "Pasas de uva · 500g (pre-entrenos y post-entreno jueves)",
+    "Miel · 1 frasco",
+    "Cacao amargo · 1 paquete",
+    "Tomate triturado · 3 latas",
+    "Curry en polvo · 1 frasco (jueves)",
+    "Pimentón dulce · 1 frasco"
+  ],
+  "Frutas y verduras": [
+    "Bananas · 3kg (las usás en casi todas las comidas)",
+    "Naranjas · 1.5kg",
+    "Manzanas · 1kg",
+    "Palta · 3 unidades",
+    "Tomates · 1kg",
+    "Lechuga · 1 planta",
+    "Rúcula · 1 atado (lunes)",
+    "Espinaca · 1 atado",
+    "Brócoli · 1 cabeza",
+    "Zucchini · 2 unidades (domingo)",
+    "Cebolla · 1kg",
+    "Morrón rojo · 3 (mar/sab)",
+    "Champiñones · 100g",
+    "Zanahoria · 500g",
+    "Arvejas (lata o congeladas) · 1",
+    "Limones · 4",
+    "Ajo · 1 cabeza"
+  ],
+  "Suplementos": [
+    "Whey protein",
+    "Creatina monohidrato",
+    "Omega 3 (opcional pero recomendado)",
+    "Vitamina D3 (opcional)",
+    "Magnesio o ZMA (opcional)"
+  ]
+};
+
+// =====================================================
+// ESTADO Y STORAGE
+// =====================================================
+let activeDay = days[0].id;
+let scheduledNotifs = [];
+
+function getDayStateForKey(key) {
+  const all = JSON.parse(localStorage.getItem(STORAGE.meals) || "{}");
+  return all[key] || {};
+}
+
+function getDayState() {
+  const all = JSON.parse(localStorage.getItem(STORAGE.meals) || "{}");
+  return all[getTodayKey()] || {};
+}
+
+function getActiveDayKey() {
+  // When viewing a non-today tab use today's date for state
+  // (meals can only be marked for the current date)
+  return getTodayKey();
+}
+
+function saveDayState(state) {
+  const all = JSON.parse(localStorage.getItem(STORAGE.meals) || "{}");
+  all[getTodayKey()] = state;
+  localStorage.setItem(STORAGE.meals, JSON.stringify(all));
+}
+
+function isDone(id) {
+  return Boolean(getDayState()[id]);
+}
+
+function toggleMealCheck(button, mealId) {
+  const state = getDayState();
+  const wasMarked = Boolean(state[mealId]);
+  state[mealId] = !wasMarked;
+  saveDayState(state);
+
+  // Detectar si recién llegamos a 4 comidas marcadas (goal del día)
+  const newCount = Object.values(state).filter(Boolean).length;
+  // FIX: solo celebrar la PRIMERA vez del día, no cada vez que oscilás entre 3 y 4
+  const goalCelebratedKey = `goal-celebrated-${getTodayKey()}`;
+  const alreadyCelebrated = localStorage.getItem(goalCelebratedKey) === "1";
+  const justHitGoal = !wasMarked && newCount === 4 && !alreadyCelebrated;
+  if (justHitGoal) localStorage.setItem(goalCelebratedKey, "1");
+
+  renderActiveDay();
+  renderWeekOverview();
+  updateStreak();
+  updateFabBadge();
+
+  if (justHitGoal) {
+    celebrateGoal();
+  } else if (!wasMarked) {
+    // pequeño pulso al marcar
+    triggerCheckPulse(mealId);
+  }
+}
+
+function triggerCheckPulse(mealId) {
+  // Buscar el meal-check del id y agregarle clase de pulso
+  const checkBtn = document.querySelector(`[onclick*="toggleMealCheck"][onclick*="'${mealId}'"]`);
+  if (!checkBtn) return;
+  checkBtn.classList.add("pulse-once");
+  setTimeout(() => checkBtn.classList.remove("pulse-once"), 600);
+}
+
+function celebrateGoal() {
+  // Confetti emoji aparece y desaparece
+  const confetti = document.createElement("div");
+  confetti.className = "confetti-burst";
+  confetti.innerHTML = "🎉 💪 🔥 ⭐️ 🎯 ✨";
+  document.body.appendChild(confetti);
+  setTimeout(() => confetti.remove(), 1800);
+  showToast("🎯 ¡4 comidas marcadas! Día cumpliendo el objetivo.");
+}
+
+function toggleMeal(head) {
+  head.closest(".meal").classList.toggle("open");
+}
+
+function togglePrep(button) {
+  const body = button.nextElementSibling;
+  const isOpen = body.classList.toggle("open");
+  button.classList.toggle("open", isOpen);
+  const label = button.querySelector(".prep-label");
+  if (label) label.textContent = isOpen ? "Ocultar preparación" : "Ver preparación";
+}
+
+// =====================================================
+// QUICK ACTION · marcar la comida más cercana a la hora actual
+// =====================================================
+function quickCheckCurrentMeal() {
+  // FIX: usar SIEMPRE el día actual real (no el activo). Si el usuario está mirando otro día,
+  // cambiar primero al de hoy. Antes marcaba la comida del día equivocado.
+  const todayObj = getTodayDayObject();
+  if (activeDay !== todayObj.id) {
+    setActiveDay(todayObj.id);
+  }
+  const day = todayObj;
+  if (!day) return;
+  const now = new Date();
+  const nowMin = now.getHours() * 60 + now.getMinutes();
+  let closest = null;
+  let closestDiff = Infinity;
+  day.meals.forEach((m) => {
+    const [h, mn] = m.time.split(":").map(Number);
+    const diff = Math.abs(h * 60 + mn - nowMin);
+    if (diff < closestDiff) {
+      closestDiff = diff;
+      closest = m;
+    }
+  });
+  if (!closest) return;
+
+  const state = getDayState();
+  if (state[closest.id]) {
+    showToast(`Ya tenías marcado: ${closest.label}`);
+    return;
+  }
+
+  state[closest.id] = true;
+  saveDayState(state);
+
+  const newCount = Object.values(state).filter(Boolean).length;
+  const goalCelebratedKey = `goal-celebrated-${getTodayKey()}`;
+  const alreadyCelebrated = localStorage.getItem(goalCelebratedKey) === "1";
+  const justHitGoal = newCount === 4 && !alreadyCelebrated;
+  if (justHitGoal) localStorage.setItem(goalCelebratedKey, "1");
+
+  renderActiveDay();
+  renderWeekOverview();
+  updateStreak();
+  updateFabBadge();
+
+  if (justHitGoal) {
+    celebrateGoal();
+  }
+  showToast(`✓ ${closest.label} marcado: ${closest.name}`);
+}
+
+// =====================================================
+// TOAST
+// =====================================================
+function showToast(text) {
+  let toast = document.querySelector(".toast");
+  if (!toast) {
+    toast = document.createElement("div");
+    toast.className = "toast";
+    document.body.appendChild(toast);
+  }
+  toast.textContent = text;
+  toast.classList.add("show");
+  setTimeout(() => toast.classList.remove("show"), 2400);
+}
+
+// =====================================================
+// RENDER
+// =====================================================
+function renderTabs() {
+  // Show current week name above the tabs
+  const tabsEl = document.querySelector("#week-tabs");
+  const weekLabelEl = document.querySelector("#current-week-label");
+  if (weekLabelEl) weekLabelEl.textContent = currentWeekName;
+  tabsEl.innerHTML = days.map((day) => {
+    const isToday = day.dayIndex === new Date().getDay();
+    return `
+      <button class="tab-btn ${day.id === activeDay ? "active" : ""} ${isToday ? "is-today" : ""} ${day.isRestDay ? "rest-tab" : ""}" type="button" onclick="setActiveDay('${day.id}')">
+        ${day.tab}
+        ${isToday ? '<span class="today-dot"></span>' : ""}
+      </button>
+    `;
+  }).join("");
+}
+
+function setActiveDay(dayId) {
+  activeDay = dayId;
+  renderTabs();
+  renderActiveDay();
+  updateNextMeal();
+  // FIX: scrollear al tope del panel al cambiar de tab
+  setTimeout(() => {
+    const dayContainer = document.querySelector("#day-container");
+    if (dayContainer) {
+      const top = dayContainer.getBoundingClientRect().top + window.scrollY - 12;
+      window.scrollTo({ top, behavior: "smooth" });
+    }
+  }, 50);
+}
+
+function renderProgressBar(label, current, target, color) {
+  const numCurrent = parseInt(String(current));
+  const numTarget = parseInt(String(target));
+  const rawPct = Math.round((numCurrent / numTarget) * 100);
+  const pct = Math.min(100, rawPct);
+  let stage = "low";
+  if (rawPct > 115) stage = "over";
+  else if (rawPct >= 95 && rawPct <= 115) stage = "complete";
+  else if (rawPct >= 60) stage = "high";
+  else if (rawPct >= 30) stage = "mid";
+  const overTag = rawPct > 115 ? `<span class="over-tag">+${rawPct - 100}%</span>` : "";
+  const pctLabel = rawPct > 0 ? `<span class="prog-pct ${stage}">${Math.min(rawPct, 999)}%</span>` : "";
+  return `
+    <div class="prog-bar-row" data-stage="${stage}">
+      <div class="prog-bar-head">
+        <span class="prog-bar-label">${label}</span>
+        <span class="prog-bar-value">${current}<span class="prog-bar-target"> / ${target}</span>${overTag}</span>
+        ${pctLabel}
+      </div>
+      <div class="prog-bar-track">
+        <div class="prog-bar-fill animating" style="width: ${pct}%; background: ${color};"></div>
+      </div>
+    </div>
+  `;
+}
+
+function renderActiveDay() {
+  // FIX: preservar estado abierto/cerrado de comidas y preparaciones antes de re-renderizar
+  const openMealIds = Array.from(document.querySelectorAll(".meal.open"))
+    .map((m) => m.querySelector("[onclick*='toggleMealCheck']")?.getAttribute("onclick")?.match(/'([^']+)'/)?.[1])
+    .filter(Boolean);
+  const openPrepMealIds = Array.from(document.querySelectorAll(".prep-body.open"))
+    .map((p) => p.closest(".meal")?.querySelector("[onclick*='toggleMealCheck']")?.getAttribute("onclick")?.match(/'([^']+)'/)?.[1])
+    .filter(Boolean);
+
+  const day = days.find((item) => item.id === activeDay);
+  const doneMeals = day.meals.filter((item) => isDone(item.id));
+  const consumed = sumMacros(doneMeals);
+
+  const isFridayWithoutGym = day.id === "vie" && localStorage.getItem(STORAGE.fridayMode) === "rest";
+  const adjustedKcal = isFridayWithoutGym ? day.kcal - 200 : day.kcal;
+
+  document.querySelector("#day-container").innerHTML = `
+    <section class="panel active">
+      <div class="day-header">
+        <div class="day-header-top">
+          <div class="day-icon ${day.isRestDay ? "rest" : ""}">${day.workout.icon}</div>
+          <div>
+            <div class="day-label">${day.title}</div>
+            <div class="day-type">${day.type} · <span>~${adjustedKcal} kcal</span></div>
+          </div>
+        </div>
+        ${day.workout.duration !== "—" ? `
+          <div class="workout-info">
+            <strong>🏋️ ${day.workout.name}</strong> · ${day.workout.duration}
+            ${day.workout.optional ? '<span class="opt-label">opcional</span>' : ""}
+          </div>` : ""}
+        ${day.id === "vie" ? `
+          <div class="friday-toggle">
+            <label class="toggle-row">
+              <span>¿Vas al gym hoy?</span>
+              <select id="friday-mode-select" onchange="setFridayMode(this.value)">
+                <option value="gym" ${!isFridayWithoutGym ? "selected" : ""}>Sí, full body (${day.kcal} kcal)</option>
+                <option value="rest" ${isFridayWithoutGym ? "selected" : ""}>No, descanso (${day.kcal - 200} kcal)</option>
+              </select>
+            </label>
+          </div>` : ""}
+        <div class="workout-tags">${day.tags.map((tag) => `<span class="workout-tag">${tag}</span>`).join("")}</div>
+      </div>
+
+      <div class="day-total">
+        <div class="dt-title">Progreso del día</div>
+        ${renderProgressBar("kcal", consumed.kcal, adjustedKcal, "linear-gradient(90deg, #f4b84a, #ffe08a)")}
+        ${renderProgressBar("proteína", consumed.p + "g", (isFridayWithoutGym ? Math.round(day.protein * 0.92) : day.protein) + "g", "linear-gradient(90deg, #ff6b5f, #ff9588)")}
+        ${renderProgressBar("carbos", consumed.c + "g", (isFridayWithoutGym ? Math.round(day.carbs * 0.93) : day.carbs) + "g", "linear-gradient(90deg, #f4b84a, #ffe08a)")}
+        ${renderProgressBar("grasas", consumed.g + "g", day.fats + "g", "linear-gradient(90deg, #61a8ff, #8fc6ff)")}
+      </div>
+
+      <div class="tip-card"><div class="tip-icon">💡</div><div class="tip-text">${day.tip}</div></div>
+
+      <div class="quick-actions">
+        <button class="quick-btn" type="button" onclick="quickCheckCurrentMeal()">⚡ Marcar comida actual</button>
+      </div>
+
+      ${day.meals.map(renderMeal).join("")}
+    </section>
+  `;
+
+  // FIX: trigger shimmer animation on progress bar fills
+  setTimeout(() => {
+    document.querySelectorAll(".prog-bar-fill").forEach(el => {
+      el.classList.remove("animating");
+      void el.offsetWidth; // force reflow
+      el.classList.add("animating");
+    });
+  }, 100);
+
+  // FIX: restaurar estado abierto de comidas y preparaciones después del re-render
+  openMealIds.forEach((id) => {
+    const checkBtn = document.querySelector(`[onclick*="toggleMealCheck"][onclick*="'${id}'"]`);
+    if (checkBtn) checkBtn.closest(".meal")?.classList.add("open");
+  });
+  openPrepMealIds.forEach((id) => {
+    const checkBtn = document.querySelector(`[onclick*="toggleMealCheck"][onclick*="'${id}'"]`);
+    const meal = checkBtn?.closest(".meal");
+    if (meal) {
+      const prepBody = meal.querySelector(".prep-body");
+      const prepToggle = meal.querySelector(".prep-toggle");
+      if (prepBody) prepBody.classList.add("open");
+      if (prepToggle) {
+        prepToggle.classList.add("open");
+        const label = prepToggle.querySelector(".prep-label");
+        if (label) label.textContent = "Ocultar preparación";
+      }
+    }
+  });
+}
+
+function setFridayMode(mode) {
+  localStorage.setItem(STORAGE.fridayMode, mode);
+  renderActiveDay();
+}
+
+function isUpcomingMeal(item, day) {
+  // Solo se considera "próxima" si estamos viendo el día actual y la comida es la siguiente
+  const todayObj = getTodayDayObject();
+  if (day.id !== todayObj.id) return false;
+  if (isDone(item.id)) return false;
+
+  const now = new Date();
+  const nowMin = now.getHours() * 60 + now.getMinutes();
+  const [h, mn] = item.time.split(":").map(Number);
+  const targetMin = h * 60 + mn;
+
+  // Es "próxima" si está dentro de los próximos 60 min, o si está en curso (faltan menos de 30 min para que pase)
+  const diff = targetMin - nowMin;
+  return diff >= -30 && diff <= 60;
+}
+
+
+
+// =====================================================
+// OPCIÓN B · Mostrar/ocultar alternativa en almuerzo y cena
+// =====================================================
+function toggleAltMeal(mealId) {
+  const panel = document.querySelector(`[data-alt-for="${mealId}"]`);
+  const btn = document.querySelector(`[data-alt-btn="${mealId}"]`);
+  if (!panel) return;
+  const isOpen = panel.classList.toggle("open");
+  if (btn) {
+    btn.innerHTML = isOpen
+      ? '<span class="alt-btn-icon">⬆</span> Ver opción principal'
+      : '<span class="alt-btn-icon">🔄</span> No me convence · Ver opción B';
+    btn.classList.toggle("active", isOpen);
+  }
+}
+window.toggleAltMeal = toggleAltMeal;
+
+function renderMeal(item) {
+  const done = isDone(item.id);
+  const day = days.find((d) => d.id === activeDay);
+  const isUpcoming = day ? isUpcomingMeal(item, day) : false;
+  const todayObj = getTodayDayObject();
+  const isToday = day && day.id === todayObj.id;
+  const note = item.note ? `<div class="meal-note">📝 ${item.note}</div>` : "";
+  const totalP = item.foods.reduce((s, f) => s + f.p, 0);
+  const totalC = item.foods.reduce((s, f) => s + f.c, 0);
+  const totalG = item.foods.reduce((s, f) => s + f.g, 0);
+
+  const hasAlt = item.alt && (item.label === "Almuerzo" || item.label === "Cena");
+  const altPanel = hasAlt ? `
+    <div class="alt-meal-panel" data-alt-for="${item.id}">
+      <div class="alt-meal-header">
+        <span class="alt-badge">Opción B</span>
+        <span class="alt-kcal">${item.alt.kcal} kcal</span>
+      </div>
+      <div class="alt-meal-name">${item.alt.name}</div>
+      <div class="alt-meal-desc">${item.alt.desc}</div>
+      <div class="alt-macro-row">
+        <span class="mm p">${item.alt.foods.reduce((s,f)=>s+f.p,0)}g P</span>
+        <span class="mm c">${item.alt.foods.reduce((s,f)=>s+f.c,0)}g C</span>
+        <span class="mm g">${item.alt.foods.reduce((s,f)=>s+f.g,0)}g G</span>
+      </div>
+      <div class="food-list">${item.alt.foods.map(renderFood).join("")}</div>
+      <button class="prep-toggle alt-prep-toggle" type="button" onclick="togglePrep(this)">
+        <span>▶</span> <span class="prep-label">Ver preparación</span>
+      </button>
+      <div class="prep-body">
+        ${item.alt.prep.map((step, index) => `
+          <div class="prep-step"><div class="prep-num">${index + 1}</div><div class="prep-text">${step}</div></div>
+        `).join("")}
+      </div>
+    </div>
+  ` : "";
+
+  const altBtn = hasAlt ? `
+    <button class="alt-meal-btn" type="button" data-alt-btn="${item.id}" onclick="event.stopPropagation(); toggleAltMeal('${item.id}')">
+      <span class="alt-btn-icon">🔄</span> No me convence · Ver opción B
+    </button>
+  ` : "";
+
+  const typeSlug = item.label.toLowerCase().replace(/[\s\/]/g,'-');
+  return `
+    <article class="meal ${done ? 'done' : ''} ${isUpcoming ? 'is-upcoming' : ''}" data-type="${typeSlug}">
+      <div class="meal-type-stripe"></div>
+      ${isUpcoming ? '<div class="upcoming-tag">⏰ Toca ahora</div>' : ""}
+      <div class="meal-head" onclick="toggleMeal(this)">
+        <div class="meal-time-col">
+          <div class="meal-time">${item.time}</div>
+          <div class="meal-time-label">${item.label}</div>
+        </div>
+        <div class="meal-info-col">
+          <div class="meal-name">${item.name}</div>
+          <div class="meal-desc">${item.desc}</div>
+          <div class="meal-mini-macros">
+            <span class="mm p">${totalP}g P</span>
+            <span class="mm c">${totalC}g C</span>
+            <span class="mm g">${totalG}g G</span>
+          </div>
+        </div>
+        <div class="meal-kcal">
+          <div class="meal-kcal-val">${item.kcal}</div>
+          <div class="meal-kcal-lbl">kcal</div>
+        </div>
+        <button class="meal-check ${done ? 'checked' : ''} ${isToday ? '' : 'disabled-day'}" type="button" ${isToday ? `onclick="event.stopPropagation(); toggleMealCheck(this, '${item.id}')"` : 'disabled title="Solo podés marcar el día de hoy"'} aria-label="${done ? 'Desmarcar comida' : 'Marcar comida'}">
+          <span class="mc-dot"></span>
+        </button>
+      </div>
+      <div class="meal-detail">
+        ${note}
+        <div class="food-list">${item.foods.map(renderFood).join("")}</div>
+        <button class="prep-toggle" type="button" onclick="togglePrep(this)">
+          <span>▶</span> <span class="prep-label">Ver preparación</span>
+        </button>
+        <div class="prep-body">
+          ${item.prep.map((step, index) => `
+            <div class="prep-step"><div class="prep-num">${index + 1}</div><div class="prep-text">${step}</div></div>
+          `).join("")}
+        </div>
+        ${altBtn}
+        ${altPanel}
+      </div>
+    </article>
+  `;
+}
+
+
+function renderFood(item) {
+  return `
+    <div class="food-item">
+      <span class="food-name">${item.name}</span>
+      <div class="food-macros">
+        <span class="fm p">${item.p}g P</span>
+        <span class="fm c">${item.c}g C</span>
+        <span class="fm g">${item.g}g G</span>
+      </div>
+    </div>
+  `;
+}
+
+const SUPP_ICONS = {
+  "Whey protein": "🥛",
+  "Creatina monohidrato": "⚡",
+  "Omega 3 (EPA + DHA)": "🐟",
+  "Vitamina D3": "☀️",
+  "Magnesio o ZMA": "🌙",
+  "Multivitamínico (opcional)": "💊"
+};
+
+function renderSupplements() {
+  const baseEl = document.querySelector("#supp-base-row");
+  const extraEl = document.querySelector("#supp-extra-row");
+  if (baseEl) {
+    baseEl.innerHTML = supplementsBase.map((s) => `
+      <article class="supp-card">
+        <div class="supp-icon">${SUPP_ICONS[s.name] || "💊"}</div>
+        <div class="supp-body">
+          <div class="supp-name">${s.name}</div>
+          <div class="supp-detail">${s.detail}</div>
+          <div class="supp-when"><span class="supp-when-icon">⏰</span>${s.when}</div>
+        </div>
+      </article>
+    `).join("");
+  }
+  if (extraEl) {
+    extraEl.innerHTML = supplementsOptional.map((s) => `
+      <article class="supp-card supp-card-optional">
+        <div class="supp-icon">${SUPP_ICONS[s.name] || "💊"}</div>
+        <div class="supp-body">
+          <div class="supp-name">${s.name}</div>
+          <div class="supp-detail">${s.detail}</div>
+          <div class="supp-when"><span class="supp-when-icon">⏰</span>${s.when}</div>
+        </div>
+      </article>
+    `).join("");
+  }
+}
+
+function renderRules() {
+  document.querySelector("#rules-grid").innerHTML = rules.map(([icon, title, text]) => `
+    <article class="rule"><div class="rule-icon">${icon}</div><div><div class="rule-title">${title}</div><div class="rule-text">${text}</div></div></article>
+  `).join("");
+}
+
+const SHOP_CAT_ICONS = {
+  "Carnes y proteínas": "🥩",
+  "Huevos y lácteos": "🥚",
+  "Carbohidratos": "🍞",
+  "Grasas y almacén": "🫙",
+  "Frutas y verduras": "🥦",
+  "Suplementos": "💊"
+};
+
+function renderShopping() {
+  document.querySelector("#shopping-content").innerHTML = Object.entries(shopping).map(([category, items]) => `
+    <div class="sl-category">
+      <div class="sl-cat-title">
+        <span class="sl-cat-icon">${SHOP_CAT_ICONS[category] || "🛒"}</span>
+        ${category}
+        <span class="sl-cat-count">${items.length}</span>
+      </div>
+      <div class="sl-items-grid">
+        ${items.map((item) => {
+          const [name, ...rest] = item.split(" · ");
+          const qty = rest.join(" · ");
+          return `<div class="sl-item" onclick="toggleShop(this)">
+            <div class="sl-check"><span class="sl-check-icon">✓</span></div>
+            <div class="sl-info">
+              <span class="sl-name">${name}</span>
+              ${qty ? `<span class="sl-qty">${qty}</span>` : ""}
+            </div>
+          </div>`;
+        }).join("")}
+      </div>
+    </div>
+  `).join("");
+  restoreShoppingState();
+}
+
+function getShoppingState() {
+  return JSON.parse(localStorage.getItem("rony-dieta-shopping") || "[]");
+}
+
+function saveShoppingState() {
+  const done = Array.from(document.querySelectorAll(".sl-item.done"))
+    .map((el) => el.querySelector(".sl-name")?.textContent?.trim())
+    .filter(Boolean);
+  localStorage.setItem("rony-dieta-shopping", JSON.stringify(done));
+}
+
+function restoreShoppingState() {
+  const done = getShoppingState();
+  document.querySelectorAll(".sl-item").forEach((item) => {
+    const name = item.querySelector(".sl-name")?.textContent?.trim();
+    if (name && done.includes(name)) item.classList.add("done");
+  });
+  updateShoppingProgress();
+}
+
+function toggleShop(item) {
+  item.classList.toggle("done");
+  saveShoppingState();
+  updateShoppingProgress();
+}
+
+function resetShopping() {
+  document.querySelectorAll(".sl-item").forEach((item) => item.classList.remove("done"));
+  localStorage.removeItem("rony-dieta-shopping");
+  updateShoppingProgress();
+}
+
+function updateShoppingProgress() {
+  const total = document.querySelectorAll(".sl-item").length;
+  const done = document.querySelectorAll(".sl-item.done").length;
+  document.querySelector("#sl-count").textContent = done;
+  document.querySelector("#sl-total").textContent = total;
+  document.querySelector("#sl-fill").style.width = total ? `${(done / total) * 100}%` : "0%";
+}
+
+function exportShopping() {
+  const lines = ["🛒 LISTA DE COMPRAS · DIETA RONY (78-80kg)", ""];
+  Object.entries(shopping).forEach(([category, items]) => {
+    lines.push(`*${category}*`);
+    items.forEach((item) => lines.push(`• ${item}`));
+    lines.push("");
+  });
+  const text = lines.join("\n");
+
+  if (navigator.share) {
+    navigator.share({ title: "Lista de compras", text }).catch(() => copyToClipboard(text));
+  } else {
+    copyToClipboard(text);
+  }
+}
+
+function copyToClipboard(text) {
+  // FIX: navigator.clipboard requiere HTTPS. En HTTP usamos execCommand como fallback.
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(text).then(() => {
+      showToast("Lista copiada — pegala en WhatsApp");
+    }).catch(() => copyToClipboardFallback(text));
+  } else {
+    copyToClipboardFallback(text);
+  }
+}
+
+function copyToClipboardFallback(text) {
+  const ta = document.createElement("textarea");
+  ta.value = text;
+  ta.style.cssText = "position:fixed;top:-9999px;left:-9999px;opacity:0";
+  document.body.appendChild(ta);
+  ta.focus();
+  ta.select();
+  try {
+    document.execCommand("copy");
+    showToast("Lista copiada — pegala en WhatsApp");
+  } catch {
+    showToast("No se pudo copiar. Copiá manualmente.");
+  }
+  document.body.removeChild(ta);
+}
+
+// =====================================================
+// CLOCK Y BANNER
+// =====================================================
+function updateClock() {
+  // FIX: solo actualiza el reloj. updateGreeting se llama cada minuto, no cada segundo.
+  const now = new Date();
+  const clockEl = document.querySelector("#live-clock");
+  const dateEl = document.querySelector("#clock-date");
+  if (clockEl) clockEl.textContent = now.toLocaleTimeString("es-AR", { hour12: false });
+  if (dateEl) dateEl.textContent = now.toLocaleDateString("es-AR", { weekday: "long", day: "numeric", month: "long" });
+}
+
+function updateGreeting() {
+  const h = new Date().getHours();
+  let greeting;
+  if (h >= 5 && h < 13) greeting = "Buenos días, Rony 👋";
+  else if (h >= 13 && h < 20) greeting = "Buenas tardes, Rony ☀️";
+  else greeting = "Buenas noches, Rony 🌙";
+  const el = document.querySelector("#hero-greeting");
+  if (el && el.textContent !== greeting) el.textContent = greeting;
+}
+
+function getTodayDayObject() {
+  const dayIdx = new Date().getDay();
+  return days.find((d) => d.dayIndex === dayIdx) || days[0];
+}
+
+function updateGymBanner() {
+  const day = getTodayDayObject();
+  const banner = document.querySelector("#gym-banner-dieta");
+  if (!banner) return;
+
+  const isFridayRest = day.id === "vie" && localStorage.getItem(STORAGE.fridayMode) === "rest";
+  const preMeal = day.meals.find((m) => /pre-?entreno/i.test(m.label));
+
+  if (day.isRestDay || isFridayRest) {
+    const kcal = isFridayRest ? day.kcal - 200 : day.kcal;
+    banner.innerHTML = `
+      <div class="gym-banner-inner gym-banner-rest">
+        <div class="gym-banner-left">
+          <div class="gym-banner-icon">😴</div>
+          <div>
+            <div class="gym-banner-title">Día de descanso · ${day.title}</div>
+            <div class="gym-banner-sub">Caminata 20 min recomendada · Recargá energía</div>
+          </div>
+        </div>
+        <div class="gym-banner-stats">
+          <div class="gym-stat"><span class="gym-stat-val">${kcal}</span><span class="gym-stat-lbl">kcal</span></div>
+          <div class="gym-stat"><span class="gym-stat-val">${day.protein}g</span><span class="gym-stat-lbl">proteína</span></div>
+        </div>
+      </div>`;
+    return;
+  }
+
+  banner.innerHTML = `
+    <div class="gym-banner-inner">
+      <div class="gym-banner-left">
+        <div class="gym-banner-icon">${day.workout.icon}</div>
+        <div>
+          <div class="gym-banner-title">${day.workout.name}</div>
+          <div class="gym-banner-sub">${day.workout.duration}${preMeal ? " · Pre-entreno " + preMeal.time : ""} · ${day.title}</div>
+        </div>
+      </div>
+      <div class="gym-banner-stats">
+        <div class="gym-stat"><span class="gym-stat-val">${day.kcal}</span><span class="gym-stat-lbl">kcal</span></div>
+        <div class="gym-stat"><span class="gym-stat-val">${day.protein}g</span><span class="gym-stat-lbl">proteína</span></div>
+        <div class="gym-stat"><span class="gym-stat-val">${day.carbs}g</span><span class="gym-stat-lbl">carbos</span></div>
+      </div>
+    </div>`;
+}
+
+function updateNextMeal() {
+  const now = new Date();
+  const currentDay = days.find((item) => item.id === activeDay);
+  const next = currentDay.meals.find((item) => {
+    const [hour, minute] = item.time.split(":").map(Number);
+    const target = new Date();
+    target.setHours(hour, minute, 0, 0);
+    return target > now;
+  });
+  const el = document.querySelector("#next-meal");
+  if (el) {
+    if (next) {
+      const [h, mn] = next.time.split(":").map(Number);
+      const target = new Date();
+      target.setHours(h, mn, 0, 0);
+      const diffMin = Math.round((target - now) / 60000);
+      const hoursLeft = Math.floor(diffMin / 60);
+      const minsLeft = diffMin % 60;
+      const timeLeft = hoursLeft > 0 ? `en ${hoursLeft}h ${minsLeft}min` : `en ${minsLeft} min`;
+      el.innerHTML = `Próxima: <strong>${next.time}</strong> · ${next.name} <span class="next-meal-time">${timeLeft}</span>`;
+    } else {
+      el.textContent = "Ya no quedan comidas para este día. Descansá bien.";
+    }
+  }
+  // FIX: actualizar la clase is-upcoming sin re-renderizar todo el día (preserva estado abierto/cerrado)
+  updateUpcomingClass();
+  updateFabBadge();
+}
+
+function updateUpcomingClass() {
+  const day = days.find((d) => d.id === activeDay);
+  if (!day) return;
+  const todayObj = getTodayDayObject();
+  const isViewingToday = day.id === todayObj.id;
+
+  // Limpiar clases viejas
+  document.querySelectorAll(".meal.is-upcoming").forEach((m) => m.classList.remove("is-upcoming"));
+  document.querySelectorAll(".upcoming-tag").forEach((t) => t.remove());
+
+  if (!isViewingToday) return;
+
+  day.meals.forEach((m) => {
+    if (isUpcomingMeal(m, day)) {
+      // Buscar la card de esta meal en el DOM
+      const checkBtn = document.querySelector(`[onclick*="toggleMealCheck"][onclick*="'${m.id}'"]`);
+      const meal = checkBtn?.closest(".meal");
+      if (meal && !meal.classList.contains("is-upcoming")) {
+        meal.classList.add("is-upcoming");
+        // Insertar el tag visual al principio
+        const tag = document.createElement("div");
+        tag.className = "upcoming-tag";
+        tag.textContent = "⏰ Toca ahora";
+        meal.insertBefore(tag, meal.firstChild);
+      }
+    }
+  });
+}
+
+// =====================================================
+// AGUA (10 vasos · 2.5L)
+// =====================================================
+function getWaterState() {
+  const saved = JSON.parse(localStorage.getItem(STORAGE.water) || "{}");
+  return saved.date === getTodayKey() ? saved.count : 0;
+}
+
+function setWater(count) {
+  const prevCount = getWaterState();
+  localStorage.setItem(STORAGE.water, JSON.stringify({ date: getTodayKey(), count }));
+  renderWater();
+  if (count === WATER_GOAL && prevCount < WATER_GOAL) {
+    celebrateWaterGoal();
+  } else if (count > prevCount) {
+    // Mini animación al llenar vaso
+    const dots = document.querySelectorAll(".water-dot.active");
+    const lastDot = dots[dots.length - 1];
+    if (lastDot) {
+      lastDot.classList.add("just-filled");
+      setTimeout(() => lastDot.classList.remove("just-filled"), 500);
+    }
+  }
+}
+
+function celebrateWaterGoal() {
+  const confetti = document.createElement("div");
+  confetti.className = "confetti-burst water-burst";
+  confetti.innerHTML = "💧 💧 💧 ✨ ⭐️";
+  document.body.appendChild(confetti);
+  setTimeout(() => confetti.remove(), 1800);
+  showToast("💧 ¡10 vasos cumplidos! Bien hidratado.");
+}
+
+function renderWater() {
+  const count = getWaterState();
+  const labelEl = document.querySelector("#water-label");
+  const dotsEl = document.querySelector("#water-dots");
+  if (labelEl) labelEl.textContent = `${count}/${WATER_GOAL} vasos`;
+  if (dotsEl) {
+    dotsEl.innerHTML = Array.from({ length: WATER_GOAL }, (_, index) => {
+      const filled = index < count;
+      const onClick = filled && index === count - 1 ? `setWater(${index})` : `setWater(${index + 1})`;
+      return `<button class="water-dot ${filled ? "active" : ""}" type="button" onclick="${onClick}">${index + 1}</button>`;
+    }).join("");
+  }
+}
+
+// =====================================================
+// RESET DÍA
+// =====================================================
+function resetDay() {
+  if (!confirm("¿Resetear todas las marcas y el agua del día?")) return;
+  saveDayState({});
+  setWater(0);
+  renderActiveDay();
+  renderWeekOverview();
+  updateStreak();
+  updateFabBadge();
+  showToast("Día reseteado");
+}
+
+// =====================================================
+// STREAK
+// =====================================================
+function getStreakEmoji(count) {
+  if (count >= 30) return "🔥🔥🔥";
+  if (count >= 14) return "🔥🔥";
+  if (count >= 7) return "🔥";
+  if (count >= 3) return "✨";
+  return "";
+}
+
+function updateStreak() {
+  const today = getTodayKey();
+  const streak = JSON.parse(localStorage.getItem(STORAGE.streak) || "{}");
+  const todayDoneCount = Object.values(getDayState()).filter(Boolean).length;
+  const todayQualifies = todayDoneCount >= 4;
+
+  // Si hoy NO califica pero el last era hoy, lo sacamos del registro
+  // (significa que destildaste hasta bajar de 4 — el día de hoy ya no cuenta)
+  if (!todayQualifies && streak.last === today) {
+    // Buscamos cuál era el streak antes de marcarlo hoy
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayKey = formatLocalDateKey(yesterday);
+    if (streak.previousLast === yesterdayKey) {
+      streak.count = streak.previousCount || 0;
+      streak.last = streak.previousLast;
+    } else {
+      streak.count = 0;
+      streak.last = null;
+    }
+  } else if (todayQualifies && streak.last !== today) {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayKey = formatLocalDateKey(yesterday);
+
+    // Guardamos el estado anterior para poder revertir si desmarca
+    streak.previousLast = streak.last;
+    streak.previousCount = streak.count || 0;
+
+    if (streak.last === yesterdayKey) {
+      streak.count = (streak.count || 0) + 1;
+    } else {
+      streak.count = 1;
+    }
+    streak.last = today;
+
+    // Si llegó a un milestone, lo celebramos
+    if ([3, 7, 14, 30, 60, 90].includes(streak.count)) {
+      celebrateStreak(streak.count);
+    }
+  }
+
+  localStorage.setItem(STORAGE.streak, JSON.stringify(streak));
+  const count = streak.count || 0;
+  const badge = document.querySelector("#streak-badge");
+  if (badge) {
+    const emoji = getStreakEmoji(count);
+    const level = count >= 30 ? "gold" : count >= 14 ? "silver" : count >= 7 ? "fire" : count >= 3 ? "warm" : "cold";
+    badge.className = `sb-streak streak-${level}`;
+    badge.innerHTML = `<span class="streak-num">${count}</span><span class="streak-label">días seguidos${emoji ? " " + emoji : ""}</span>`;
+    // Mirror to topbar
+    const mirror = document.querySelector("#topbar-streak-mirror");
+    if (mirror) mirror.innerHTML = badge.innerHTML;
+  }
+}
+
+function celebrateStreak(count) {
+  showToast(`🎉 ¡${count} días seguidos! Seguís firme.`);
+}
+
+// =====================================================
+// TRACKER DE PESO
+// =====================================================
+function getWeightHistory() {
+  return JSON.parse(localStorage.getItem(STORAGE.weight) || "[]");
+}
+
+// Seed inicial: precarga el peso del jueves pasado SOLO la primera vez que se abre la app
+function seedInitialWeight() {
+  // Si ya se hizo el seed alguna vez, no volver a hacerlo aunque el history esté vacío
+  if (localStorage.getItem(STORAGE.weightSeeded) === "1") return;
+  const history = getWeightHistory();
+  if (history.length > 0) {
+    localStorage.setItem(STORAGE.weightSeeded, "1");
+    return;
+  }
+  const today = new Date();
+  const dayDiff = (today.getDay() - 4 + 7) % 7 || 7;
+  const lastThursday = new Date(today);
+  lastThursday.setDate(today.getDate() - dayDiff);
+  const seed = [{
+    date: formatLocalDateKey(lastThursday),
+    kg: 78
+  }];
+  localStorage.setItem(STORAGE.weight, JSON.stringify(seed));
+  localStorage.setItem(STORAGE.weightSeeded, "1");
+}
+
+function saveWeight() {
+  const input = document.querySelector("#weight-input");
+  // FIX: aceptar coma como separador decimal (Argentina usa coma, ej: "78,5")
+  const rawValue = String(input.value).replace(",", ".").trim();
+  const val = parseFloat(rawValue);
+  if (!val || val < 30 || val > 200 || isNaN(val)) {
+    showToast("Ingresá un peso válido (kg)");
+    return;
+  }
+  const history = getWeightHistory();
+  const today = getTodayKey();
+  const existing = history.findIndex((h) => h.date === today);
+  if (existing >= 0) {
+    history[existing].kg = val;
+  } else {
+    history.push({ date: today, kg: val });
+  }
+  history.sort((a, b) => a.date.localeCompare(b.date));
+  localStorage.setItem(STORAGE.weight, JSON.stringify(history));
+  input.value = "";
+  renderWeightTracker();
+  showToast(`Peso guardado: ${val} kg`);
+}
+
+function renderWeightTracker() {
+  const history = getWeightHistory();
+  const wrap = document.querySelector("#weight-history");
+  if (!wrap) return;
+
+  if (history.length === 0) {
+    wrap.innerHTML = '<p class="weight-empty">Todavía no registraste pesos. Pesate cada lunes en ayunas.</p>';
+    return;
+  }
+
+  const recent = history.slice(-6);
+  const first = history[0];
+  const last = history[history.length - 1];
+  const diff = (last.kg - first.kg).toFixed(1);
+  const diffSign = diff >= 0 ? "+" : "";
+  const weeks = Math.max(1, Math.floor((new Date(last.date) - new Date(first.date)) / (7 * 86400000)));
+
+  // Lógica para mantenimiento 78-80kg
+  let suggestion = "";
+  const currentKg = last.kg;
+  if (currentKg > 80) {
+    suggestion = `<div class="weight-alert">⚠️ Pasaste tu límite (80kg). <strong>Achicá 1 porción de carbo</strong> en el almuerzo o cena (½ papa, ½ taza arroz, sacá 1 tostada) hasta volver al rango 78-80kg.</div>`;
+  } else if (currentKg < 77) {
+    suggestion = `<div class="weight-alert">⚠️ Bajaste del rango (78-80kg). <strong>Sumá 200 kcal/día</strong>: 1 cda extra de manteca de maní + 1 banana + ½ taza arroz extra al almuerzo.</div>`;
+  } else if (currentKg >= 78 && currentKg <= 80) {
+    suggestion = `<div class="weight-good">✓ Mantenimiento perfecto. Estás en ${currentKg}kg, dentro del rango 78-80kg.</div>`;
+  } else if (currentKg >= 77 && currentKg < 78) {
+    suggestion = `<div class="weight-good">⚪ Casi en rango. ${currentKg}kg — sumá una merienda extra esta semana para volver a 78-80kg.</div>`;
+  }
+
+  // SVG chart — últimos 8 registros
+  const chartData = history.slice(-8);
+  const W = 340, H = 120, PAD = { t: 14, r: 10, b: 28, l: 36 };
+  const innerW = W - PAD.l - PAD.r;
+  const innerH = H - PAD.t - PAD.b;
+
+  // Rango: incluir siempre la zona 78-80 en el eje Y
+  const allKg = chartData.map(h => h.kg);
+  const yMin = Math.min(Math.min(...allKg) - 0.5, 77.5);
+  const yMax = Math.max(Math.max(...allKg) + 0.5, 80.5);
+  const yRange = yMax - yMin;
+
+  const toX = (i) => PAD.l + (i / Math.max(chartData.length - 1, 1)) * innerW;
+  const toY = (kg) => PAD.t + innerH - ((kg - yMin) / yRange) * innerH;
+
+  // Zona verde 78-80 kg
+  const zoneY1 = toY(80); const zoneY2 = toY(78);
+
+  // Línea principal
+  const points = chartData.map((h, i) => `${toX(i).toFixed(1)},${toY(h.kg).toFixed(1)}`).join(" ");
+
+  // Área bajo la línea (gradiente)
+  const areaPoints = [
+    `${toX(0).toFixed(1)},${(PAD.t + innerH).toFixed(1)}`,
+    ...chartData.map((h, i) => `${toX(i).toFixed(1)},${toY(h.kg).toFixed(1)}`),
+    `${toX(chartData.length - 1).toFixed(1)},${(PAD.t + innerH).toFixed(1)}`
+  ].join(" ");
+
+  // Labels Y (78, 79, 80)
+  const yLabels = [78, 79, 80].map(kg => `
+    <text x="${PAD.l - 5}" y="${toY(kg).toFixed(1)}" text-anchor="end" dominant-baseline="middle"
+      fill="rgba(100,120,160,0.7)" font-size="8" font-family="sans-serif">${kg}</text>
+    <line x1="${PAD.l}" y1="${toY(kg).toFixed(1)}" x2="${W - PAD.r}" y2="${toY(kg).toFixed(1)}"
+      stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+  `).join("");
+
+  // Puntos y etiquetas
+  const dotEls = chartData.map((h, i) => {
+    const cx = toX(i).toFixed(1), cy = toY(h.kg).toFixed(1);
+    const isLast = i === chartData.length - 1;
+    const inZone = h.kg >= 78 && h.kg <= 80;
+    const dotColor = inZone ? "#00e5a0" : (h.kg > 80 ? "#ff6b5f" : "#f59e0b");
+    const [, , d] = h.date.split("-").map(Number);
+    const [,mon] = h.date.split("-").map(Number);
+    return `
+      <circle cx="${cx}" cy="${cy}" r="${isLast ? 5 : 3.5}" fill="${dotColor}"
+        stroke="${isLast ? 'rgba(255,255,255,0.3)' : 'none'}" stroke-width="${isLast ? 2 : 0}"/>
+      ${isLast ? `<circle cx="${cx}" cy="${cy}" r="9" fill="${dotColor}" opacity="0.18"/>` : ''}
+      <text x="${cx}" y="${(PAD.t + innerH + 16).toFixed(1)}" text-anchor="middle"
+        fill="rgba(100,120,160,0.8)" font-size="7.5" font-family="sans-serif">${d}/${mon}</text>
+      ${isLast ? `<text x="${cx}" y="${(+cy - 10).toFixed(1)}" text-anchor="middle"
+        fill="${dotColor}" font-size="9" font-weight="700" font-family="sans-serif">${h.kg}</text>` : ''}
+    `;
+  }).join("");
+
+  const svgChart = `
+    <svg viewBox="0 0 ${W} ${H}" width="100%" style="overflow:visible;display:block;margin-top:12px">
+      <defs>
+        <linearGradient id="wgArea" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="rgba(79,139,255,0.25)"/>
+          <stop offset="100%" stop-color="rgba(79,139,255,0)"/>
+        </linearGradient>
+      </defs>
+      <!-- Zona 78-80 kg -->
+      <rect x="${PAD.l}" y="${zoneY1.toFixed(1)}" width="${innerW}" height="${(zoneY2 - zoneY1).toFixed(1)}"
+        fill="rgba(0,229,160,0.08)" rx="2"/>
+      <text x="${(W - PAD.r - 2)}" y="${((zoneY1 + zoneY2) / 2).toFixed(1)}"
+        text-anchor="end" dominant-baseline="middle"
+        fill="rgba(0,229,160,0.55)" font-size="7.5" font-family="sans-serif" font-weight="600">78–80</text>
+      <!-- Grid Y -->
+      ${yLabels}
+      <!-- Área -->
+      <polygon points="${areaPoints}" fill="url(#wgArea)"/>
+      <!-- Línea -->
+      <polyline points="${points}" fill="none" stroke="#4f8bff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+      <!-- Puntos -->
+      ${dotEls}
+    </svg>
+  `;
+
+  wrap.innerHTML = `
+    <div class="weight-summary">
+      <div class="ws-current">
+        <div class="ws-val">${last.kg} <span class="ws-unit">kg</span></div>
+        <div class="ws-lbl">peso actual</div>
+      </div>
+      <div class="ws-change ${diff >= 0 ? "up" : "down"}">
+        <div class="ws-val">${diffSign}${diff} <span class="ws-unit">kg</span></div>
+        <div class="ws-lbl">en ${weeks} sem</div>
+      </div>
+      <div class="ws-range">
+        <div class="ws-val ${last.kg >= 78 && last.kg <= 80 ? 'in-range' : 'out-range'}">
+          ${last.kg >= 78 && last.kg <= 80 ? '✓' : '↑↓'} 78–80
+        </div>
+        <div class="ws-lbl">objetivo</div>
+      </div>
+    </div>
+    ${suggestion}
+    ${svgChart}
+  `;
+}
+
+// =====================================================
+// NOTIFICACIONES
+// =====================================================
+function clearScheduledNotifs() {
+  scheduledNotifs.forEach((id) => clearTimeout(id));
+  scheduledNotifs = [];
+}
+
+function scheduleMealNotifs() {
+  if (!("Notification" in window) || Notification.permission !== "granted") return;
+  clearScheduledNotifs();
+
+  const day = getTodayDayObject();
+  const now = new Date();
+
+  day.meals.forEach((m) => {
+    const [h, mn] = m.time.split(":").map(Number);
+    const target = new Date();
+    target.setHours(h, mn, 0, 0);
+    const diff = target - now;
+    if (diff <= 0) return;
+    const id = setTimeout(() => {
+      new Notification(`${m.label} · ${m.time}`, {
+        body: `${m.name} · ${m.kcal} kcal`,
+        tag: `meal-${m.id}`
+      });
+      updateNextMeal();
+    }, diff);
+    scheduledNotifs.push(id);
+  });
+
+  let waterTime = new Date();
+  if (waterTime.getHours() < 9) {
+    waterTime.setHours(9, 0, 0, 0);
+  } else {
+    const minsFromStart = (waterTime.getHours() - 9) * 60 + waterTime.getMinutes();
+    const blocks = Math.floor(minsFromStart / 90) + 1;
+    waterTime.setHours(9, 0, 0, 0);
+    waterTime.setMinutes(blocks * 90);
+  }
+  while (waterTime.getHours() <= 22 && waterTime.getDate() === now.getDate()) {
+    const diff = waterTime - now;
+    if (diff > 0) {
+      const id = setTimeout(() => {
+        new Notification("💧 Hora de tomar agua", { body: "Acordate de hidratarte", tag: "water" });
+      }, diff);
+      scheduledNotifs.push(id);
+    }
+    waterTime = new Date(waterTime.getTime() + 90 * 60000);
+  }
+}
+
+function activarNotificaciones() {
+  // iOS Safari: las notificaciones solo funcionan si está instalada como PWA
+  if (isIOS() && !isStandalone()) {
+    alert(
+      "📱 En iPhone primero tenés que instalar la app:\n\n" +
+      "1. Tocá el botón Compartir (⎙) de Safari\n" +
+      "2. Bajá y elegí 'Agregar a pantalla de inicio'\n" +
+      "3. Abrí la app desde el ícono y volvé a tocar 'Activar notificaciones'\n\n" +
+      "Después sí van a funcionar las alarmas de comidas."
+    );
+    return;
+  }
+
+  if (!("Notification" in window)) {
+    showToast("Tu navegador no permite notificaciones.");
+    return;
+  }
+
+  if (Notification.permission === "granted") {
+    scheduleMealNotifs();
+    showToast("Notificaciones activas");
+    document.querySelector("#notif-btn").textContent = "🔔 Notificaciones activas ✓";
+    return;
+  }
+
+  if (Notification.permission === "denied") {
+    showToast("Notificaciones bloqueadas. Habilitalas en el navegador.");
+    return;
+  }
+
+  Notification.requestPermission().then((permission) => {
+    if (permission === "granted") {
+      scheduleMealNotifs();
+      new Notification("Dieta activada", { body: "Te aviso en cada comida y para tomar agua." });
+      document.querySelector("#notif-btn").textContent = "🔔 Notificaciones activas ✓";
+    }
+  });
+}
+
+// =====================================================
+// iOS DETECTION & PWA INSTALL BANNER
+// =====================================================
+function isIOS() {
+  return /iPhone|iPad|iPod/i.test(navigator.userAgent) && !window.MSStream;
+}
+
+function isStandalone() {
+  return ("standalone" in window.navigator && window.navigator.standalone) ||
+    window.matchMedia("(display-mode: standalone)").matches;
+}
+
+// iOS install banner removed — no longer shown
+
+// =====================================================
+// FAB · botón flotante "Ir al día de hoy"
+// =====================================================
+function setupDayFab() {
+  const fab = document.querySelector("#day-fab");
+  if (!fab) return;
+
+  function checkVisibility() {
+    const dayContainer = document.querySelector("#day-container");
+    if (!dayContainer) return;
+    const rect = dayContainer.getBoundingClientRect();
+    const panelTopVisible = rect.top >= 0 && rect.top < window.innerHeight * 0.4;
+    fab.classList.toggle("show", !panelTopVisible);
+  }
+
+  window.addEventListener("scroll", checkVisibility, { passive: true });
+
+  // Update sidebar nav active item on scroll
+  const navSections = [
+    { id: "plan-section",   href: "#plan-section" },
+    { id: "supp-section",   href: "#supp-section" },
+    { id: "weight-section", href: "#weight-section" },
+    { id: "shopping-list",  href: "#shopping-list" },
+    { id: "review-section", href: "#review-section" }
+  ];
+  function updateSidebarNav() {
+    const scrollY = window.scrollY + 120;
+    let current = navSections[0].href;
+    for (const s of navSections) {
+      const el = document.getElementById(s.id);
+      if (el && el.offsetTop <= scrollY) current = s.href;
+    }
+    document.querySelectorAll(".sb-nav-item").forEach(a => {
+      a.classList.toggle("sb-nav-active", a.getAttribute("href") === current);
+    });
+  }
+  window.addEventListener("scroll", updateSidebarNav, { passive: true });
+
+  // FIX: ignorar resize cuando hay input enfocado (teclado iOS dispara resize y causaba flicker)
+  let resizeTimeout;
+  window.addEventListener("resize", () => {
+    if (document.activeElement && ["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement.tagName)) return;
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(checkVisibility, 200);
+  });
+  checkVisibility();
+}
+
+function updateFabBadge() {
+  const fab = document.querySelector("#day-fab");
+  if (!fab) return;
+  const todayObj = getTodayDayObject();
+  const allMeals = JSON.parse(localStorage.getItem(STORAGE.meals) || "{}");
+  const todayState = allMeals[getTodayKey()] || {};
+  const doneCount = Object.values(todayState).filter(Boolean).length;
+  const totalCount = todayObj.meals.length;
+  const remaining = totalCount - doneCount;
+
+  let badge = fab.querySelector(".day-fab-badge");
+  if (remaining > 0 && doneCount > 0 && doneCount < totalCount) {
+    if (!badge) {
+      badge = document.createElement("span");
+      badge.className = "day-fab-badge";
+      fab.appendChild(badge);
+    }
+    badge.textContent = remaining;
+  } else if (badge) {
+    badge.remove();
+  }
+}
+
+function scrollToTodayPanel() {
+  const todayObj = getTodayDayObject();
+  // Si el día activo no es el de hoy, cambiarlo
+  if (todayObj.id !== activeDay) {
+    setActiveDay(todayObj.id);
+  }
+  // Scrollear al panel después del re-render
+  setTimeout(() => {
+    const dayContainer = document.querySelector("#day-container");
+    if (dayContainer) {
+      const headerOffset = 12;
+      const elementPosition = dayContainer.getBoundingClientRect().top + window.scrollY;
+      window.scrollTo({
+        top: elementPosition - headerOffset,
+        behavior: "smooth"
+      });
+    }
+  }, 80);
+}
+window.scrollToTodayPanel = scrollToTodayPanel;
+
+// =====================================================
+// WEEK OVERVIEW · resumen semanal con cumplimiento por día
+// =====================================================
+function getDayStateForDate(dateKey, allMealsCache) {
+  const all = allMealsCache || JSON.parse(localStorage.getItem(STORAGE.meals) || "{}");
+  return all[dateKey] || {};
+}
+
+function getWeekDates() {
+  // Lunes a domingo de la semana actual
+  const today = new Date();
+  const todayDay = today.getDay() === 0 ? 7 : today.getDay(); // Mon=1...Sun=7
+  const monday = new Date(today);
+  monday.setDate(today.getDate() - (todayDay - 1));
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    return formatLocalDateKey(d);
+  });
+}
+
+function renderWeekOverview() {
+  const grid = document.querySelector("#week-overview-grid");
+  if (!grid) return;
+  const weekDates = getWeekDates();
+  const todayKey = getTodayKey();
+  const dayOrder = ["lun", "mar", "mie", "jue", "vie", "sab", "dom"];
+
+  // FIX: leer el localStorage UNA sola vez, no 7 veces (uno por día)
+  const allMealsCache = JSON.parse(localStorage.getItem(STORAGE.meals) || "{}");
+
+  grid.innerHTML = dayOrder.map((dayId, i) => {
+    const dayDef = days.find((d) => d.id === dayId);
+    const dateKey = weekDates[i];
+    const state = getDayStateForDate(dateKey, allMealsCache);
+    const doneCount = Object.values(state).filter(Boolean).length;
+    const totalMeals = dayDef.meals.length;
+    const isToday = dateKey === todayKey;
+    const isComplete = doneCount >= 4;
+    const dots = Array.from({ length: totalMeals }, (_, idx) =>
+      `<span class="wo-dot ${idx < doneCount ? "done" : ""}"></span>`
+    ).join("");
+
+    // SVG ring progress
+    const R = 18, CIRC = 2 * Math.PI * R;
+    const pct = totalMeals > 0 ? doneCount / totalMeals : 0;
+    const dash = (pct * CIRC).toFixed(2);
+    const ringColor = isComplete ? "#00e5a0" : isToday ? "#4f8bff" : "rgba(79,139,255,0.45)";
+    const trackColor = "rgba(255,255,255,0.07)";
+    const ringEl = `
+      <svg width="44" height="44" viewBox="0 0 44 44" class="wo-ring">
+        <circle cx="22" cy="22" r="${R}" fill="none" stroke="${trackColor}" stroke-width="3.5"/>
+        <circle cx="22" cy="22" r="${R}" fill="none" stroke="${ringColor}" stroke-width="3.5"
+          stroke-dasharray="${dash} ${CIRC.toFixed(2)}"
+          stroke-dashoffset="0" stroke-linecap="round"
+          transform="rotate(-90 22 22)"
+          class="wo-ring-fill"/>
+        <text x="22" y="22" text-anchor="middle" dominant-baseline="middle"
+          fill="${ringColor}" font-size="9.5" font-weight="800" font-family="sans-serif">${doneCount}/${totalMeals}</text>
+      </svg>
+    `;
+
+    return `
+      <div class="wo-day ${isToday ? "is-today" : ""} ${isComplete ? "complete" : ""} ${dayDef.isRestDay ? "rest-day" : ""}" onclick="setActiveDay('${dayId}')">
+        <div class="wo-tab">${dayDef.tab}</div>
+        <div class="wo-icon">${dayDef.workout.icon}</div>
+        ${ringEl}
+      </div>
+    `;
+  }).join("");
+}
+
+// =====================================================
+// EXPORTAR A CALENDARIO (.ics) · notificaciones reales en iPhone
+// =====================================================
+const ICS_RRULE_DAY = { 0: "SU", 1: "MO", 2: "TU", 3: "WE", 4: "TH", 5: "FR", 6: "SA" };
+
+function pad2(n) { return String(n).padStart(2, "0"); }
+
+function formatICSLocal(date) {
+  return `${date.getFullYear()}${pad2(date.getMonth() + 1)}${pad2(date.getDate())}T${pad2(date.getHours())}${pad2(date.getMinutes())}00`;
+}
+
+function nextOccurrenceOfDay(targetDayIndex) {
+  // targetDayIndex: 0=dom, 1=lun, ..., 6=sab
+  const today = new Date();
+  let diff = targetDayIndex - today.getDay();
+  if (diff < 0) diff += 7;
+  const next = new Date(today);
+  next.setDate(today.getDate() + diff);
+  next.setHours(0, 0, 0, 0);
+  return next;
+}
+
+function escapeICS(text) {
+  return String(text)
+    .replace(/\\/g, "\\\\")
+    .replace(/;/g, "\\;")
+    .replace(/,/g, "\\,")
+    .replace(/\n/g, "\\n");
+}
+
+function generateICS() {
+  const TZ = "America/Argentina/Buenos_Aires";
+  const lines = [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//Rony Cozzi//Dieta Gym//ES",
+    "CALSCALE:GREGORIAN",
+    "METHOD:PUBLISH",
+    "X-WR-CALNAME:Dieta Rony · Comidas",
+    `X-WR-TIMEZONE:${TZ}`
+  ];
+
+  // Eventos de comidas (semanales recurrentes) — las 4 semanas del menú rotativo
+  // RRULE exporta solo la semana correspondiente usando BYDAY. Para menus rotativos
+  // usamos la primera ocurrencia real de cada semana para la fecha de arranque.
+  allWeeks.forEach((weekDays, wi) => {
+    weekDays.forEach((day) => {
+      day.meals.forEach((m) => {
+        const [h, mn] = m.time.split(":").map(Number);
+        // FIX: cada semana del menú rotativo debe empezar wi semanas después de la semana actual
+        const startDate = nextOccurrenceOfDay(day.dayIndex);
+        startDate.setDate(startDate.getDate() + wi * 7);
+        startDate.setHours(h, mn, 0, 0);
+        const endDate = new Date(startDate.getTime() + 30 * 60 * 1000);
+        // UID único por semana para evitar colisiones entre semanas del menú
+        const uid = `${m.id}-${day.id}@dieta-rony`;
+
+        lines.push(
+          "BEGIN:VEVENT",
+          `UID:${uid}`,
+          `SUMMARY:🍽️ [S${wi+1}] ${escapeICS(m.label)}: ${escapeICS(m.name)}`,
+          `DESCRIPTION:${escapeICS("Semana " + (wi+1) + " · " + m.kcal + " kcal · " + m.desc)}`,
+          `DTSTART;TZID=${TZ}:${formatICSLocal(startDate)}`,
+          `DTEND;TZID=${TZ}:${formatICSLocal(endDate)}`,
+          `RRULE:FREQ=WEEKLY;INTERVAL=4;BYDAY=${ICS_RRULE_DAY[day.dayIndex]}`,
+          "BEGIN:VALARM",
+          "TRIGGER:-PT5M",
+          "ACTION:DISPLAY",
+          `DESCRIPTION:${escapeICS(m.label + ": " + m.name)}`,
+          "END:VALARM",
+          "END:VEVENT"
+        );
+      });
+    });
+  });
+
+  // Recordatorios de agua diarios cada 2 horas (9, 11, 13, 15, 17, 19, 21)
+  for (let h = 9; h <= 21; h += 2) {
+    const start = nextOccurrenceOfDay(new Date().getDay());
+    start.setHours(h, 0, 0, 0);
+    const end = new Date(start.getTime() + 5 * 60 * 1000);
+    lines.push(
+      "BEGIN:VEVENT",
+      `UID:water-${h}@dieta-rony`,
+      "SUMMARY:💧 Tomar agua",
+      "DESCRIPTION:Acordate de hidratarte. Meta diaria: 10 vasos (2.5L).",
+      `DTSTART;TZID=${TZ}:${formatICSLocal(start)}`,
+      `DTEND;TZID=${TZ}:${formatICSLocal(end)}`,
+      "RRULE:FREQ=DAILY",
+      "BEGIN:VALARM",
+      "TRIGGER:PT0M",
+      "ACTION:DISPLAY",
+      "DESCRIPTION:💧 Hora de tomar agua",
+      "END:VALARM",
+      "END:VEVENT"
+    );
+  }
+
+  // Recordatorio de pesarse los lunes a las 9:00
+  const monday = nextOccurrenceOfDay(1);
+  monday.setHours(9, 0, 0, 0);
+  const mondayEnd = new Date(monday.getTime() + 5 * 60 * 1000);
+  lines.push(
+    "BEGIN:VEVENT",
+    "UID:weigh-monday@dieta-rony",
+    "SUMMARY:⚖️ Pesarte (en ayunas)",
+    "DESCRIPTION:Pesate antes de desayunar. Después abrí la app y guardalo en el tracker.",
+    `DTSTART;TZID=${TZ}:${formatICSLocal(monday)}`,
+    `DTEND;TZID=${TZ}:${formatICSLocal(mondayEnd)}`,
+    "RRULE:FREQ=WEEKLY;BYDAY=MO",
+    "BEGIN:VALARM",
+    "TRIGGER:PT0M",
+    "ACTION:DISPLAY",
+    "DESCRIPTION:⚖️ Pesarte hoy",
+    "END:VALARM",
+    "END:VEVENT"
+  );
+
+  lines.push("END:VCALENDAR");
+  return lines.join("\r\n");
+}
+
+function downloadICS() {
+  const ics = generateICS();
+  const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "dieta-rony.ics";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  showToast("📅 Calendario descargado · Tocalo para importar");
+}
+
+function showCalendarHelp() {
+  const isIOSDevice = isIOS();
+  let message;
+  if (isIOSDevice) {
+    message =
+      "📅 PARA IPHONE:\n\n" +
+      "1. Tocá 'Descargar calendario' abajo\n" +
+      "2. iOS te va a preguntar dónde abrir el archivo\n" +
+      "3. Elegí 'Calendario'\n" +
+      "4. Tocá 'Aceptar' y 'OK'\n\n" +
+      "Listo: a partir de ahora vas a recibir notificaciones nativas del iPhone para cada comida (5 min antes), agua (cada 2h) y pesarte los lunes — TODO funciona aunque la app esté cerrada.\n\n" +
+      "Si después modificamos el plan, volvés a descargar y los eventos se actualizan automáticamente (mismos IDs).";
+  } else {
+    message =
+      "📅 ARCHIVO DE CALENDARIO\n\n" +
+      "Tocá 'Descargar' y se baja un archivo .ics que podés importar a:\n" +
+      "• Calendario de iPhone (lo mejor)\n" +
+      "• Google Calendar\n" +
+      "• Outlook\n\n" +
+      "Vas a recibir notificaciones nativas del sistema sin necesidad de abrir esta app.";
+  }
+  if (confirm(message + "\n\n¿Descargar ahora?")) {
+    downloadICS();
+  }
+}
+window.showCalendarHelp = showCalendarHelp;
+window.downloadICS = downloadICS;
+
+// =====================================================
+// COMPARTIR EL DÍA · WhatsApp / Share API
+// =====================================================
+function shareDay() {
+  const day = days.find((d) => d.id === activeDay);
+  if (!day) return;
+
+  const lines = [];
+  lines.push(`🍽️ DIETA · ${day.title.toUpperCase()}`);
+  lines.push(`${day.workout.icon} ${day.type}`);
+  lines.push(`📊 ${day.kcal} kcal · ${day.protein}g P · ${day.carbs}g C · ${day.fats}g G`);
+  lines.push("");
+
+  day.meals.forEach((m) => {
+    lines.push(`*${m.time}* — ${m.label}`);
+    lines.push(`▸ ${m.name} (${m.kcal} kcal)`);
+    lines.push(`  ${m.desc}`);
+    lines.push("");
+  });
+
+  lines.push(`💡 ${day.tip}`);
+
+  const text = lines.join("\n");
+
+  if (navigator.share) {
+    navigator.share({
+      title: `Dieta · ${day.title}`,
+      text
+    }).catch(() => copyToClipboard(text));
+  } else {
+    copyToClipboard(text);
+  }
+}
+
+// =====================================================
+// INIT
+// =====================================================
+document.querySelector("#notif-btn").addEventListener("click", activarNotificaciones);
+document.querySelector("#reset-btn").addEventListener("click", resetDay);
+const shareDayBtn = document.querySelector("#share-day-btn");
+if (shareDayBtn) shareDayBtn.addEventListener("click", shareDay);
+document.querySelector("#shopping-btn").addEventListener("click", () => {
+  const list = document.querySelector("#shopping-list");
+  list.classList.toggle("active");
+  list.scrollIntoView({ behavior: "smooth", block: "start" });
+});
+
+const weightBtn = document.querySelector("#weight-save-btn");
+if (weightBtn) weightBtn.addEventListener("click", saveWeight);
+
+window.setActiveDay = setActiveDay;
+window.toggleMeal = toggleMeal;
+window.toggleMealCheck = toggleMealCheck;
+window.togglePrep = togglePrep;
+window.toggleShop = toggleShop;
+window.setWater = setWater;
+window.resetShopping = resetShopping;
+window.exportShopping = exportShopping;
+window.setFridayMode = setFridayMode;
+window.quickCheckCurrentMeal = quickCheckCurrentMeal;
+window.saveWeight = saveWeight;
+
+// Cleanup de localStorage viejo antes que nada
+cleanupOldData();
+
+// FIX BUG NUTRICIONAL: sincronizar los targets del día con la suma REAL de los foods.
+// Antes los targets (kcal/protein/carbs/fats del header del día) estaban hardcoded
+// y NO coincidían con la suma de los foods. Eso causaba que el progress bar mostrara
+// menos kcal de las que el usuario realmente consumía si seguía las cantidades del plan.
+// Ahora los targets reflejan exactamente lo que sumás si seguís el plan al pie de la letra.
+
+// FIX: Sincronizar targets + prefixar IDs de comidas con índice de semana
+// Esto evita colisiones en localStorage cuando la misma comida aparece en varias semanas
+allWeeks.forEach((weekDays, wi) => {
+  weekDays.forEach((day) => {
+    // Prefix meal IDs with week index so they're unique across weeks
+    day.meals.forEach((m) => {
+      m.id = `w${wi}-${m.id}`;
+      if (m.alt) m.alt.id = `w${wi}-alt-${slug(m.alt.name)}`;
+    });
+    const totals = day.meals.reduce((acc, m) => {
+      acc.kcal += m.kcal;
+      m.foods.forEach((f) => { acc.p += f.p; acc.c += f.c; acc.g += f.g; });
+      return acc;
+    }, { kcal: 0, p: 0, c: 0, g: 0 });
+    day.kcal = totals.kcal;
+    day.protein = totals.p;
+    day.carbs = totals.c;
+    day.fats = totals.g;
+  });
+});
+
+
+const todayObj = getTodayDayObject();
+activeDay = todayObj.id;
+
+// Set greeting/time-of-day antes que nada para evitar flicker
+updateGreeting();
+
+renderTabs();
+renderActiveDay();
+renderWater();
+renderRules();
+renderShopping();
+renderSupplements();
+seedInitialWeight();
+renderWeightTracker();
+renderWeekOverview();
+setupDayFab();
+updateClock();
+updateNextMeal();
+updateGymBanner();
+updateStreak();
+// Intervals con manejo de visibilidad: pausan cuando la página está en background (ahorra batería en mobile)
+let clockInterval = null;
+let nextMealInterval = null;
+let greetingInterval = null;
+let dayChangeInterval = null;
+let lastCheckedDayKey = getTodayKey();
+
+function checkDayChange() {
+  // FIX: si la app queda abierta de un día al siguiente (pasó medianoche),
+  // actualizamos todo: día activo, banner, notifs, weekly overview.
+  const currentKey = getTodayKey();
+  if (currentKey !== lastCheckedDayKey) {
+    lastCheckedDayKey = currentKey;
+    // FIX: recalcular weekIndex y days en caso de que cambió la semana ISO
+    const newWeekIndex = getWeekIndex();
+    if (newWeekIndex !== weekIndex) {
+      weekIndex = newWeekIndex;
+      days = allWeeks[weekIndex];
+      currentWeekName = weekNames[weekIndex];
+    }
+    const todayObj = getTodayDayObject();
+    activeDay = todayObj.id;
+    renderTabs();
+    renderActiveDay();
+    renderWeekOverview();
+    updateGymBanner();
+    updateFabBadge();
+    if ("Notification" in window && Notification.permission === "granted") {
+      scheduleMealNotifs();
+    }
+  }
+}
+
+function startIntervals() {
+  if (!clockInterval) clockInterval = setInterval(updateClock, 1000);
+  if (!nextMealInterval) nextMealInterval = setInterval(updateNextMeal, 60000);
+  // Greeting/timeOfDay: cada minuto alcanza (no necesita actualizarse cada segundo)
+  if (!greetingInterval) greetingInterval = setInterval(() => {
+    updateGreeting();
+  }, 60000);
+  // Detectar cambio de día (medianoche): cada 2 minutos
+  if (!dayChangeInterval) dayChangeInterval = setInterval(checkDayChange, 2 * 60000);
+}
+function stopIntervals() {
+  if (clockInterval) { clearInterval(clockInterval); clockInterval = null; }
+  if (nextMealInterval) { clearInterval(nextMealInterval); nextMealInterval = null; }
+  if (greetingInterval) { clearInterval(greetingInterval); greetingInterval = null; }
+  if (dayChangeInterval) { clearInterval(dayChangeInterval); dayChangeInterval = null; }
+}
+
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) {
+    stopIntervals();
+  } else {
+    updateClock();
+    updateNextMeal();
+    startIntervals();
+  }
+});
+
+// =====================================================
+// SWIPE ENTRE DÍAS + TECLADO (desktop)
+// =====================================================
+(function setupInteraction() {
+  const DAY_ORDER = ["lun","mar","mie","jue","vie","sab","dom"];
+  const THRESHOLD = 55;
+  let startX = 0, startY = 0, dragging = false;
+
+  // Touch swipe
+  document.addEventListener("touchstart", (e) => {
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+    dragging = true;
+  }, { passive: true });
+
+  document.addEventListener("touchend", (e) => {
+    if (!dragging) return;
+    dragging = false;
+    const target = e.target;
+    if (target.closest("input,select,textarea,.prep-body,.alt-meal-panel")) return;
+    const dx = e.changedTouches[0].clientX - startX;
+    const dy = Math.abs(e.changedTouches[0].clientY - startY);
+    if (Math.abs(dx) < THRESHOLD || dy > Math.abs(dx) * 0.9) return;
+    const idx = DAY_ORDER.indexOf(activeDay);
+    if (dx < 0 && idx < DAY_ORDER.length - 1) setActiveDay(DAY_ORDER[idx + 1]);
+    else if (dx > 0 && idx > 0) setActiveDay(DAY_ORDER[idx - 1]);
+  }, { passive: true });
+
+  // Keyboard left/right arrow to switch days
+  document.addEventListener("keydown", (e) => {
+    if (e.target.matches("input,select,textarea")) return;
+    const idx = DAY_ORDER.indexOf(activeDay);
+    if ((e.key === "ArrowRight" || e.key === "ArrowDown") && idx < DAY_ORDER.length - 1) {
+      e.preventDefault();
+      setActiveDay(DAY_ORDER[idx + 1]);
+    } else if ((e.key === "ArrowLeft" || e.key === "ArrowUp") && idx > 0) {
+      e.preventDefault();
+      setActiveDay(DAY_ORDER[idx - 1]);
+    }
+  });
+})();
+
+// Active bottom nav highlight on scroll
+(function setupBottomNavHighlight() {
+  const sections = [
+    { id: "plan-section",    nav: 'a[href="#plan-section"]' },
+    { id: "weight-section",  nav: 'a[href="#weight-section"]' },
+    { id: "supp-section",    nav: 'a[href="#supp-section"]' },
+    { id: "shopping-list",   nav: 'a[href="#shopping-list"]' }
+  ];
+  function update() {
+    let active = sections[0];
+    for (const s of sections) {
+      const el = document.getElementById(s.id);
+      if (el && el.getBoundingClientRect().top <= 120) active = s;
+    }
+    document.querySelectorAll(".bn-item").forEach(a => a.classList.remove("bn-active"));
+    const activeEl = document.querySelector(active.nav);
+    if (activeEl) activeEl.classList.add("bn-active");
+  }
+  window.addEventListener("scroll", update, { passive: true });
+  update();
+})();
+
+// =====================================================
+// APPLE WATCH / SIRI SHORTCUTS INTEGRATION
+// =====================================================
+
+// URL scheme: ?action=water|meal|weight|today — disparado por Siri Shortcuts
+(function handleURLActions() {
+  const params = new URLSearchParams(window.location.search);
+  const action = params.get("action");
+  if (!action) return;
+
+  // Limpiar la URL sin recargar
+  const clean = window.location.pathname;
+  window.history.replaceState({}, "", clean);
+
+  // Ejecutar la acción después de que la app cargue
+  setTimeout(() => {
+    if (action === "water") {
+      // Agrega un vaso de agua y muestra confirmación
+      const dots = document.querySelectorAll(".water-dot:not(.active)");
+      if (dots.length > 0) {
+        dots[0].click();
+        showToast("💧 Vaso de agua registrado desde el Watch");
+      } else {
+        showToast("💧 ¡Ya completaste los 10 vasos de hoy!");
+      }
+    } else if (action === "meal") {
+      // Marca la comida más cercana al horario actual
+      setActiveDay(getTodayDayObject().id);
+      setTimeout(() => {
+        quickCheckCurrentMeal();
+      }, 300);
+    } else if (action === "weight") {
+      // Scroll a la sección de peso y foca el input
+      const el = document.querySelector("#weight-section");
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth" });
+        setTimeout(() => document.querySelector("#weight-input")?.focus(), 600);
+      }
+    } else if (action === "today") {
+      setActiveDay(getTodayDayObject().id);
+      setTimeout(scrollToTodayPanel, 300);
+    }
+  }, 800);
+})();
+
+// Genera la URL para el shortcut dado el action
+function getShortcutURL(action) {
+  return window.location.origin + window.location.pathname + "?action=" + action;
+}
+
+// Instalar atajo — abre la app Atajos de Apple con el atajo pre-configurado
+function installShortcut(action) {
+  const url = getShortcutURL(action);
+  const names = { water: "Agua Dieta", meal: "Marcar Comida", weight: "Registrar Peso", today: "Ver Plan Hoy" };
+  const icons = { water: "💧", meal: "✅", weight: "⚖️", today: "📊" };
+  const siriPhrases = { water: "Agua dieta", meal: "Marcar comida dieta", weight: "Peso dieta", today: "Ver dieta" };
+  const name = names[action] || action;
+  const icon = icons[action] || "⚡";
+  const siriPhrase = siriPhrases[action] || name;
+
+  // 1. Copiar URL al portapapeles automáticamente
+  copyToClipboard(url);
+
+  // 2. Mostrar mini-panel dentro del modal (no confirm feo)
+  // Eliminar panel previo si existe
+  const old = document.getElementById("shortcut-install-panel");
+  if (old) old.remove();
+
+  const panel = document.createElement("div");
+  panel.id = "shortcut-install-panel";
+  panel.innerHTML = `
+    <div class="sip-header">
+      <span class="sip-icon">${icon}</span>
+      <div>
+        <div class="sip-title">${icon} ${name}</div>
+        <div class="sip-sub">URL copiada al portapapeles ✓</div>
+      </div>
+      <button class="sip-close" onclick="document.getElementById('shortcut-install-panel').remove()">✕</button>
+    </div>
+    <div class="sip-url">${url}</div>
+    <ol class="sip-steps">
+      <li>Tocá <strong>Abrir Atajos</strong> abajo → se abre la app</li>
+      <li>Tocá <strong>"+"</strong> (arriba a la derecha)</li>
+      <li>Tocá <strong>"Añadir acción"</strong> → buscá <strong>"Abrir URLs"</strong></li>
+      <li>Tocá el campo de URL → <strong>Pegar</strong> (ya está en el clipboard)</li>
+      <li>Tocá el nombre del atajo arriba → escribí <strong>"${name}"</strong></li>
+      <li>Tocá <strong>"···"</strong> → activá <strong>"Mostrar en Apple Watch"</strong></li>
+    </ol>
+    <div class="sip-siri">💬 Después podés decirle a Siri: <em>"${siriPhrase}"</em></div>
+    <div class="sip-actions">
+      <button class="sip-btn-primary" onclick="window.location.href='shortcuts://'">
+        ⚡ Abrir app Atajos ahora
+      </button>
+      <button class="sip-btn-secondary" onclick="copyToClipboard(url); showToast('URL copiada')">
+        Copiar URL de nuevo
+      </button>
+    </div>
+  `;
+
+  // Insertar dentro del watch-modal, después del shortcuts-grid
+  const grid = document.querySelector(".watch-shortcuts-grid");
+  if (grid) {
+    grid.after(panel);
+    panel.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  } else {
+    document.body.appendChild(panel);
+  }
+}
+window.installShortcut = installShortcut;
+
+function showWatchModal() {
+  const modal = document.querySelector("#watch-modal");
+  if (modal) {
+    modal.style.display = "flex";
+    document.body.style.overflow = "hidden";
+  }
+}
+window.showWatchModal = showWatchModal;
+
+function closeWatchModal(event) {
+  if (event && event.target !== document.querySelector("#watch-modal")) return;
+  const modal = document.querySelector("#watch-modal");
+  if (modal) {
+    modal.style.display = "none";
+    document.body.style.overflow = "";
+  }
+}
+window.closeWatchModal = closeWatchModal;
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") closeWatchModal();
+});
+
+function requestNotifications() {
+  activarNotificaciones();
+}
+window.requestNotifications = requestNotifications;
