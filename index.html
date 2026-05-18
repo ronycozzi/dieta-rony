@@ -108,6 +108,7 @@
           <div class="topbar-right">
             <div class="topbar-clock" id="topbar-clock-mirror"></div>
             <div class="topbar-streak" id="topbar-streak-mirror"></div>
+            <button class="topbar-watch-btn" type="button" onclick="showWatchModal()" aria-label="Apple Watch">⌚</button>
           </div>
         </div>
 
@@ -313,7 +314,7 @@
         <span class="bn-fab-inner">🍽️</span>
       </button>
       <a class="bn-item" href="#supp-section"><span class="bn-icon">💊</span><span class="bn-label">Supls</span></a>
-      <a class="bn-item" href="#shopping-list"><span class="bn-icon">🛒</span><span class="bn-label">Compras</span></a>
+      <button class="bn-item" type="button" onclick="showWatchModal()"><span class="bn-icon">⌚</span><span class="bn-label">Watch</span></button>
     </nav>
 
     <script src="script.js"></script>
@@ -329,11 +330,4 @@
         pairs.forEach(function(p) {
           var src = document.getElementById(p[0]);
           var dst = document.getElementById(p[1]);
-          if (src && dst) dst.textContent = src.textContent;
-        });
-      }
-      setInterval(mirrorToTopbar, 1000);
-      mirrorToTopbar();
-    </script>
-  </body>
-</html>
+          if (src && dst) ds

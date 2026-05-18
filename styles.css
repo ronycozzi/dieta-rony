@@ -1919,3 +1919,106 @@ body::before {
   .gym-stat-val { font-size: 0.88rem; }
   .gym-banner-icon { font-size: 1.6rem; }
 }
+
+/* ─── Shortcut Install Panel ─────────────────────────────── */
+#shortcut-install-panel {
+  background: #0d1525;
+  border: 1px solid rgba(99,179,237,0.25);
+  border-radius: 14px;
+  padding: 18px;
+  margin: 16px 0 8px;
+  animation: panelFadeIn .25s ease;
+}
+.sip-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.sip-icon { font-size: 1.6rem; flex-shrink: 0; }
+.sip-title { font-weight: 700; font-size: 0.95rem; color: var(--text); }
+.sip-sub { font-size: 0.78rem; color: #48bb78; margin-top: 2px; }
+.sip-close {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 4px 6px;
+  border-radius: 6px;
+  line-height: 1;
+}
+.sip-close:hover { background: rgba(255,255,255,.08); }
+.sip-url {
+  font-family: monospace;
+  font-size: 0.7rem;
+  color: #63b3ed;
+  background: rgba(99,179,237,.08);
+  border-radius: 6px;
+  padding: 7px 10px;
+  word-break: break-all;
+  margin-bottom: 12px;
+}
+.sip-steps {
+  padding-left: 20px;
+  margin: 0 0 12px;
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  line-height: 1.7;
+}
+.sip-steps strong { color: var(--text); }
+.sip-siri {
+  background: rgba(255,255,255,.04);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin-bottom: 14px;
+}
+.sip-siri em { color: var(--text-secondary); font-style: normal; font-weight: 600; }
+.sip-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.sip-btn-primary {
+  flex: 1;
+  min-width: 140px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.sip-btn-primary:hover { opacity: .88; }
+.sip-btn-secondary {
+  flex: 1;
+  min-width: 130px;
+  background: rgba(255,255,255,.06);
+  color: var(--text-secondary);
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+}
+.sip-btn-secondary:hover { background: rgba(255,255,255,.1); }
+
+/* Topbar Watch button (mobile) */
+.topbar-watch-btn {
+  background: linear-gradient(135deg, rgba(102,126,234,.25), rgba(118,75,162,.25));
+  border: 1px solid rgba(102,126,234,.4);
+  border-radius: 10px;
+  color: #fff;
+  font-size: 1.15rem;
+  line-height: 1;
+  padding: 6px 9px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background .2s;
+}
+.topbar-watch-btn:hover,
+.topbar-watch-btn:active { background: linear-gradient(135deg, rgba(102,126,234,.45), rgba(118,75,162,.45)); }
