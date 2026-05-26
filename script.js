@@ -2717,6 +2717,12 @@ const allWeeks = [
 // - Todas las comidas tienen opcion B.
 // =====================================================
 const BANNED_INGREDIENTS_RE = /(yogur|avena|harina de arroz|arroz inflado|cottage|ricota|locro|leche caliente|manzana con manteca de man[ií])/i;
+const PLAIN_MENU_BLOCKLIST = [
+  "souvlaki", "falafel", "gyoza", "wonton", "satay", "teriyaki",
+  "quinoa", "esparrago", "datil", "datiles", "granola", "chia", "lino",
+  "sesamo", "ponzu", "jengibre", "eneldo", "arandano", "frutos rojos",
+  "tomate seco", "salsa de pepino"
+];
 
 function cleanPlanText(value) {
   if (typeof value !== "string") return value;
@@ -2763,6 +2769,29 @@ function cleanPlanItem(item) {
   item.desc = cleanPlanText(item.desc);
   item.note = cleanPlanText(item.note);
   return item;
+}
+
+function plainText(value) {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
+function mealSearchText(item) {
+  if (!item) return "";
+  return plainText([
+    item.name,
+    item.desc,
+    item.note || "",
+    ...(item.foods || []).map((f) => f.name),
+    ...(item.prep || [])
+  ].join(" "));
+}
+
+function isTooSpecialForRony(item) {
+  const text = mealSearchText(item);
+  return PLAIN_MENU_BLOCKLIST.some((term) => text.includes(term));
 }
 
 function macroTotalsForMeal(item) {
@@ -2812,6 +2841,17 @@ function metabolismBoosterTemplate(name = "Refuerzo de leche, banana y nueces") 
   ], [
     "Refuerzo de calorias para metabolismo rapido sin meter otro scoop de whey.",
     "Usalo cuando el dia quedo corto o cuando el entrenamiento te dejo con hambre real."
+  ]);
+}
+
+function energyFloorTemplate(name = "Refuerzo chico de energia") {
+  return altMeal(name, "Leche - banana chica - tostada", [
+    food("200ml leche entera", 6, 10, 7),
+    food("1 banana chica", 1, 20, 0),
+    food("1 tostada integral", 4, 17, 2)
+  ], [
+    "Refuerzo simple para no quedar bajo de calorias.",
+    "No suma otro scoop: la whey diaria ya esta cubierta."
   ]);
 }
 
@@ -3203,6 +3243,40 @@ function compactMainOptions() {
   ];
 }
 
+function simpleFishOptions() {
+  return [
+    altMeal("Salmon con arroz y ensalada", "Salmon - arroz - ensalada - limon", [
+      food("200g salmon a la plancha o al horno", 44, 0, 22),
+      food("1 taza arroz cocido", 4, 50, 0),
+      food("Ensalada grande", 2, 10, 0),
+      food("1 cdita aceite de oliva", 0, 0, 5),
+      food("Limon", 0, 1, 0)
+    ], [
+      "Plancha u horno con sal, limon y ajo. Nada raro.",
+      "Arroz medido y ensalada grande para que sea comida completa."
+    ]),
+    altMeal("Salmon con papa al horno y verduras", "Salmon - papa - verduras - limon", [
+      food("200g salmon al horno", 44, 0, 22),
+      food("250g papa al horno", 5, 50, 0),
+      food("Verduras salteadas o ensalada", 3, 12, 0),
+      food("1 cdita aceite de oliva", 0, 0, 5)
+    ], [
+      "Salmon con papa y verduras. Simple, rico y con omega 3.",
+      "Usa limon, sal, pimienta y ajo; no hace falta salsa rara."
+    ]),
+    altMeal("Merluza con arroz, huevo y ensalada", "Merluza - arroz - huevo - ensalada", [
+      food("220g merluza al horno", 44, 0, 4),
+      food("1 taza arroz cocido", 4, 50, 0),
+      food("1 huevo duro", 6, 1, 5),
+      food("Ensalada grande", 2, 10, 0),
+      food("1 cdita aceite de oliva", 0, 0, 5)
+    ], [
+      "Merluza al horno con limon y ajo.",
+      "Arroz y huevo para completar energia y proteina."
+    ])
+  ];
+}
+
 function mealFromTemplate(time, label, template, altTemplate) {
   const item = meal(time, label, template.name, template.desc, 0, template.foods.map((f) => ({ ...f })), template.prep.slice(), template.note || null);
   item.alt = cloneMealTemplate(altTemplate);
@@ -3338,6 +3412,66 @@ function applyFiveDayTrainingRules() {
   });
 }
 
+function getPlainReplacement(item, weekNumber, dayNumber, offset = 0) {
+  const label = plainText(item.label);
+  const itemText = mealSearchText(item);
+
+  if (label.includes("desayuno")) {
+    const options = commonBreakfastOptions();
+    return options[(weekNumber + dayNumber + offset) % options.length];
+  }
+
+  if (label.includes("pre")) {
+    const options = [
+      altMeal("Banana, miel y tostada", "Banana - miel - tostada", [
+        food("1 banana", 1, 27, 0),
+        food("1 tostada integral", 4, 14, 1),
+        food("1 cdita miel", 0, 8, 0)
+      ], ["Comelo 30-60 minutos antes de entrenar.", "Carbo simple, liviano y efectivo."]),
+      altMeal("Banana con leche y tostada", "Banana - leche - tostada", [
+        food("1 banana", 1, 27, 0),
+        food("200ml leche entera", 6, 10, 7),
+        food("1 tostada integral", 4, 14, 1)
+      ], ["Opcion simple si queres algo mas completo antes del gym."])
+    ];
+    return options[(weekNumber + dayNumber + offset) % options.length];
+  }
+
+  if (label.includes("post")) return oneFitDailyStack("Whey OneFit + banana + creatina");
+
+  if (label.includes("media") || label.includes("merienda")) {
+    const options = nonWheySnackOptions();
+    return options[(weekNumber + dayNumber + offset) % options.length];
+  }
+
+  if (label.includes("almuerzo") || label.includes("cena")) {
+    const fishMeal = /salmon|trucha|merluza|pescado/.test(itemText);
+    const options = fishMeal ? simpleFishOptions() : compactMainOptions();
+    return options[(weekNumber + dayNumber + offset) % options.length];
+  }
+
+  return metabolismBoosterTemplate();
+}
+
+function applyPlainMenuRules() {
+  allWeeks.forEach((weekDays, weekNumber) => {
+    weekDays.forEach((day, dayNumber) => {
+      day.meals.forEach((m, mealNumber) => {
+        if (isTooSpecialForRony(m)) {
+          const replacement = getPlainReplacement(m, weekNumber, dayNumber, mealNumber);
+          applyMealTemplate(m, replacement);
+          const altReplacement = getPlainReplacement(m, weekNumber, dayNumber, mealNumber + 1);
+          m.alt = cloneMealTemplate(altReplacement);
+        }
+
+        if (m.alt && isTooSpecialForRony(m.alt)) {
+          m.alt = cloneMealTemplate(getPlainReplacement(m, weekNumber, dayNumber, mealNumber + 2));
+        }
+      });
+    });
+  });
+}
+
 function ensureDailyOneFitAndCreatine() {
   allWeeks.forEach((weekDays) => {
     weekDays.forEach((day) => {
@@ -3378,6 +3512,37 @@ function limitDefaultWheyToOneScoop() {
         applyMealTemplate(m, template);
         m.alt = cloneMealTemplate(replacements[(weekNumber + dayNumber + index + 1) % replacements.length]);
       });
+    });
+  });
+}
+
+function applyMinimumEnergyFloorRules() {
+  allWeeks.forEach((weekDays) => {
+    weekDays.forEach((day) => {
+      const floor = day.isRestDay ? 2450 : 2650;
+      if (calculateDayTotals(day).kcal >= floor) return;
+
+      const night = day.meals.find((m) => /dormir/i.test(m.label));
+      if (night && !hasFullOneFitWhey(night)) {
+        applyMealTemplate(night, energyFloorTemplate());
+        night.alt = altMeal("Tostado chico de jamon y queso", "Pan - jamon - queso", [
+          food("1 rebanada pan integral", 4, 17, 2),
+          food("50g jamon cocido natural", 10, 1, 3),
+          food("30g queso en fetas o mozzarella", 7, 1, 5)
+        ], ["Refuerzo salado y simple si no queres leche y banana."]);
+      } else {
+        const insertAt = night ? day.meals.indexOf(night) : day.meals.length;
+        day.meals.splice(insertAt, 0, mealFromTemplate(
+          "23:00",
+          "Refuerzo",
+          energyFloorTemplate(),
+          altMeal("Tostado chico de jamon y queso", "Pan - jamon - queso", [
+            food("1 rebanada pan integral", 4, 17, 2),
+            food("50g jamon cocido natural", 10, 1, 3),
+            food("30g queso en fetas o mozzarella", 7, 1, 5)
+          ], ["Refuerzo salado y simple si no queres leche y banana."])
+        ));
+      }
     });
   });
 }
@@ -5325,9 +5490,11 @@ applyPlanQualityRules();
 applyProfessionalMenuRules();
 applyOneFitProductRules();
 applyFiveDayTrainingRules();
+applyPlainMenuRules();
 applyCalorieBalanceRules();
 ensureDailyOneFitAndCreatine();
 limitDefaultWheyToOneScoop();
+applyMinimumEnergyFloorRules();
 
 // FIX BUG NUTRICIONAL: sincronizar los targets del día con la suma REAL de los foods.
 // Antes los targets (kcal/protein/carbs/fats del header del día) estaban hardcoded
