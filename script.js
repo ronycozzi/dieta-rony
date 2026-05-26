@@ -2726,8 +2726,8 @@ function cleanPlanText(value) {
     .replace(/yogur natural/gi, "queso untable")
     .replace(/yogur/gi, "queso untable")
     .replace(/tzatziki/gi, "salsa de pepino y queso crema")
-    .replace(/harina de avena|harina avena/gi, "harina de arroz")
-    .replace(/avena en hojuelas|avena cruda|avena licuada|avena/gi, "arroz inflado")
+    .replace(/harina de avena|harina avena/gi, "pan integral")
+    .replace(/avena en hojuelas|avena cruda|avena licuada|avena/gi, "tostadas integrales")
     .replace(/galletitas de arroz inflado/gi, "galletitas de arroz")
     .replace(/alfajores de arroz inflado/gi, "alfajores de maicena")
     .replace(/panqueques? de arroz inflado/gi, "panqueques de banana")
@@ -2735,6 +2735,9 @@ function cleanPlanText(value) {
     .replace(/waffle proteico de arroz inflado/gi, "waffle proteico de banana")
     .replace(/porridge proteico de arroz inflado/gi, "crema de arroz proteica")
     .replace(/bol proteico: queso untable \+ whey \+ arroz inflado/gi, "Bol proteico: queso untable + whey + banana")
+    .replace(/crema de arroz proteica/gi, "desayuno proteico")
+    .replace(/harina de arroz/gi, "pan integral")
+    .replace(/arroz inflado/gi, "tostadas integrales")
     .replace(/arroz inflado \+ banana/gi, "banana + leche")
     .replace(/arroz inflado \+ huevos/gi, "harina de arroz + huevos")
     .replace(/arroz inflado mezclada/gi, "banana mezclada")
@@ -2901,12 +2904,72 @@ function commonSnackAltOptions() {
   ];
 }
 
+function commonBreakfastOptions() {
+  return [
+    altMeal("Huevos revueltos con jamon, queso, tostadas y banana", "3 huevos - jamon - queso en fetas - tostadas - banana", [
+      food("3 huevos", 18, 1, 15),
+      food("60g jamon cocido natural", 12, 1, 4),
+      food("50g queso en fetas", 12, 1, 8),
+      food("2 tostadas integrales", 7, 34, 3),
+      food("1 banana", 1, 27, 0),
+      food("Cafe con leche 200ml", 6, 10, 7)
+    ], [
+      "Hace los huevos revueltos y suma jamon y queso al final.",
+      "Comelo con tostadas y banana. Es desayuno fuerte, normal y perfecto para dia de espalda."
+    ]),
+    altMeal("Tostado de jamon y queso con banana y leche", "Pan - jamon - queso - banana - leche", [
+      food("2 rebanadas pan integral", 7, 34, 3),
+      food("80g jamon cocido natural", 16, 1, 5),
+      food("60g queso en fetas o mozzarella", 14, 2, 10),
+      food("1 banana", 1, 27, 0),
+      food("250ml leche entera", 8, 12, 8)
+    ], [
+      "Arma un tostado grande con jamon y queso.",
+      "Banana y leche al lado para completar energia antes de entrenar."
+    ]),
+    altMeal("Omelette con queso, tostadas y fruta", "Huevos - queso - tostadas - fruta", [
+      food("3 huevos", 18, 1, 15),
+      food("50g mozzarella o queso en fetas", 12, 1, 9),
+      food("2 tostadas integrales", 7, 34, 3),
+      food("1 fruta", 1, 24, 0),
+      food("1 cdita aceite de oliva", 0, 0, 5)
+    ], [
+      "Omelette simple con queso, sin inventos.",
+      "Tostadas y fruta para que no quede corto de carbohidratos."
+    ]),
+    altMeal("Tostadas con queso untable, huevos y banana", "Tostadas - queso untable - huevos - banana", [
+      food("2 tostadas integrales", 7, 34, 3),
+      food("2 cdas queso untable", 4, 3, 7),
+      food("2 huevos", 12, 1, 10),
+      food("1 banana", 1, 27, 0),
+      food("200ml leche entera", 6, 10, 7)
+    ], [
+      "Unta queso untable en las tostadas.",
+      "Suma huevos a la plancha o revueltos, banana y leche."
+    ])
+  ];
+}
+
+function applyMealTemplate(target, template) {
+  target.name = template.name;
+  target.desc = template.desc;
+  target.kcal = template.kcal;
+  target.foods = template.foods.map((f) => ({ ...f }));
+  target.prep = template.prep.slice();
+  target.note = null;
+}
+
 function applyProfessionalMenuRules() {
+  const breakfastOptions = commonBreakfastOptions();
   const mainOptions = commonMainAltOptions();
   const snackOptions = commonSnackAltOptions();
   allWeeks.forEach((weekDays) => {
     weekDays.forEach((day) => {
       day.meals.forEach((m) => {
+        if (m.label === "Desayuno") {
+          const template = day.id === "mar" ? breakfastOptions[0] : pickAlt(m, breakfastOptions);
+          applyMealTemplate(m, template);
+        }
         if (m.label === "Almuerzo" || m.label === "Cena") {
           m.alt = pickAlt(m, mainOptions);
         }
