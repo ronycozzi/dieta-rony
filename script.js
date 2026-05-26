@@ -2769,6 +2769,154 @@ function pickAlt(item, options) {
   return options[hashString(item.id + "-" + item.label) % options.length];
 }
 
+function commonMainAltOptions() {
+  return [
+    altMeal("Pastel de papa con carne magra", "Carne magra - papa - huevo - mozzarella - queso rallado", [
+      food("180g carne magra picada", 42, 0, 10),
+      food("300g papa pisada", 6, 60, 0),
+      food("1 huevo duro", 6, 1, 5),
+      food("40g mozzarella", 9, 1, 8),
+      food("1 cda queso rallado", 3, 1, 4),
+      food("Cebolla + morron + tomate", 2, 12, 0)
+    ], [
+      "Saltea cebolla, morron y carne magra con pimenton, comino y tomate.",
+      "Arma fuente con relleno, huevo duro picado y pure de papa arriba.",
+      "Termina con mozzarella y queso rallado; horno fuerte hasta gratinar."
+    ]),
+    altMeal("Tarta de pollo, jamon y queso", "Tapa de tarta - pollo - jamon - queso en fetas - huevo", [
+      food("1 tapa de tarta", 8, 38, 8),
+      food("160g pollo desmenuzado", 45, 0, 6),
+      food("60g jamon cocido", 12, 1, 4),
+      food("60g queso en fetas", 14, 2, 10),
+      food("2 huevos", 12, 1, 10),
+      food("Cebolla + espinaca", 3, 8, 1)
+    ], [
+      "Mezcla pollo, jamon, queso, huevos y verduras salteadas.",
+      "Va todo a una tapa de tarta y horno 25-30 min.",
+      "Queda practica para guardar porciones."
+    ]),
+    altMeal("Milanesa de pollo al horno con pure", "Pechuga - pan rallado - papa - ensalada", [
+      food("200g pechuga rebozada al horno", 48, 10, 8),
+      food("300g papa para pure", 6, 60, 0),
+      food("1 cdita aceite de oliva", 0, 0, 5),
+      food("Ensalada de tomate y hojas", 2, 8, 0)
+    ], [
+      "Reboza la pechuga y hornea a 200 grados hasta dorar.",
+      "Pure simple con papa, sal y un toque de oliva.",
+      "Es comida de casa, alta en proteina y facil de cumplir."
+    ]),
+    altMeal("Fideos con tuco de carne magra", "Pasta - carne magra - tomate - queso rallado", [
+      food("90g fideos secos", 11, 65, 2),
+      food("150g carne magra picada", 35, 0, 8),
+      food("250ml tomate triturado", 3, 14, 0),
+      food("1 cda queso rallado", 3, 1, 4)
+    ], [
+      "Dora carne con ajo y cebolla. Suma tomate y cocina 15 min.",
+      "Mezcla con pasta al dente y queso rallado medido.",
+      "Ideal para dias de espalda o piernas por el carbo."
+    ]),
+    altMeal("Tortilla de papa, huevo y queso", "Huevos - papa - queso en fetas - ensalada", [
+      food("3 huevos", 18, 1, 15),
+      food("280g papa", 6, 56, 0),
+      food("50g queso en fetas", 12, 1, 8),
+      food("Ensalada mixta", 2, 8, 0)
+    ], [
+      "Cocina la papa en cubos chicos y mezcla con huevo batido.",
+      "Agrega queso en fetas y cocina tapado hasta que firme.",
+      "Cena simple, saciante y buena para recuperar."
+    ]),
+    altMeal("Arroz con atun, huevo y palta", "Arroz - atun - huevo - palta - tomate", [
+      food("1 taza arroz cocido", 4, 50, 0),
+      food("1 lata grande de atun", 32, 0, 2),
+      food("2 huevos duros", 12, 1, 10),
+      food("1/2 palta", 2, 6, 12),
+      food("Tomate + limon", 1, 6, 0)
+    ], [
+      "Arma bowl con arroz, atun escurrido, huevo duro, palta y tomate.",
+      "Limon, sal y pimienta. Cero raro, mucha proteina."
+    ]),
+    altMeal("Hamburguesas caseras con papas al horno", "Carne magra - pan - papas - queso - ensalada", [
+      food("2 hamburguesas magras caseras", 40, 0, 14),
+      food("1 pan de hamburguesa", 5, 28, 3),
+      food("250g papas al horno", 5, 50, 0),
+      food("1 feta de queso", 6, 1, 5),
+      food("Lechuga + tomate", 1, 5, 0)
+    ], [
+      "Arma hamburguesas con carne magra, sal, pimienta y ajo.",
+      "Papas al horno en bastones con poquito aceite.",
+      "Mucho mejor que delivery y encaja con recomposicion."
+    ]),
+    altMeal("Empanadas de carne al horno con ensalada", "Empanadas - carne magra - huevo - ensalada", [
+      food("3 tapas de empanada", 9, 51, 6),
+      food("150g carne magra", 35, 0, 8),
+      food("1 huevo duro", 6, 1, 5),
+      food("Ensalada grande", 3, 10, 0)
+    ], [
+      "Relleno con carne magra, cebolla, morron y huevo duro.",
+      "Horno hasta dorar. Ensalada grande al lado para fibra."
+    ]),
+    altMeal("Pizza casera con mozzarella y pollo", "Prepizza - mozzarella - pollo - tomate - rucula", [
+      food("1 prepizza individual", 10, 62, 6),
+      food("120g pollo cocido", 34, 0, 4),
+      food("70g mozzarella", 16, 2, 14),
+      food("Salsa de tomate", 2, 10, 0),
+      food("Rucula o tomate fresco", 1, 4, 0)
+    ], [
+      "Salsa de tomate, pollo, mozzarella medida y horno fuerte.",
+      "Rucula o tomate al salir. Rica, normal y controlada."
+    ]),
+    altMeal("Pollo al horno con papas y queso rallado", "Pollo - papas - zanahoria - queso rallado", [
+      food("220g pollo al horno", 50, 0, 12),
+      food("280g papas", 6, 56, 0),
+      food("Zanahoria + cebolla", 2, 14, 0),
+      food("1 cda queso rallado", 3, 1, 4)
+    ], [
+      "Todo a la bandeja con sal, pimenton, ajo y limon.",
+      "Queso rallado al final para sabor sin pasarse."
+    ])
+  ];
+}
+
+function commonSnackAltOptions() {
+  return [
+    altMeal("Tostado de jamon y queso con fruta", "Pan - jamon - queso en fetas - fruta", [
+      food("2 rebanadas pan integral", 7, 34, 3),
+      food("70g jamon cocido", 14, 1, 5),
+      food("50g queso en fetas", 12, 1, 8),
+      food("1 fruta", 1, 24, 0)
+    ], ["Tostado clasico y una fruta. Practico y normal."]),
+    altMeal("Sandwich de atun, queso y tomate", "Pan - atun - queso en fetas - tomate", [
+      food("2 rebanadas pan integral", 7, 34, 3),
+      food("1 lata de atun", 24, 0, 1),
+      food("40g queso en fetas", 9, 1, 6),
+      food("Tomate + hojas verdes", 1, 5, 0)
+    ], ["Atun escurrido, queso y tomate. Buena proteina sin cocinar."]),
+    altMeal("Tostadas con queso untable y banana", "Tostadas - queso untable - banana - miel", [
+      food("2 tostadas integrales", 7, 34, 3),
+      food("2 cdas queso untable", 4, 3, 7),
+      food("1 banana", 1, 27, 0),
+      food("1 cdita miel", 0, 8, 0)
+    ], ["Unta el queso, suma banana y un poco de miel si hace falta energia."])
+  ];
+}
+
+function applyProfessionalMenuRules() {
+  const mainOptions = commonMainAltOptions();
+  const snackOptions = commonSnackAltOptions();
+  allWeeks.forEach((weekDays) => {
+    weekDays.forEach((day) => {
+      day.meals.forEach((m) => {
+        if (m.label === "Almuerzo" || m.label === "Cena") {
+          m.alt = pickAlt(m, mainOptions);
+        }
+        if (m.label === "Merienda" || m.label === "Media mañana") {
+          m.alt = pickAlt(m, snackOptions);
+        }
+      });
+    });
+  });
+}
+
 function buildFallbackAlt(item) {
   const label = item.label.toLowerCase();
   const mainOptions = [
@@ -4661,6 +4809,7 @@ window.saveWeight = saveWeight;
 // Cleanup de localStorage viejo antes que nada
 cleanupOldData();
 applyPlanQualityRules();
+applyProfessionalMenuRules();
 
 // FIX BUG NUTRICIONAL: sincronizar los targets del día con la suma REAL de los foods.
 // Antes los targets (kcal/protein/carbs/fats del header del día) estaban hardcoded
