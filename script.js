@@ -2783,6 +2783,38 @@ function oneFitPancakesFood(label = "1 porcion pancakes proteicos OneFit vainill
   return food(label, ONEFIT_PANCAKES.p, ONEFIT_PANCAKES.c, ONEFIT_PANCAKES.g);
 }
 
+function oneFitDailyStack(name = "Whey OneFit diario + banana + creatina") {
+  return altMeal(name, "Whey OneFit - banana - agua - creatina", [
+    oneFitWheyFood(),
+    food("1 banana", 1, 27, 0),
+    food("Creatina 5g", 0, 0, 0)
+  ], [
+    "1 scoop todos los dias. Con metabolismo rapido y 5 entrenos semanales lo dejamos como base, no como opcion rara.",
+    "La creatina va todos los dias; el horario no es magico, lo importante es cumplirla."
+  ]);
+}
+
+function oneFitSolidPostAlt() {
+  return altMeal("Atun con papa y limon", "Atun - papa - tomate - oliva", [
+    food("1 lata grande de atun", 32, 0, 2),
+    food("220g papa hervida", 5, 44, 0),
+    food("Tomate + limon", 1, 5, 0),
+    food("1 cdita oliva", 0, 0, 5)
+  ], ["Si ese dia no queres batido, atun + papa es el reemplazo solido."]);
+}
+
+function metabolismBoosterTemplate(name = "Refuerzo de leche, banana y nueces") {
+  return altMeal(name, "Leche - banana - nueces - tostada", [
+    food("250ml leche entera", 8, 12, 8),
+    food("1 banana", 1, 27, 0),
+    food("15g nueces", 2, 2, 10),
+    food("1 tostada integral", 3, 17, 1)
+  ], [
+    "Refuerzo de calorias para metabolismo rapido sin meter otro scoop de whey.",
+    "Usalo cuando el dia quedo corto o cuando el entrenamiento te dejo con hambre real."
+  ]);
+}
+
 function hashString(value) {
   return String(value).split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
 }
@@ -2970,6 +3002,33 @@ function lightSnackOptions() {
       "Deja huevos hervidos en la heladera.",
       "Snack normal, barato y alto en saciedad."
     ])
+  ];
+}
+
+function nonWheySnackOptions() {
+  return [
+    altMeal("Jamón, queso y fruta", "Jamon cocido - queso en fetas - fruta", [
+      food("70g jamon cocido natural", 14, 1, 5),
+      food("40g queso en fetas o mozzarella", 9, 1, 6),
+      food("1 fruta", 1, 24, 0)
+    ], ["Plato frio simple: jamon, queso y fruta."]),
+    altMeal("Sandwich de atun, queso y tomate", "Pan - atun - queso en fetas - tomate", [
+      food("2 rebanadas pan integral", 7, 34, 3),
+      food("1 lata de atun", 24, 0, 1),
+      food("40g queso en fetas", 9, 1, 6),
+      food("Tomate + hojas verdes", 1, 5, 0)
+    ], ["Atun escurrido, queso y tomate. Buena proteina sin sumar otro scoop."]),
+    altMeal("Huevos duros con fruta", "Huevos - fruta - mate o cafe", [
+      food("2 huevos duros", 12, 1, 10),
+      food("1 fruta", 1, 24, 0),
+      food("Mate o cafe", 0, 0, 0)
+    ], ["Deja huevos hervidos listos en la heladera."]),
+    altMeal("Tostado chico de jamon y queso con fruta", "Pan - jamon - queso en fetas - fruta", [
+      food("1 rebanada pan integral", 4, 17, 2),
+      food("50g jamon cocido", 10, 1, 3),
+      food("30g queso en fetas", 7, 1, 5),
+      food("1 fruta", 1, 24, 0)
+    ], ["Tostado chico y una fruta. Practico, normal y sin sumar otro scoop."])
   ];
 }
 
@@ -3162,6 +3221,24 @@ function calculateDayTotals(day) {
   }, { kcal: 0, p: 0, c: 0, g: 0 });
 }
 
+function hasFullOneFitWhey(mealItem) {
+  const text = `${mealItem.name} ${mealItem.desc} ${mealItem.foods.map((f) => f.name).join(" ")}`;
+  return /1 scoop whey OneFit/i.test(text) || (/Whey OneFit/i.test(text) && !/medio scoop|1\/2 scoop/i.test(text));
+}
+
+function hasCreatine(mealItem) {
+  const text = `${mealItem.name} ${mealItem.desc} ${mealItem.foods.map((f) => f.name).join(" ")} ${mealItem.prep.join(" ")}`;
+  return /creatina/i.test(text);
+}
+
+function addCreatineToMeal(mealItem) {
+  if (hasCreatine(mealItem)) return;
+  mealItem.foods.push(food("Creatina 5g", 0, 0, 0));
+  if (!/creatina/i.test(mealItem.name)) mealItem.name = `${mealItem.name} + creatina`;
+  if (!/creatina/i.test(mealItem.desc)) mealItem.desc = `${mealItem.desc} - creatina 5g`;
+  mealItem.prep.push("Sumale 5g de creatina. Todos los dias, entrenes o descanses.");
+}
+
 function applyProfessionalMenuRules() {
   const breakfastOptions = commonBreakfastOptions();
   const mainOptions = commonMainAltOptions();
@@ -3202,20 +3279,8 @@ function applyOneFitProductRules() {
         }
 
         if (m.label === "Post-entreno") {
-          applyMealTemplate(m, altMeal("Whey OneFit + banana + creatina", "Whey OneFit - banana - agua - creatina", [
-            oneFitWheyFood(),
-            food("1 banana", 1, 27, 0),
-            food("Creatina 5g", 0, 0, 0)
-          ], [
-            "Batilo con agua. La banana repone energia sin hacer una comida pesada.",
-            "La whey entra aca porque ahora la tenes; no hace falta meter 2 scoops."
-          ]));
-          m.alt = altMeal("Atun con papa y limon", "Atun - papa - tomate - oliva", [
-            food("1 lata grande de atun", 32, 0, 2),
-            food("220g papa hervida", 5, 44, 0),
-            food("Tomate + limon", 1, 5, 0),
-            food("1 cdita oliva", 0, 0, 5)
-          ], ["Si no queres whey, atun + papa es el reemplazo solido."]);
+          applyMealTemplate(m, oneFitDailyStack("Whey OneFit + banana + creatina"));
+          m.alt = oneFitSolidPostAlt();
         }
 
         if ((m.label === "Merienda" || m.label === "Media mañana") && (m.kcal > 380 || macroTotalsForMeal(m).p < 12)) {
@@ -3247,6 +3312,76 @@ function applyOneFitProductRules() {
   });
 }
 
+function applyFiveDayTrainingRules() {
+  allWeeks.forEach((weekDays) => {
+    const friday = weekDays.find((day) => day.id === "vie");
+    if (!friday) return;
+
+    friday.type = "Dia de gym - Full body";
+    friday.workout.name = "Full Body";
+    friday.workout.duration = "50 min";
+    friday.workout.icon = "⚡";
+    friday.workout.primary = ["Full body"];
+    delete friday.workout.optional;
+    friday.tags = ["Full body", "Quinto dia", "Metabolismo rapido"];
+    friday.tip = "Viernes cuenta como quinto entrenamiento. Full body controlado, sin matarte: empuje, tiron, piernas liviano y abdomen. Si excepcionalmente descansas, usa el selector y baja un poco carbo.";
+
+    if (!friday.meals.some((m) => m.label === "Post-entreno")) {
+      const postSlot = friday.meals.find((m) => m.label === "Merienda") || friday.meals.find(hasFullOneFitWhey) || friday.meals.find((m) => m.label === "Media mañana");
+      if (postSlot) {
+        postSlot.label = "Post-entreno";
+        postSlot.time = postSlot.time < "15:00" ? "17:00" : postSlot.time;
+        applyMealTemplate(postSlot, oneFitDailyStack("Whey OneFit + banana + creatina"));
+        postSlot.alt = oneFitSolidPostAlt();
+      }
+    }
+  });
+}
+
+function ensureDailyOneFitAndCreatine() {
+  allWeeks.forEach((weekDays) => {
+    weekDays.forEach((day) => {
+      let wheyMeal = day.meals.find(hasFullOneFitWhey);
+
+      if (!wheyMeal) {
+        wheyMeal = day.meals.find((m) => m.label === "Antes de dormir") || day.meals[day.meals.length - 1];
+        applyMealTemplate(wheyMeal, oneFitDailyStack());
+        wheyMeal.alt = altMeal("Whey OneFit con agua + creatina", "Whey OneFit - agua - creatina", [
+          oneFitWheyFood(),
+          food("Creatina 5g", 0, 0, 0)
+        ], [
+          "Version liviana si ya metiste suficientes calorias.",
+          "La creatina igual va todos los dias."
+        ]);
+      } else {
+        addCreatineToMeal(wheyMeal);
+      }
+    });
+  });
+}
+
+function limitDefaultWheyToOneScoop() {
+  const replacements = nonWheySnackOptions();
+  allWeeks.forEach((weekDays, weekNumber) => {
+    weekDays.forEach((day, dayNumber) => {
+      const wheyMeals = day.meals.filter(hasFullOneFitWhey);
+      if (wheyMeals.length <= 1) return;
+
+      const keep = wheyMeals.find((m) => m.label === "Post-entreno") || wheyMeals[0];
+      wheyMeals.filter((m) => m !== keep).forEach((m, index) => {
+        if (/dormir/i.test(m.label)) {
+          applyMealTemplate(m, metabolismBoosterTemplate("Refuerzo de leche, banana y nueces"));
+          m.alt = cloneMealTemplate(replacements[(weekNumber + dayNumber + index) % replacements.length]);
+          return;
+        }
+        const template = replacements[(weekNumber + dayNumber + index) % replacements.length];
+        applyMealTemplate(m, template);
+        m.alt = cloneMealTemplate(replacements[(weekNumber + dayNumber + index + 1) % replacements.length]);
+      });
+    });
+  });
+}
+
 function applyCalorieBalanceRules() {
   const lighterSnacks = lightSnackOptions();
   const fullSnacks = commonSnackAltOptions();
@@ -3254,9 +3389,9 @@ function applyCalorieBalanceRules() {
 
   allWeeks.forEach((weekDays, weekNumber) => {
     weekDays.forEach((day, dayNumber) => {
-      const target = day.isRestDay ? 2550 : 2750;
-      const maxComfort = target + 130;
-      const minComfort = day.isRestDay ? 2350 : 2550;
+      const target = day.isRestDay ? 2600 : 2850;
+      const maxComfort = target + (day.isRestDay ? 160 : 180);
+      const minComfort = day.isRestDay ? 2450 : 2650;
 
       if (day.isRestDay && calculateDayTotals(day).kcal < minComfort) {
         const hasMidMorning = day.meals.some((m) => /media/i.test(m.label));
@@ -3271,34 +3406,24 @@ function applyCalorieBalanceRules() {
       if (day.isRestDay && calculateDayTotals(day).kcal < minComfort) {
         const night = day.meals.find((m) => /dormir/i.test(m.label));
         if (night) {
-          applyMealTemplate(night, altMeal("Whey OneFit con leche y banana chica", "Whey OneFit - leche - banana chica", [
-            oneFitWheyFood(),
-            food("200ml leche entera", 6, 10, 7),
-            food("1 banana chica", 1, 20, 0)
-          ], [
-            "Usalo en descanso solo si el dia quedo corto de calorias o proteina.",
-            "Si estas lleno y ya cumpliste, pasa a la opcion B con agua."
-          ]));
-          night.alt = altMeal("Whey OneFit con agua", "Whey OneFit - agua", [
-            oneFitWheyFood()
-          ], ["Version liviana si solo falto proteina."]);
+          applyMealTemplate(night, metabolismBoosterTemplate("Refuerzo de leche, banana y nueces"));
+          night.alt = altMeal("Tostado chico de jamon y queso", "Pan - jamon - queso", [
+            food("1 rebanada pan integral", 4, 17, 2),
+            food("50g jamon cocido natural", 10, 1, 3),
+            food("30g queso en fetas o mozzarella", 7, 1, 5)
+          ], ["Refuerzo salado y simple si no queres algo dulce."]);
         }
       }
 
-      if (!day.isRestDay && calculateDayTotals(day).kcal < 2500) {
+      if (!day.isRestDay && calculateDayTotals(day).kcal < minComfort) {
         const night = day.meals.find((m) => /dormir/i.test(m.label));
         if (night) {
-          applyMealTemplate(night, altMeal("Cierre proteico si el dia quedo corto", "Whey OneFit - leche - banana chica", [
-            oneFitWheyFood(),
-            food("200ml leche entera", 6, 10, 7),
-            food("1 banana chica", 1, 20, 0)
-          ], [
-            "Para dias de gym que quedaron muy bajos de calorias.",
-            "Si no entrenaste o ya estas lleno, usa la opcion B con agua."
-          ]));
-          night.alt = altMeal("Whey OneFit con agua", "Whey OneFit - agua", [
-            oneFitWheyFood()
-          ], ["Version liviana si solo falto proteina."]);
+          applyMealTemplate(night, metabolismBoosterTemplate("Refuerzo post-dia de gym"));
+          night.alt = altMeal("Tostado chico de jamon y queso", "Pan - jamon - queso", [
+            food("1 rebanada pan integral", 4, 17, 2),
+            food("50g jamon cocido natural", 10, 1, 3),
+            food("30g queso en fetas o mozzarella", 7, 1, 5)
+          ], ["Refuerzo salado y simple si no queres algo dulce."]);
         }
       }
 
@@ -3510,13 +3635,13 @@ let currentWeekName = getCurrentWeekName();
 const supplementsBase = [
   {
     name: "Whey protein",
-    detail: "1 scoop cuando falte proteína. 2 scoops solo si ese día venís corto o salís del gym sin poder comer.",
-    when: "Post-entreno o antes de dormir · con agua o leche según calorías y tolerancia"
+    detail: "1 scoop todos los días. En tu caso no queda como 'por si falta': metabolismo rápido + 5 entrenos semanales = base diaria.",
+    when: "Gym: post-entreno con banana + creatina · Descanso: con desayuno, merienda o antes de dormir"
   },
   {
     name: "Creatina monohidrato",
-    detail: "3-5g por día, todos los días (incluso los de descanso). No hace falta ciclarla ni tomarla exactamente post-entreno. La constancia es lo que importa.",
-    when: "Gym: cuando te quede cómodo · Descanso: con cualquier comida"
+    detail: "5g por día, todos los días. No se cicla y no depende de entrenar ese día; funciona por saturación y constancia.",
+    when: "Junto al whey diario o con cualquier comida si ese día te queda más cómodo"
   }
 ];
 
@@ -3548,13 +3673,13 @@ const supplementsOptional = [
 // =====================================================
 const rules = [
   ["⚖️", "Mantenimiento 78-80kg", "Pesate cada lunes en ayunas. Si pasás de 80kg, achicá 1 porción de carbo en almuerzo/cena. Si bajás de 77kg, sumá 200 kcal/día. El objetivo es recomposición, no subir."],
-  ["🥩", "Proteína primero", "150-185g/día, distribuida en 5-6 comidas. Es lo que mantiene el músculo aunque las kcal estén en mantenimiento. Si una comida queda corta, sumá un huevo, 1 lata de atún o 1 scoop whey."],
+  ["🥩", "Proteína primero", "1 scoop whey diario ya está contado en el plan. El resto viene de comida real: huevos, pollo, carne, atún, pescado, queso y leche. Si una comida queda corta, sumá huevo o atún antes que inventar mezclas raras."],
   ["🥛", "Leche entera si la tolerás", "Densa en calorías y útil. Si te cae pesada, usá agua para el whey. Para 78-80kg, no hace falta forzar más calorías."],
   ["💧", "Hidratación 3L+", "Mínimo 2.5L. En días de gym (especialmente piernas) o calor: 3-3.5L. La sed es señal tardía. La app te recuerda cada 90 min."],
   ["💊", "Creatina TODOS los días", "3-5g, incluso días de descanso. Lo que importa es que esté siempre presente en el músculo. Saltearla 1 día no rompe nada, pero la constancia es la clave."],
   ["🛌", "Dormir 8-9 horas", "El músculo crece cuando dormís. Con menos de 7h, perdés progreso aunque comas perfecto. Establecé una hora fija."],
-  ["🦵", "Día de piernas = +200 kcal", "El jueves sigue siendo el día más fuerte (3100 kcal vs 2800-2950 los otros). Si te sentís muerto el viernes, comiste poco el jueves."],
-  ["🏃", "Cardio moderado", "Con tu objetivo (mantener 78-80kg), 2-3 sesiones de 20-30 min de cardio por semana ayudan a definir sin perder músculo. Caminatas, bici suave o intervalos."],
+  ["🦵", "5 entrenos por semana", "Lunes a viernes quedan como base de gym. Viernes es full body controlado; si descansás de forma excepcional, usá el selector para bajar un poco carbo."],
+  ["🔥", "Metabolismo rápido", "No conviene recortar de más. Los días de gym se mueven cerca de 2800-3000 kcal y los descansos cerca de 2450-2650 kcal, ajustando con el peso semanal."],
   ["📸", "Medí más allá de la balanza", "Balanza + cintura + foto sin remera cada 4 semanas. En recomposición la balanza no se mueve mucho pero el cuerpo cambia: más músculo, menos grasa."],
   ["🥦", "Fibra todos los días", "Frutas y verduras en cada comida principal. Mejora digestión, energía y absorción de proteína. Importante en mantenimiento para sentirte saciado."]
 ];
@@ -3633,8 +3758,8 @@ const shopping = {
     "Ajo · 1 cabeza"
   ],
   "Suplementos": [
-    "Whey protein",
-    "Creatina monohidrato",
+    "Whey OneFit Classic · 1 scoop diario",
+    "Creatina monohidrato · 5g diario",
     "Omega 3 (opcional pero recomendado)",
     "Vitamina D3 (opcional)",
     "Magnesio o ZMA (opcional)"
@@ -3891,10 +4016,10 @@ function renderActiveDay() {
         ${day.id === "vie" ? `
           <div class="friday-toggle">
             <label class="toggle-row">
-              <span>¿Vas al gym hoy?</span>
+              <span>Viernes base: quinto gym</span>
               <select id="friday-mode-select" onchange="setFridayMode(this.value)">
-                <option value="gym" ${!isFridayWithoutGym ? "selected" : ""}>Sí, full body (${day.kcal} kcal)</option>
-                <option value="rest" ${isFridayWithoutGym ? "selected" : ""}>No, descanso (${day.kcal - 200} kcal)</option>
+                <option value="gym" ${!isFridayWithoutGym ? "selected" : ""}>Full body 5x/semana (${day.kcal} kcal)</option>
+                <option value="rest" ${isFridayWithoutGym ? "selected" : ""}>Descanso excepcional (${day.kcal - 200} kcal)</option>
               </select>
             </label>
           </div>` : ""}
@@ -5199,7 +5324,10 @@ cleanupOldData();
 applyPlanQualityRules();
 applyProfessionalMenuRules();
 applyOneFitProductRules();
+applyFiveDayTrainingRules();
 applyCalorieBalanceRules();
+ensureDailyOneFitAndCreatine();
+limitDefaultWheyToOneScoop();
 
 // FIX BUG NUTRICIONAL: sincronizar los targets del día con la suma REAL de los foods.
 // Antes los targets (kcal/protein/carbs/fats del header del día) estaban hardcoded
