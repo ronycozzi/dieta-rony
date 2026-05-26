@@ -110,7 +110,7 @@ const allWeeks = [
     workout: { name: "Pecho · Tríceps", duration: "60 min", icon: "🏋️", primary: ["Pecho", "Tríceps"] },
     isRestDay: false, kcal: 2900, protein: 170, carbs: 330, fats: 80,
     tags: ["Pecho", "Tríceps", "Mantenimiento"],
-    tip: "Día de empuje. Desayuná bien — la arroz inflado te da energía sostenida para las series pesadas de pecho. Si terminás el entreno con hambre real, sumá el cottage antes de dormir.",
+    tip: "Día de empuje. Desayuná bien — la arroz inflado te da energía sostenida para las series pesadas de pecho. Si terminás el entreno con hambre real, sumá el queso untable antes de dormir.",
     meals: [
       meal("10:00", "Desayuno", "Bowl de arroz inflado con banana, manteca de maní y miel", "60g arroz inflado · banana · 2 cdas manteca de maní · miel · leche", 0, [
         food("60g arroz inflado", 7, 40, 4),
@@ -172,14 +172,14 @@ const allWeeks = [
         "Para el puré: papas hervidas pisadas con oliva, sal y pizca de nuez moscada. Sin manteca — igual queda cremoso con oliva."
       ])),
 
-      meal("19:30", "Merienda", "ricota batida con granola, banana y miel", "200g ricota batida · granola · banana · miel", 0, [
-        food("200g ricota batida natural", 20, 8, 10),
+      meal("19:30", "Merienda", "queso untable con granola, banana y miel", "200g queso untable · granola · banana · miel", 0, [
+        food("200g queso untable natural", 20, 8, 10),
         food("30g granola sin azúcar", 3, 20, 4),
         food("1 banana", 1, 27, 0),
         food("1 cdita miel", 0, 8, 0)
       ], [
-        "Poné el queso cottage en el bol. Cortá la banana en rodajas arriba.",
-        "Esparcí la granola y rociá con miel. El ricota batida tiene el doble de proteína que el queso cottage común."
+        "Poné el queso untable en el bol. Cortá la banana en rodajas arriba.",
+        "Esparcí la granola y rociá con miel. El queso untable tiene el doble de proteína que el queso untable común."
       ], null),
 
       meal("22:00", "Cena", "Fideos al tuco casero con carne molida", "80g fideos · 150g carne magra · tomate triturado · queso", 0, [
@@ -204,11 +204,11 @@ const allWeeks = [
         "Armá los wraps poniendo arroz + pollo + palta en cada hoja de lechuga. Enrollá y comé de un mordisco."
       ])),
 
-      meal("23:30", "Antes de dormir", "Cottage con miel (opcional)", "100g queso cottage · miel · caseína natural", 0, [
-        food("100g queso cottage", 11, 3, 4),
+      meal("23:30", "Antes de dormir", "queso untable con miel (opcional)", "100g queso untable · miel · caseína natural", 0, [
+        food("100g queso untable", 11, 3, 4),
         food("1 cdita miel", 0, 8, 0)
       ], [
-        "Mezclá el cottage con la miel. El cottage tiene caseína — proteína de digestión lenta, ideal antes de dormir.",
+        "Mezclá el queso untable con la miel. El queso untable tiene caseína — proteína de digestión lenta, ideal antes de dormir.",
         "Solo si llegaste corto de proteína en el día. Si ya cumpliste los 170g, podés saltearlo."
       ], "Opcional. Saltealo si llegaste a la proteína del día.")
     ]
@@ -317,11 +317,11 @@ const allWeeks = [
         "Grillá el bife 3-4 min por lado. Bañá con chimichurri (perejil + ajo + orégano + oliva + limón) y serví."
       ])),
 
-      meal("23:30", "Antes de dormir", "Shake nocturno o cottage", "Proteína de digestión lenta", 0, [
-        food("1 scoop whey con leche entera o 100g cottage", 25, 8, 6)
+      meal("23:30", "Antes de dormir", "Shake nocturno o queso untable", "Proteína de digestión lenta", 0, [
+        food("1 scoop whey con leche entera o 100g queso untable", 25, 8, 6)
       ], [
         "Si llegaste corto de proteína: shake con leche entera (caseína natural + whey).",
-        "Alternativa sin batidora: 100g cottage con 1 cdita miel. Proteína lenta ideal antes de dormir."
+        "Alternativa sin batidora: 100g queso untable con 1 cdita miel. Proteína lenta ideal antes de dormir."
       ], "Opcional según proteína del día.")
     ]
   },
@@ -416,18 +416,18 @@ const allWeeks = [
         "Cubrí con mozzarella desmenuzada y el morrón. Horneá 12-15 min hasta que los bordes doren.",
         "Al sacarla, poné la rúcula fresca arriba con un toque de oliva — contraste perfecto entre caliente y fresco."
       ], null,
-      altMeal("Rigatoni con salsa de ricota y pollo", "80g pasta · pechuga · ricota · ajo · perejil", [
+      altMeal("Rigatoni con salsa de queso untable y pollo", "80g pasta · pechuga · queso untable · ajo · perejil", [
         food("80g rigatoni secos", 10, 58, 2),
         food("150g pechuga en tiras", 47, 0, 5),
-        food("4 cdas ricota", 12, 4, 7),
+        food("4 cdas queso untable", 12, 4, 7),
         food("1 cda aceite de oliva", 0, 0, 14)
       ], [
         "Herví los rigatoni al dente. Salteá el pollo en tiras con ajo y oliva 5 min.",
-        "Mezclá la pasta con el pollo. Apagá el fuego y agregá ricota + perejil + sal, revolviendo hasta que se integre."
+        "Mezclá la pasta con el pollo. Apagá el fuego y agregá queso untable + perejil + sal, revolviendo hasta que se integre."
       ])),
 
-      meal("23:30", "Antes de dormir", "Cottage con miel", "Caseína lenta · sueño reparador", 0, [
-        food("100g queso cottage", 11, 3, 4),
+      meal("23:30", "Antes de dormir", "queso untable con miel", "Caseína lenta · sueño reparador", 0, [
+        food("100g queso untable", 11, 3, 4),
         food("1 cdita miel", 0, 8, 0)
       ], ["Solo si llegaste corto de proteína en el día."], "Opcional.")
     ]
@@ -530,23 +530,23 @@ const allWeeks = [
         "Incorporá el arroz cocido, la crema light y el jugo de limón. Revolvé 3 min a fuego bajo.",
         "El limón corta la pesadez de la crema y le da un sabor fresco completamente distinto al arroz con pollo de siempre."
       ], null,
-      altMeal("Pollo al curry suave con pan de pita", "170g pollo · curry · tomate · queso cottage · 2 panes pita", [
+      altMeal("Pollo al curry suave con pan de pita", "170g pollo · curry · tomate · queso untable · 2 panes pita", [
         food("170g pechuga", 53, 0, 5),
         food("2 panes de pita", 10, 50, 2),
         food("100g tomate triturado", 1, 5, 0),
-        food("2 cdas queso cottage", 3, 3, 2),
+        food("2 cdas queso untable", 3, 3, 2),
         food("1 cdita curry en polvo", 0, 1, 0)
       ], [
         "Salteá el pollo en cubos con cebolla, ajo y curry en polvo. Sumá tomate triturado y cociná 12 min.",
-        "Apagá, incorporá queso cottage y mezclá. Serví con pan de pita cortado para mojar."
+        "Apagá, incorporá queso untable y mezclá. Serví con pan de pita cortado para mojar."
       ])),
 
       meal("23:30", "Antes de dormir", "Shake nocturno (obligatorio hoy)", "Piernas exige proteína nocturna", 0, [
         food("1 scoop whey con leche entera", 25, 10, 9),
-        food("O 150g queso cottage", 16, 5, 6)
+        food("O 150g queso untable", 16, 5, 6)
       ], [
         "Después de piernas, el shake nocturno no es opcional — el músculo sigue sintetizando proteína 24-48hs.",
-        "Si el shake te cae pesado de noche, usá cottage con una fruta."
+        "Si el shake te cae pesado de noche, usá queso untable con una fruta."
       ], "Hoy es obligatorio.")
     ]
   },
@@ -572,14 +572,14 @@ const allWeeks = [
         "Servís con tostadas y jugo. Espinaca + huevos es la combinación de hierro + proteína más accesible."
       ], null),
 
-      meal("12:00", "Media mañana", "Tostadas con ricota, nueces y miel", "2 tostadas · ricota · nueces · miel · fruta", 0, [
+      meal("12:00", "Media mañana", "Tostadas con queso untable, nueces y miel", "2 tostadas · queso untable · nueces · miel · fruta", 0, [
         food("2 tostadas integrales", 8, 28, 2),
-        food("4 cdas ricota", 12, 4, 7),
+        food("4 cdas queso untable", 12, 4, 7),
         food("20g nueces", 3, 3, 13),
         food("1 cdita miel", 0, 8, 0),
         food("1 manzana", 0, 20, 0)
       ], [
-        "Batí la ricota con la miel hasta que quede cremosa. Untá en las tostadas.",
+        "Batí la queso untable con la miel hasta que quede cremosa. Untá en las tostadas.",
         "Poné las nueces picadas encima. Comé la manzana al lado."
       ], null),
 
@@ -637,8 +637,8 @@ const allWeeks = [
         "Armá con pollo + pepino en bastones + palta. Enrollá apretando bien."
       ])),
 
-      meal("23:30", "Antes de dormir", "Cottage con miel o leche tibia", "Proteína lenta", 0, [
-        food("100g queso cottage", 11, 3, 4),
+      meal("23:30", "Antes de dormir", "queso untable con miel o leche tibia", "Proteína lenta", 0, [
+        food("100g queso untable", 11, 3, 4),
         food("1 cdita miel", 0, 8, 0)
       ], ["Opcional. Solo si llegaste corto de proteína o tenés hambre real."], "Opcional.")
     ]
@@ -701,12 +701,12 @@ const allWeeks = [
       meal("22:00", "Cena", "Souvlaki de pollo con salsa de pepino y queso crema y arroz", "160g pollo marinado · 2 panes pita · salsa de pepino y queso crema · arroz", 0, [
         food("160g pechuga en brochettes", 50, 0, 5),
         food("2 panes de pita o árabe", 8, 36, 2),
-        food("salsa de pepino y queso crema (queso cottage + pepino + ajo + eneldo)", 4, 5, 4),
+        food("salsa de pepino y queso crema (queso untable + pepino + ajo + eneldo)", 4, 5, 4),
         food("1/2 taza arroz cocido", 2, 25, 0)
       ], [
         "Marinala pechuga en cubos con oliva + limón + ajo + orégano + pimentón, 30 min mínimo.",
         "Pinchá en palitos (si tenés) y grillá en sartén a fuego alto 6-8 min girando.",
-        "Para el salsa de pepino y queso crema: queso cottage + pepino rallado escurrido + ajo + eneldo + sal. Servís todo junto con el arroz."
+        "Para el salsa de pepino y queso crema: queso untable + pepino rallado escurrido + ajo + eneldo + sal. Servís todo junto con el arroz."
       ], "Una cena distinta, con personalidad. Cambia completamente el sabor de la semana.",
       altMeal("Fideos con pesto de albahaca y queso", "80g pasta · pesto casero · queso parmesano", [
         food("80g fideos secos", 10, 58, 2),
@@ -717,7 +717,7 @@ const allWeeks = [
         "Mezclá la pasta con el pesto. Servís con más queso encima. En 15 min tenés una cena con sabor italiano real."
       ])),
 
-      meal("23:30", "Antes de dormir", "Leche tibia o cottage", "Descanso profundo con proteína lenta", 0, [
+      meal("23:30", "Antes de dormir", "Leche tibia o queso untable", "Descanso profundo con proteína lenta", 0, [
         food("250ml leche entera tibia", 8, 12, 9)
       ], ["Un vaso de leche tibia antes de dormir. Mejora la calidad del sueño."], "Opcional.")
     ]
@@ -873,13 +873,13 @@ const allWeeks = [
         "Tapá y cociná 25 min a fuego medio. El tomate y las aceitunas le dan un sabor profundo y diferente."
       ])),
 
-      meal("19:30", "Merienda", "Tostadas con ricota batida y fruta", "2 tostadas · ricota · banana o manzana · leche", 0, [
+      meal("19:30", "Merienda", "Tostadas con queso untable y fruta", "2 tostadas · queso untable · banana o manzana · leche", 0, [
         food("2 tostadas integrales", 8, 28, 2),
-        food("4 cdas ricota", 12, 4, 7),
+        food("4 cdas queso untable", 12, 4, 7),
         food("1 banana", 1, 27, 0),
         food("200ml leche entera", 6, 10, 7)
       ], [
-        "Batí la ricota con 1 cdita de vainilla y miel hasta que quede cremosa. Untá en las tostadas con banana."
+        "Batí la queso untable con 1 cdita de vainilla y miel hasta que quede cremosa. Untá en las tostadas con banana."
       ], null),
 
       meal("22:00", "Cena", "Sopa de pollo con fideos y vegetales", "200g pechuga · fideos cabello · zanahoria · apio · papa", 0, [
@@ -903,8 +903,8 @@ const allWeeks = [
         "Cocinalo en sartén tapada a fuego bajo 4 min de cada lado hasta que el queso se derrita. Queda tipo panini."
       ])),
 
-      meal("23:30", "Antes de dormir", "Cottage con miel", "Proteína lenta nocturna", 0, [
-        food("100g queso cottage", 11, 3, 4),
+      meal("23:30", "Antes de dormir", "queso untable con miel", "Proteína lenta nocturna", 0, [
+        food("100g queso untable", 11, 3, 4),
         food("1 cdita miel", 0, 8, 0)
       ], ["Solo si llegaste corto de proteína."], "Opcional.")
     ]
@@ -919,14 +919,14 @@ const allWeeks = [
     tags: ["Espalda", "Bíceps", "Tirón pesado"],
     tip: "Espalda demanda carbo. Reforzá el pre-entreno y no te saltees la media mañana.",
     meals: [
-      meal("10:00", "Desayuno", "Bol de queso cottage con arroz inflado, banana y nueces", "200g queso cottage · 40g arroz inflado · banana · nueces · miel", 0, [
-        food("200g queso cottage", 8, 10, 8),
+      meal("10:00", "Desayuno", "Bol de queso untable con arroz inflado, banana y nueces", "200g queso untable · 40g arroz inflado · banana · nueces · miel", 0, [
+        food("200g queso untable", 8, 10, 8),
         food("40g arroz inflado", 4, 27, 3),
         food("1 banana", 1, 27, 0),
         food("20g nueces", 3, 3, 13),
         food("1 cda miel", 0, 17, 0)
       ], [
-        "Mezcla el queso cottage con la arroz inflado y dejá reposar 5 min para que la banana tome cuerpo.",
+        "Mezcla el queso untable con la arroz inflado y dejá reposar 5 min para que la banana tome cuerpo.",
         "Cortá la banana en rodajas y poné arriba con las nueces picadas y la miel."
       ], null),
 
@@ -971,33 +971,35 @@ const allWeeks = [
         "Rebozá la pechuga y horneá 20 min a 200°C. Para el arroz: sofreí cebolla + morrón + zanahoria + arvejas, sumá arroz y agua."
       ])),
 
-      meal("19:30", "Merienda", "Manzana con manteca de maní y leche caliente", "1 manzana · 2 cdas manteca de maní · 250ml leche", 0, [
-        food("1 manzana mediana", 0, 20, 0),
-        food("2 cdas manteca de maní", 8, 6, 16),
-        food("250ml leche entera caliente", 8, 12, 9)
+      meal("19:30", "Merienda", "Tostadas con queso untable, banana y manteca de mani", "2 tostadas - queso untable - banana - manteca de mani", 0, [
+        food("2 tostadas integrales", 7, 34, 3),
+        food("2 cdas queso untable", 4, 3, 7),
+        food("1 banana", 1, 27, 0),
+        food("1 cda manteca de mani", 4, 3, 8),
+        food("200ml leche fria o cafe con leche", 6, 10, 7)
       ], [
-        "Cortá la manzana en gajos. Mojala en la manteca de maní como dip.",
-        "Tomá la leche caliente al lado. Una merienda simple que cambia la rutina."
+        "Unta el queso untable en las tostadas y suma banana en rodajas.",
+        "Agrega una cucharada de manteca de mani arriba y acompana con leche fria o cafe con leche."
       ], null),
 
-      meal("22:00", "Cena", "Locro liviano de pollo y garbanzos", "150g pollo · 1 taza garbanzos · zapallo · chorizo colorado", 0, [
-        food("150g pechuga en cubos", 47, 0, 5),
-        food("1 taza garbanzos cocidos", 10, 30, 4),
-        food("150g zapallo", 1, 12, 0),
-        food("30g chorizo colorado (sabor, no grasa)", 4, 2, 5),
-        food("1/2 cebolla + condimentos", 0, 3, 0)
+      meal("22:00", "Cena", "Bowl de pollo, arroz, garbanzos y palta", "180g pollo - arroz - garbanzos - palta - tomate", 0, [
+        food("180g pechuga grillada", 47, 0, 5),
+        food("1 taza arroz cocido", 4, 50, 0),
+        food("1/2 taza garbanzos cocidos", 5, 15, 2),
+        food("1/2 palta", 2, 6, 12),
+        food("Tomate + limon + condimentos", 1, 6, 0)
       ], [
-        "Sofreí cebolla, el chorizo en rodajas finas y el pollo en cubos.",
-        "Sumá el zapallo y los garbanzos cocidos con caldo. Cociná 15-20 min tapado.",
-        "Locro liviano: sin cerdo pesado pero con todo el sabor de los garbanzos y el zapallo."
+        "Grilla el pollo con sal, pimienta, ajo y limon.",
+        "Arma un bowl con arroz, garbanzos, tomate y palta.",
+        "Cena simple, alta en proteina y facil de repetir sin sentir que estas comiendo algo raro."
       ], null,
-      altMeal("Arroz primavera con pollo y vegetales", "150g pollo · arroz · arvejas · morrón · choclo", [
+      altMeal("Arroz primavera con pollo y vegetales", "150g pollo - arroz - arvejas - morron - choclo", [
         food("150g pechuga", 47, 0, 5),
         food("1 taza arroz blanco", 4, 50, 0),
-        food("Arvejas + morrón + choclo", 4, 18, 0),
+        food("Arvejas + morron + choclo", 4, 18, 0),
         food("1 cda aceite de oliva", 0, 0, 14)
       ], [
-        "Salteá el pollo en cubos. Sumá los vegetales y el arroz ya cocido. Salteá 3-4 min hasta que todo se integre."
+        "Saltea el pollo en cubos. Suma los vegetales y el arroz ya cocido. Saltea 3-4 min hasta que todo se integre."
       ])),
 
       meal("23:30", "Antes de dormir", "Shake nocturno", "Proteína de recuperación", 0, [
@@ -1025,13 +1027,13 @@ const allWeeks = [
         "Tomá el café con leche grande para aumentar calorías y proteína."
       ], "Una vez por semana, el desayuno café + medialunas es totalmente válido."),
 
-      meal("11:30", "Media mañana", "ricota batida con frutos secos y miel", "200g ricota batida · almendras · nueces · miel", 0, [
-        food("200g ricota batida natural", 20, 8, 10),
+      meal("11:30", "Media mañana", "queso untable con frutos secos y miel", "200g queso untable · almendras · nueces · miel", 0, [
+        food("200g queso untable natural", 20, 8, 10),
         food("15g almendras", 3, 3, 8),
         food("10g nueces", 2, 2, 7),
         food("1 cda miel", 0, 17, 0)
       ], [
-        "queso cottage con los frutos secos picados y miel encima. Proteína alta y muy poca preparación."
+        "queso untable con los frutos secos picados y miel encima. Proteína alta y muy poca preparación."
       ], null),
 
       meal("12:30", "Pre-entreno", "Banana + dátiles", "Glucosa concentrada", 0, [
@@ -1093,8 +1095,8 @@ const allWeeks = [
         "Batí los huevos, volcá en sartén con la carne y papa. Tapá y cociná a fuego bajo 5 min. Queso encima al final."
       ])),
 
-      meal("23:30", "Antes de dormir", "Cottage con miel", "Caseína nocturna", 0, [
-        food("100g queso cottage", 11, 3, 4),
+      meal("23:30", "Antes de dormir", "queso untable con miel", "Caseína nocturna", 0, [
+        food("100g queso untable", 11, 3, 4),
         food("1 cdita miel", 0, 8, 0)
       ], ["Opcional."], "Opcional.")
     ]
@@ -1165,18 +1167,18 @@ const allWeeks = [
         "Serví con el caldo como sopa primero, luego la carne y vegetales. El puchero alimenta y reconforta."
       ])),
 
-      meal("19:30", "Merienda", "Panqueques rellenos de ricota y miel", "2 panqueques · ricota · miel · canela · banana", 0, [
+      meal("19:30", "Merienda", "Panqueques rellenos de queso untable y miel", "2 panqueques · queso untable · miel · canela · banana", 0, [
         food("2 panqueques finos (harina + huevo + leche)", 8, 30, 5),
-        food("4 cdas ricota batida", 12, 4, 7),
+        food("4 cdas queso untable", 12, 4, 7),
         food("1 cda miel", 0, 17, 0),
         food("1 banana", 1, 27, 0)
       ], [
-        "Hacé los panqueques finos. Rellená con ricota batida con miel y canela.",
+        "Hacé los panqueques finos. Rellená con queso untable con miel y canela.",
         "Dobblalos o enrollalos. Poné banana en rodajas encima."
       ], null),
 
-      meal("22:00", "Cena", "Sorrentinos de ricota con manteca y salvia", "300g sorrentinos frescos · ricota · manteca · salvia · queso", 0, [
-        food("300g sorrentinos de ricota frescos", 15, 57, 8),
+      meal("22:00", "Cena", "Ravioles de verdura y mozzarella con manteca y salvia", "300g ravioles frescos · queso untable · manteca · salvia · queso", 0, [
+        food("300g Ravioles de verdura y mozzarella frescos", 15, 57, 8),
         food("20g manteca para saltear", 0, 0, 16),
         food("Salvia fresca (4 hojas)", 0, 1, 0),
         food("30g queso parmesano rallado", 9, 0, 9)
@@ -1272,8 +1274,8 @@ const allWeeks = [
         "Incorporá el arroz integral y el sésamo. Salteá 2 min más."
       ])),
 
-      meal("23:30", "Antes de dormir", "Cottage o leche tibia", "Cierre proteico del día", 0, [
-        food("100g cottage con miel o 250ml leche", 11, 11, 4)
+      meal("23:30", "Antes de dormir", "queso untable o leche tibia", "Cierre proteico del día", 0, [
+        food("100g queso untable con miel o 250ml leche", 11, 11, 4)
       ], ["Opcional según proteína del día."], "Opcional.")
     ]
   },
@@ -1299,8 +1301,8 @@ const allWeeks = [
         "El desayuno más gourmet de las 4 semanas — salmón ahumado en casa es un lujo accesible."
       ], null),
 
-      meal("12:30", "Media mañana", "Bol de frutas con granola y queso cottage", "200g queso cottage · granola · frutas de estación · miel", 0, [
-        food("200g queso cottage", 8, 10, 8),
+      meal("12:30", "Media mañana", "Bol de frutas con granola y queso untable", "200g queso untable · granola · frutas de estación · miel", 0, [
+        food("200g queso untable", 8, 10, 8),
         food("30g granola", 3, 20, 4),
         food("100g frutas variadas (banana, manzana, naranja)", 1, 25, 0),
         food("1 cdita miel", 0, 8, 0)
@@ -1351,7 +1353,7 @@ const allWeeks = [
         "Armá el plato con quinoa de base, los morrones y el pollo encima."
       ])),
 
-      meal("23:30", "Antes de dormir", "Cottage o leche tibia", "Cierre del sábado", 0, [
+      meal("23:30", "Antes de dormir", "queso untable o leche tibia", "Cierre del sábado", 0, [
         food("250ml leche entera tibia", 8, 12, 9)
       ], ["Opcional. Un vaso de leche tibia cierra bien el sábado."], "Opcional.")
     ]
@@ -1414,14 +1416,14 @@ const allWeeks = [
         "Sellá en sartén 3 min y terminá en horno a 200°C por 15 min. Papas noisette congeladas al horno son atajo válido.",
         "La pechuga rellena es fácil de hacer y parece plato de restaurante."
       ], null,
-      altMeal("Pasta con ricota y espinaca al limón", "80g pasta · ricota · espinaca · limón · oliva · queso", [
+      altMeal("Pasta con queso untable y espinaca al limón", "80g pasta · queso untable · espinaca · limón · oliva · queso", [
         food("80g pasta larga (linguini o espagueti)", 10, 58, 2),
-        food("5 cdas ricota", 15, 5, 9),
+        food("5 cdas queso untable", 15, 5, 9),
         food("100g espinaca saltada con ajo", 3, 4, 2),
         food("Limón + oliva + queso parmesano", 2, 2, 10)
       ], [
         "Herví la pasta. Salteá espinaca con ajo en oliva 2 min.",
-        "Mezclá pasta caliente con ricota + espinaca + ralladura de limón + parmesano. Cremoso sin crema real."
+        "Mezclá pasta caliente con queso untable + espinaca + ralladura de limón + parmesano. Cremoso sin crema real."
       ])),
 
       meal("23:30", "Antes de dormir", "Shake o leche", "Cierre dominical", 0, [
@@ -1498,13 +1500,13 @@ const allWeeks = [
         "Armá los tacos con palta, pollo, tomate y cebolla. Exprimí limón encima."
       ])),
 
-      meal("19:30", "Merienda", "ricota batida con manteca de maní y banana", "200g ricota batida · manteca de maní · banana · miel", 0, [
-        food("200g ricota batida", 20, 8, 10),
+      meal("19:30", "Merienda", "queso untable con manteca de maní y banana", "200g queso untable · manteca de maní · banana · miel", 0, [
+        food("200g queso untable", 20, 8, 10),
         food("1 cda manteca de maní", 4, 3, 8),
         food("1 banana", 1, 27, 0),
         food("1 cdita miel", 0, 8, 0)
       ], [
-        "Mezclá el queso cottage con la manteca de maní hasta integrar. Cortá la banana arriba y rociá con miel."
+        "Mezclá el queso untable con la manteca de maní hasta integrar. Cortá la banana arriba y rociá con miel."
       ], null),
 
       meal("22:00", "Cena", "Fideos estilo pad thai con pollo y maní", "80g noodles o fideos · 160g pollo · huevo · maní · soja · limón", 0, [
@@ -1529,8 +1531,8 @@ const allWeeks = [
         "Servís con arroz, brócoli y el pollo encima con sésamo esparcido."
       ])),
 
-      meal("23:30", "Antes de dormir", "Cottage con miel", "Proteína lenta", 0, [
-        food("100g cottage", 11, 3, 4),
+      meal("23:30", "Antes de dormir", "queso untable con miel", "Proteína lenta", 0, [
+        food("100g queso untable", 11, 3, 4),
         food("1 cdita miel", 0, 8, 0)
       ], ["Opcional."], "Opcional.")
     ]
@@ -1610,16 +1612,16 @@ const allWeeks = [
         food("1 cdita miel", 0, 8, 0)
       ], ["Clásico seguro para la merienda de martes."], null),
 
-      meal("22:00", "Cena", "Pollo tikka masala liviano con arroz basmati", "170g pollo · queso cottage · tomate · curry · garam masala · arroz", 0, [
+      meal("22:00", "Cena", "Pollo tikka masala liviano con arroz basmati", "170g pollo · queso untable · tomate · curry · garam masala · arroz", 0, [
         food("170g pechuga en cubos", 53, 0, 5),
         food("3/4 taza arroz basmati cocido", 3, 40, 0),
         food("100ml tomate triturado", 1, 5, 0),
-        food("4 cdas queso cottage", 6, 5, 4),
+        food("4 cdas queso untable", 6, 5, 4),
         food("1 cdita curry + 1/2 cdita garam masala", 0, 2, 1)
       ], [
-        "Marinato el pollo en queso cottage + curry + sal 20 min. Doré en sartén caliente.",
+        "Marinato el pollo en queso untable + curry + sal 20 min. Doré en sartén caliente.",
         "Sumá el tomate y las especias. Cociná 10 min a fuego bajo.",
-        "Apagá e incorporá más queso cottage para suavizar la salsa. La versión liviana del tikka masala — sin crema pero con todo el sabor."
+        "Apagá e incorporá más queso untable para suavizar la salsa. La versión liviana del tikka masala — sin crema pero con todo el sabor."
       ], null,
       altMeal("Burrito de pollo con queso y arroz", "2 tortillas grandes · 150g pollo · arroz · queso · palta", [
         food("2 tortillas de harina grande", 8, 60, 6),
@@ -1659,13 +1661,13 @@ const allWeeks = [
         "Apilá los pancakes y poné los arándanos encima con miel. Los pancakes americanos esponjosos son completamente distintos a los finos."
       ], null),
 
-      meal("11:30", "Media mañana", "Tostadas con ricota, frutillas y canela", "2 tostadas · ricota · frutillas · miel · canela", 0, [
+      meal("11:30", "Media mañana", "Tostadas con queso untable, frutillas y canela", "2 tostadas · queso untable · frutillas · miel · canela", 0, [
         food("2 tostadas integrales", 8, 28, 2),
-        food("4 cdas ricota", 12, 4, 7),
+        food("4 cdas queso untable", 12, 4, 7),
         food("100g frutillas", 1, 8, 0),
         food("1 cdita miel · pizca canela", 0, 8, 0)
       ], [
-        "Batí la ricota con la miel. Poné sobre las tostadas con las frutillas cortadas y canela."
+        "Batí la queso untable con la miel. Poné sobre las tostadas con las frutillas cortadas y canela."
       ], null),
 
       meal("12:30", "Pre-entreno", "Banana + pasas", "Carbo para hombros", 0, [
@@ -1733,8 +1735,8 @@ const allWeeks = [
         "Sacala y poné encima el pollo + rúcula + parmesano + ralladura de limón. Pizza bianca: sin tomate, con carácter."
       ])),
 
-      meal("23:30", "Antes de dormir", "Cottage con miel", "Proteína lenta", 0, [
-        food("100g cottage", 11, 3, 4),
+      meal("23:30", "Antes de dormir", "queso untable con miel", "Proteína lenta", 0, [
+        food("100g queso untable", 11, 3, 4),
         food("1 cdita miel", 0, 8, 0)
       ], ["Opcional."], "Opcional.")
     ]
@@ -1863,12 +1865,12 @@ const allWeeks = [
         "Serví con banana en rodajas y manteca de maní por encima. Los waffles de arroz inflado son una variación del panqueque con otra textura."
       ], "Si no tenés wafflera, hacélo como panqueques gruesos."),
 
-      meal("12:00", "Media mañana", "Bol de frutas con queso cottage y granola", "Frutas variadas · queso cottage · granola · miel", 0, [
+      meal("12:00", "Media mañana", "Bol de frutas con queso untable y granola", "Frutas variadas · queso untable · granola · miel", 0, [
         food("150g frutas (banana + manzana + naranja)", 1, 35, 0),
-        food("150g queso cottage", 6, 8, 6),
+        food("150g queso untable", 6, 8, 6),
         food("25g granola", 2, 17, 3),
         food("1 cdita miel", 0, 8, 0)
-      ], ["Bol de frutas con queso cottage. Fresco y liviano para el viernes."], null),
+      ], ["Bol de frutas con queso untable. Fresco y liviano para el viernes."], null),
 
       meal("13:30", "Almuerzo", "Salmón teriyaki con arroz y brócoli", "200g salmón · salsa teriyaki · arroz · brócoli · sésamo", 0, [
         food("200g filet de salmón", 50, 0, 26),
@@ -1897,14 +1899,14 @@ const allWeeks = [
         food("1 banana", 1, 27, 0)
       ], ["Merienda liviana del viernes."], null),
 
-      meal("22:00", "Cena", "Falafel casero con arroz y ensalada", "Falafel de garbanzos · arroz · ensalada · queso cottage · limón", 0, [
+      meal("22:00", "Cena", "Falafel casero con arroz y ensalada", "Falafel de garbanzos · arroz · ensalada · queso untable · limón", 0, [
         food("6 falafeles caseros (garbanzos+especias+harina)", 10, 28, 8),
         food("3/4 taza arroz cocido", 3, 37, 0),
-        food("3 cdas queso cottage", 5, 4, 3),
+        food("3 cdas queso untable", 5, 4, 3),
         food("Ensalada (pepino+tomate+cebolla+perejil)", 2, 10, 0)
       ], [
         "Para falafel: procesá garbanzos en lata escurridos + ajo + perejil + comino + sal + 2 cdas harina. Formá bolitas y horneá a 200°C por 20 min.",
-        "Servís con arroz, ensalada y queso cottage condimentado con limón. Los falafeles al horno son crujientes y sanos."
+        "Servís con arroz, ensalada y queso untable condimentado con limón. Los falafeles al horno son crujientes y sanos."
       ], null,
       altMeal("Pollo con especias marroquíes y couscous", "160g pollo · cuscús · zanahoria · garbanzos · canela", [
         food("160g pechuga especiada (comino+canela+pimentón)", 50, 0, 5),
@@ -1915,8 +1917,8 @@ const allWeeks = [
         "Mezclá el cuscús con los garbanzos y la zanahoria. Servís el pollo encima."
       ])),
 
-      meal("23:30", "Antes de dormir", "Cottage o leche tibia", "Cierre del viernes", 0, [
-        food("100g cottage con miel o leche tibia 250ml", 11, 11, 4)
+      meal("23:30", "Antes de dormir", "queso untable o leche tibia", "Cierre del viernes", 0, [
+        food("100g queso untable con miel o leche tibia 250ml", 11, 11, 4)
       ], ["Opcional."], "Opcional.")
     ]
   },
@@ -1962,7 +1964,7 @@ const allWeeks = [
       altMeal("Costillitas de cerdo agridulces con ensalada", "350g costillas · miel + soja + ajo + jengibre", [
         food("350g costillitas de cerdo", 45, 0, 20),
         food("Glaze (miel + soja + ajo + jengibre)", 2, 18, 1),
-        food("Ensalada coleslaw liviana (repollo + zanahoria + queso cottage)", 3, 12, 3)
+        food("Ensalada coleslaw liviana (repollo + zanahoria + queso untable)", 3, 12, 3)
       ], [
         "Cociná las costillas tapadas con aluminio a 180°C por 45 min. Bañálas con el glaze y destapá 15 min más.",
         "El glaze de miel y soja carameliza y las hace absolutamente distintas a las costillas simples."
@@ -1995,7 +1997,7 @@ const allWeeks = [
         "Aderezá con limón, oliva y sal. La pasta fría en verano es un plato que cambia todo."
       ])),
 
-      meal("23:30", "Antes de dormir", "Leche tibia o cottage", "Cierre del sábado", 0, [
+      meal("23:30", "Antes de dormir", "Leche tibia o queso untable", "Cierre del sábado", 0, [
         food("250ml leche entera tibia", 8, 12, 9)
       ], ["Opcional."], "Opcional.")
     ]
@@ -2101,15 +2103,15 @@ const allWeeks = [
         "El desayuno más proteico: 45g de proteína limpia con poca grasa."
       ], null),
 
-      meal("11:30", "Media mañana", "Queso cottage con tomate y semillas", "200g cottage · tomate · pepino · chía · oliva", 0, [
-        food("200g queso cottage", 22, 6, 8),
+      meal("11:30", "Media mañana", "queso untable con tomate y semillas", "200g queso untable · tomate · pepino · chía · oliva", 0, [
+        food("200g queso untable", 22, 6, 8),
         food("1 tomate", 1, 5, 0),
         food("1/2 pepino", 0, 4, 0),
         food("1 cdita chía", 1, 2, 2),
         food("Sal + orégano + oliva", 0, 0, 5)
       ], [
-        "Poné el cottage en un bol. Cortá el tomate y el pepino en cubos encima.",
-        "Esparcí la chía, el orégano y un hilo de oliva. El cottage como snack salado — completamente diferente a usarlo solo dulce."
+        "Poné el queso untable en un bol. Cortá el tomate y el pepino en cubos encima.",
+        "Esparcí la chía, el orégano y un hilo de oliva. El queso untable como snack salado — completamente diferente a usarlo solo dulce."
       ], null),
 
       meal("12:30", "Pre-entreno", "Banana + pasas de uva", "Carbo rápido para pecho", 0, [
@@ -2144,12 +2146,12 @@ const allWeeks = [
         "Adereza con oliva y limón. Podés agregar rodajas de pan integral al costado."
       ])),
 
-      meal("19:30", "Merienda", "ricota batida natural con nueces y fruta", "200g ricota batida · 25g nueces · banana · miel", 0, [
-        food("200g ricota batida natural", 20, 8, 10),
+      meal("19:30", "Merienda", "queso untable natural con nueces y fruta", "200g queso untable · 25g nueces · banana · miel", 0, [
+        food("200g queso untable natural", 20, 8, 10),
         food("25g nueces", 4, 4, 16),
         food("1 banana", 1, 27, 0),
         food("1 cdita miel", 0, 8, 0)
-      ], ["ricota batida con nueces y banana. Alta proteína + grasas buenas."], null),
+      ], ["queso untable con nueces y banana. Alta proteína + grasas buenas."], null),
 
       meal("22:00", "Cena", "Carne magra al horno con vegetales asados", "180g peceto · zapallito · morrón · zanahoria · ajo · romero", 0, [
         food("180g peceto al horno", 47, 0, 6),
@@ -2186,16 +2188,16 @@ const allWeeks = [
     tags: ["Espalda", "Bíceps", "Alto proteína"],
     tip: "Espalda con foco máximo en proteína. Hoy llegamos a 180g.",
     meals: [
-      meal("10:00", "Desayuno", "Bol proteico: ricota batida + whey + banana + banana", "ricota batida · whey · arroz inflado · banana · miel", 0, [
-        food("200g ricota batida", 20, 8, 10),
+      meal("10:00", "Desayuno", "Bol proteico: queso untable + whey + banana + banana", "queso untable · whey · arroz inflado · banana · miel", 0, [
+        food("200g queso untable", 20, 8, 10),
         food("1/2 scoop whey vainilla", 13, 1, 1),
         food("40g arroz inflado", 4, 27, 3),
         food("1 banana", 1, 27, 0),
         food("1 cdita miel", 0, 8, 0)
       ], [
-        "Mezclá el queso cottage con el whey y la miel hasta que no haya grumos.",
+        "Mezclá el queso untable con el whey y la miel hasta que no haya grumos.",
         "Sumá la arroz inflado y cortá la banana encima. El desayuno más proteico del lunes: 38g en un bol.",
-        "La arroz inflado se digiere bien mezclada con el queso cottage — no hace falta cocinarla."
+        "La arroz inflado se digiere bien mezclada con el queso untable — no hace falta cocinarla."
       ], null),
 
       meal("11:30", "Media mañana", "Sándwich de pechuga con palta y tomate", "2 rodajas pan · 100g pechuga laminada · palta · tomate", 0, [
@@ -2364,8 +2366,8 @@ const allWeeks = [
         "Rellená la tapa con la mezcla de pollo + queso + huevos + cebolla. Horneá a 180°C por 25 min."
       ])),
 
-      meal("23:30", "Antes de dormir", "Cottage con miel", "Proteína lenta", 0, [
-        food("100g cottage", 11, 3, 4),
+      meal("23:30", "Antes de dormir", "queso untable con miel", "Proteína lenta", 0, [
+        food("100g queso untable", 11, 3, 4),
         food("1 cdita miel", 0, 8, 0)
       ], ["Opcional."], "Opcional.")
     ]
@@ -2489,14 +2491,14 @@ const allWeeks = [
         "Cortá la banana encima y bañá con miel. El porridge proteico = 40g de proteína en el desayuno."
       ], null),
 
-      meal("12:00", "Media mañana", "Tostadas con ricota, tomate y jamón", "2 tostadas · ricota · tomate · jamón · orégano", 0, [
+      meal("12:00", "Media mañana", "Tostadas con queso untable, tomate y jamón", "2 tostadas · queso untable · tomate · jamón · orégano", 0, [
         food("2 tostadas integrales", 8, 28, 2),
-        food("4 cdas ricota", 12, 4, 7),
+        food("4 cdas queso untable", 12, 4, 7),
         food("60g jamón natural", 12, 0, 4),
         food("1 tomate", 1, 5, 0)
       ], [
-        "Untá la ricota, poné el jamón y el tomate. Orégano encima.",
-        "La ricota + jamón juntos dan 24g de proteína en la media mañana."
+        "Untá la queso untable, poné el jamón y el tomate. Orégano encima.",
+        "La queso untable + jamón juntos dan 24g de proteína en la media mañana."
       ], null),
 
       meal("13:30", "Almuerzo", "Salmón con espárragos y quinoa proteica", "200g salmón · quinoa · espárragos · limón · oliva", 0, [
@@ -2536,20 +2538,20 @@ const allWeeks = [
         "Asá los morrones en el horno o a la llama — pelálos cuando se enfríen para sacar la piel.",
         "La combinación morrón asado + pechuga es simple pero increíblemente sabrosa."
       ], null,
-      altMeal("Pasta con atún y crema de ricota", "80g pasta · 1 lata atún · ricota · limón · perejil", [
+      altMeal("Pasta con atún y crema de queso untable", "80g pasta · 1 lata atún · queso untable · limón · perejil", [
         food("80g pasta larga", 10, 58, 2),
         food("1 lata atún", 28, 0, 2),
-        food("5 cdas ricota", 15, 5, 9),
+        food("5 cdas queso untable", 15, 5, 9),
         food("Limón + perejil + oliva", 0, 2, 10)
       ], [
-        "Herví la pasta. Mezclá el atún con ricota + ralladura de limón + perejil picado.",
+        "Herví la pasta. Mezclá el atún con queso untable + ralladura de limón + perejil picado.",
         "Incorporá la pasta caliente y revolvé. Cremoso sin crema real — 53g de proteína en una cena de pasta."
       ])),
 
-      meal("23:30", "Antes de dormir", "Cottage con miel", "Cierre proteico del viernes", 0, [
-        food("100g cottage", 11, 3, 4),
+      meal("23:30", "Antes de dormir", "queso untable con miel", "Cierre proteico del viernes", 0, [
+        food("100g queso untable", 11, 3, 4),
         food("1 cdita miel", 0, 8, 0)
-      ], ["Hoy el cottage sí está recomendado — la semana proteica necesita cierre nocturno."], "Recomendado esta semana.")
+      ], ["Hoy el queso untable sí está recomendado — la semana proteica necesita cierre nocturno."], "Recomendado esta semana.")
     ]
   },
 
@@ -2573,11 +2575,11 @@ const allWeeks = [
         "El desayuno del sábado más cargado de proteína de las 4 semanas: 54g."
       ], null),
 
-      meal("12:30", "Media mañana", "ricota batida con nueces y miel", "200g ricota batida · nueces · miel", 0, [
-        food("200g ricota batida", 20, 8, 10),
+      meal("12:30", "Media mañana", "queso untable con nueces y miel", "200g queso untable · nueces · miel", 0, [
+        food("200g queso untable", 20, 8, 10),
         food("25g nueces", 4, 4, 16),
         food("1 cda miel", 0, 17, 0)
-      ], ["queso cottage con nueces y miel. Simple y alta proteína."], null),
+      ], ["queso untable con nueces y miel. Simple y alta proteína."], null),
 
       meal("14:00", "Almuerzo", "Asado proteico de carne magra con ensalada grande", "250g vacío o cuadrada · chorizo pequeño · ensalada · pan", 0, [
         food("250g vacío o cuadrada a la parrilla", 50, 0, 18),
@@ -2603,16 +2605,16 @@ const allWeeks = [
         food("2 alfajores de maicena caseros", 5, 36, 7)
       ], ["Mate con alfajores. El cierre dulce del sábado."], null),
 
-      meal("22:00", "Cena", "Pollo relleno con espinaca y ricota", "180g pechuga rellena · espinaca · ricota · queso · ensalada", 0, [
+      meal("22:00", "Cena", "Pollo relleno con espinaca y queso untable", "180g pechuga rellena · espinaca · queso untable · queso · ensalada", 0, [
         food("180g pechuga rellena", 56, 0, 8),
         food("80g espinaca cocida", 2, 3, 1),
-        food("3 cdas ricota", 9, 3, 5),
+        food("3 cdas queso untable", 9, 3, 5),
         food("40g queso mozzarella", 8, 1, 8),
         food("Ensalada mixta", 2, 7, 0)
       ], [
-        "Abrí la pechuga en libro. Rellená con espinaca salteada + ricota + mozzarella. Cerrá con palillos.",
+        "Abrí la pechuga en libro. Rellená con espinaca salteada + queso untable + mozzarella. Cerrá con palillos.",
         "Sellá en sartén 3 min y terminá en horno a 200°C por 15 min.",
-        "El relleno de ricota y espinaca suma proteína y hace que el plato parezca de restaurante."
+        "El relleno de queso untable y espinaca suma proteína y hace que el plato parezca de restaurante."
       ], null,
       altMeal("Pasta con jamón, queso y guisantes", "80g pasta · jamón · queso · arvejas · crema light", [
         food("80g pasta larga", 10, 58, 2),
@@ -2625,8 +2627,8 @@ const allWeeks = [
         "Mezclá con la pasta caliente y el queso desmenuzado."
       ])),
 
-      meal("23:30", "Antes de dormir", "Cottage con miel", "Cierre proteico del sábado", 0, [
-        food("100g cottage", 11, 3, 4),
+      meal("23:30", "Antes de dormir", "queso untable con miel", "Cierre proteico del sábado", 0, [
+        food("100g queso untable", 11, 3, 4),
         food("1 cdita miel", 0, 8, 0)
       ], ["Recomendado en la semana proteica."], "Recomendado.")
     ]
@@ -2672,11 +2674,11 @@ const allWeeks = [
         "Servís en medallones con la salsa encima y el arroz integral al costado."
       ])),
 
-      meal("17:30", "Merienda", "Mate con tostadas y ricota", "Mate + 2 tostadas + ricota + miel", 0, [
+      meal("17:30", "Merienda", "Mate con tostadas y queso untable", "Mate + 2 tostadas + queso untable + miel", 0, [
         food("2 tostadas integrales", 8, 28, 2),
-        food("4 cdas ricota", 12, 4, 7),
+        food("4 cdas queso untable", 12, 4, 7),
         food("1 cdita miel", 0, 8, 0)
-      ], ["Cierre tranquilo con ricota y miel."], null),
+      ], ["Cierre tranquilo con queso untable y miel."], null),
 
       meal("22:00", "Cena", "Hamburguesas dobles de carne magra con palta", "2 hamburguesas · panes integrales · palta · tomate · ensalada", 0, [
         food("2 hamburguesas magras 180g total", 40, 0, 14),
@@ -2718,10 +2720,10 @@ const BANNED_INGREDIENTS_RE = /(yogur|avena)/i;
 function cleanPlanText(value) {
   if (typeof value !== "string") return value;
   return value
-    .replace(/yogur griego/gi, "ricota batida")
-    .replace(/yogur natural entero/gi, "queso cottage")
-    .replace(/yogur natural/gi, "queso cottage")
-    .replace(/yogur/gi, "queso cottage")
+    .replace(/yogur griego/gi, "queso untable")
+    .replace(/yogur natural entero/gi, "queso untable")
+    .replace(/yogur natural/gi, "queso untable")
+    .replace(/yogur/gi, "queso untable")
     .replace(/tzatziki/gi, "salsa de pepino y queso crema")
     .replace(/harina de avena|harina avena/gi, "harina de arroz")
     .replace(/avena en hojuelas|avena cruda|avena licuada|avena/gi, "arroz inflado")
@@ -2731,7 +2733,7 @@ function cleanPlanText(value) {
     .replace(/pancakes? de arroz inflado/gi, "pancakes de banana")
     .replace(/waffle proteico de arroz inflado/gi, "waffle proteico de banana")
     .replace(/porridge proteico de arroz inflado/gi, "crema de arroz proteica")
-    .replace(/bol proteico: ricota batida \+ whey \+ arroz inflado/gi, "Bol proteico: ricota batida + whey + banana")
+    .replace(/bol proteico: queso untable \+ whey \+ arroz inflado/gi, "Bol proteico: queso untable + whey + banana")
     .replace(/arroz inflado \+ banana/gi, "banana + leche")
     .replace(/arroz inflado \+ huevos/gi, "harina de arroz + huevos")
     .replace(/arroz inflado mezclada/gi, "banana mezclada")
@@ -2839,13 +2841,13 @@ function buildFallbackAlt(item) {
         food("Pepino y tomate", 1, 6, 0),
         food("1 fruta", 1, 24, 0)
       ], ["Unta hummus en las tostadas.", "Suma huevo duro, pepino, tomate y fruta."]),
-      altMeal("Cottage con banana y nueces", "Cottage - banana - nueces - miel - tostadas", [
-        food("180g cottage", 22, 6, 8),
+      altMeal("queso untable con banana y nueces", "queso untable - banana - nueces - miel - tostadas", [
+        food("180g queso untable", 22, 6, 8),
         food("1 banana", 1, 27, 0),
         food("20g nueces", 3, 3, 13),
         food("1 cdita miel", 0, 8, 0),
         food("1 tostada", 3, 15, 1)
-      ], ["Mezcla cottage con miel.", "Suma banana, nueces y una tostada si queres mas energia."])
+      ], ["Mezcla queso untable con miel.", "Suma banana, nueces y una tostada si queres mas energia."])
     ]);
   }
 
@@ -2885,13 +2887,13 @@ function buildFallbackAlt(item) {
 
   if (label.includes("merienda")) {
     return pickAlt(item, [
-      altMeal("Merienda de ricota, fruta y frutos secos", "Ricota - tostadas - banana - nueces - miel", [
-        food("160g ricota magra", 18, 6, 9),
+      altMeal("Merienda de queso untable, fruta y frutos secos", "queso untable - tostadas - banana - nueces - miel", [
+        food("160g queso untable", 18, 6, 9),
         food("2 tostadas", 6, 30, 2),
         food("1 banana", 1, 27, 0),
         food("20g nueces", 3, 3, 13),
         food("1 cda miel", 0, 17, 0)
-      ], ["Bati la ricota con miel para que quede cremosa.", "Comela con tostadas, banana y nueces arriba."]),
+      ], ["Bati la queso untable con miel para que quede cremosa.", "Comela con tostadas, banana y nueces arriba."]),
       altMeal("Wrap de atun y palta", "Tortilla - atun - palta - tomate - limon", [
         food("1 tortilla grande", 6, 36, 5),
         food("1 lata de atun", 24, 0, 1),
@@ -2910,11 +2912,11 @@ function buildFallbackAlt(item) {
 
   if (label.includes("dormir")) {
     return pickAlt(item, [
-      altMeal("Cierre nocturno con proteina lenta", "Cottage o ricota - leche - miel", [
-        food("150g cottage o ricota", 18, 5, 8),
+      altMeal("Cierre nocturno con proteina lenta", "queso untable o queso untable - leche - miel", [
+        food("150g queso untable o queso untable", 18, 5, 8),
         food("200ml leche entera", 6, 10, 7),
         food("1 cdita miel", 0, 8, 0)
-      ], ["Elegi cottage o ricota segun lo que tengas.", "Suma leche si ese dia quedaste corto de calorias."]),
+      ], ["Elegi queso untable o queso untable segun lo que tengas.", "Suma leche si ese dia quedaste corto de calorias."]),
       altMeal("Shake nocturno con nueces", "Whey - leche - nueces - banana chica", [
         food("1 scoop whey", 24, 3, 2),
         food("250ml leche entera", 8, 12, 8),
@@ -3042,8 +3044,8 @@ const shopping = {
     "Huevos · 2.5 docenas",
     "Leche entera · 3 litros",
     "Queso fresco en fetas · 300g",
-    "Ricota · 250g",
-    "Queso cottage · 300g",
+    "queso untable · 250g",
+    "queso untable · 300g",
     "Queso rallado · 150g",
     "Manteca · 100g"
   ],
