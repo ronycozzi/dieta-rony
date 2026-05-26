@@ -919,15 +919,16 @@ const allWeeks = [
     tags: ["Espalda", "Bíceps", "Tirón pesado"],
     tip: "Espalda demanda carbo. Reforzá el pre-entreno y no te saltees la media mañana.",
     meals: [
-      meal("10:00", "Desayuno", "Bol de queso untable con arroz inflado, banana y nueces", "200g queso untable · 40g arroz inflado · banana · nueces · miel", 0, [
-        food("200g queso untable", 8, 10, 8),
-        food("40g arroz inflado", 4, 27, 3),
+      meal("10:00", "Desayuno", "Crema de arroz proteica con banana y nueces", "Harina de arroz - whey - leche - banana - nueces", 0, [
+        food("60g harina de arroz", 4, 48, 1),
+        food("1 scoop whey", 24, 3, 2),
+        food("250ml leche entera", 8, 12, 8),
         food("1 banana", 1, 27, 0),
-        food("20g nueces", 3, 3, 13),
-        food("1 cda miel", 0, 17, 0)
+        food("15g nueces", 2, 2, 10)
       ], [
-        "Mezcla el queso untable con la arroz inflado y dejá reposar 5 min para que la banana tome cuerpo.",
-        "Cortá la banana en rodajas y poné arriba con las nueces picadas y la miel."
+        "Cocina la harina de arroz con la leche 3-4 min, revolviendo.",
+        "Retira del fuego, mezcla el whey y termina con banana en rodajas y nueces.",
+        "Buen desayuno para espalda: carbo alto, proteina suficiente y grasa moderada."
       ], null),
 
       meal("11:30", "Media mañana", "Tostadas con palta, jamón y tomate", "2 tostadas · jamón · palta · tomate · orégano", 0, [
