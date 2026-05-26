@@ -2713,36 +2713,43 @@ const allWeeks = [
 
 // =====================================================
 // CALIDAD DEL PLAN
-// - Sin yogur ni avena en ninguna receta visible.
+// - Sin ingredientes que Rony ya marco como no sostenibles.
 // - Todas las comidas tienen opcion B.
 // =====================================================
-const BANNED_INGREDIENTS_RE = /(yogur|avena)/i;
+const BANNED_INGREDIENTS_RE = /(yogur|avena|harina de arroz|arroz inflado|cottage|ricota|locro|leche caliente|manzana con manteca de man[ií])/i;
 
 function cleanPlanText(value) {
   if (typeof value !== "string") return value;
   return value
+    .replace(/queso cottage/gi, "queso untable")
+    .replace(/cottage/gi, "queso untable")
+    .replace(/ricota/gi, "queso untable")
+    .replace(/locro/gi, "guiso de lentejas con carne magra")
+    .replace(/leche caliente/gi, "leche")
+    .replace(/manzana con manteca de man[ií]/gi, "banana con queso untable")
     .replace(/yogur griego/gi, "queso untable")
     .replace(/yogur natural entero/gi, "queso untable")
     .replace(/yogur natural/gi, "queso untable")
     .replace(/yogur/gi, "queso untable")
     .replace(/tzatziki/gi, "salsa de pepino y queso crema")
-    .replace(/harina de avena|harina avena/gi, "pan integral")
-    .replace(/avena en hojuelas|avena cruda|avena licuada|avena/gi, "tostadas integrales")
+    .replace(/harina de avena|harina avena/gi, "harina comun")
+    .replace(/avena en hojuelas|avena cruda|avena licuada|avena/gi, "banana")
     .replace(/galletitas de arroz inflado/gi, "galletitas de arroz")
     .replace(/alfajores de arroz inflado/gi, "alfajores de maicena")
     .replace(/panqueques? de arroz inflado/gi, "panqueques de banana")
     .replace(/pancakes? de arroz inflado/gi, "pancakes de banana")
     .replace(/waffle proteico de arroz inflado/gi, "waffle proteico de banana")
-    .replace(/porridge proteico de arroz inflado/gi, "crema de arroz proteica")
+    .replace(/porridge proteico de arroz inflado/gi, "panqueques de banana y huevo")
     .replace(/bol proteico: queso untable \+ whey \+ arroz inflado/gi, "Bol proteico: queso untable + whey + banana")
-    .replace(/crema de arroz proteica/gi, "desayuno proteico")
-    .replace(/harina de arroz/gi, "pan integral")
-    .replace(/arroz inflado/gi, "tostadas integrales")
     .replace(/arroz inflado \+ banana/gi, "banana + leche")
-    .replace(/arroz inflado \+ huevos/gi, "harina de arroz + huevos")
+    .replace(/arroz inflado \+ huevos/gi, "banana + huevos")
     .replace(/arroz inflado mezclada/gi, "banana mezclada")
     .replace(/arroz inflado absorba/gi, "banana tome cuerpo")
-    .replace(/combo arroz inflado\+banana\+man/i, "combo banana+leche+mani");
+    .replace(/combo arroz inflado\+banana\+man/i, "combo banana+leche+mani")
+    .replace(/crema de arroz proteica/gi, "desayuno proteico")
+    .replace(/\b\d+\s*g\s+harina de arroz/gi, "1 banana")
+    .replace(/harina de arroz/gi, "banana")
+    .replace(/arroz inflado/gi, "banana");
 }
 
 function cleanPlanItem(item) {
@@ -2906,16 +2913,17 @@ function commonSnackAltOptions() {
 
 function commonBreakfastOptions() {
   return [
-    altMeal("Huevos revueltos con jamon, queso, tostadas y banana", "3 huevos - jamon - queso en fetas - tostadas - banana", [
+    altMeal("Revuelto de huevos con papa, jamon y queso", "Huevos - papa - jamon - queso - banana - cafe con leche", [
       food("3 huevos", 18, 1, 15),
+      food("180g papa hervida o al horno", 4, 36, 0),
       food("60g jamon cocido natural", 12, 1, 4),
       food("50g queso en fetas", 12, 1, 8),
-      food("2 tostadas integrales", 7, 34, 3),
       food("1 banana", 1, 27, 0),
       food("Cafe con leche 200ml", 6, 10, 7)
     ], [
+      "Corta la papa en cubos y calentala en sarten o microondas.",
       "Hace los huevos revueltos y suma jamon y queso al final.",
-      "Comelo con tostadas y banana. Es desayuno fuerte, normal y perfecto para dia de espalda."
+      "Desayuno fuerte, normal y con buen carbo sin depender de tostadas."
     ]),
     altMeal("Tostado de jamon y queso con banana y leche", "Pan - jamon - queso - banana - leche", [
       food("2 rebanadas pan integral", 7, 34, 3),
@@ -2927,54 +2935,126 @@ function commonBreakfastOptions() {
       "Arma un tostado grande con jamon y queso.",
       "Banana y leche al lado para completar energia antes de entrenar."
     ]),
-    altMeal("Omelette con queso, tostadas y fruta", "Huevos - queso - tostadas - fruta", [
+    altMeal("Omelette de mozzarella, tomate y palta", "Huevos - mozzarella - tomate - palta - fruta", [
       food("3 huevos", 18, 1, 15),
       food("50g mozzarella o queso en fetas", 12, 1, 9),
-      food("2 tostadas integrales", 7, 34, 3),
+      food("1/2 palta", 2, 6, 12),
+      food("Tomate + hojas verdes", 1, 6, 0),
       food("1 fruta", 1, 24, 0),
       food("1 cdita aceite de oliva", 0, 0, 5)
     ], [
-      "Omelette simple con queso, sin inventos.",
-      "Tostadas y fruta para que no quede corto de carbohidratos."
+      "Omelette simple con queso, tomate al costado y palta medida.",
+      "Queda alto en proteina y grasas buenas; suma fruta para energia."
     ]),
-    altMeal("Tostadas con queso untable, huevos y banana", "Tostadas - queso untable - huevos - banana", [
-      food("2 tostadas integrales", 7, 34, 3),
+    altMeal("Tortilla de papa, huevo y queso", "Papa - huevos - queso - jamon - fruta", [
+      food("260g papa", 5, 52, 0),
+      food("3 huevos", 18, 1, 15),
+      food("50g queso en fetas o mozzarella", 12, 1, 9),
+      food("50g jamon cocido natural", 10, 1, 3),
+      food("1 fruta", 1, 24, 0)
+    ], [
+      "Cocina papa en cubos y mezclala con huevo batido.",
+      "Suma jamon y queso; cocina tapado hasta que firme.",
+      "Va muy bien para piernas o espalda porque llena y rinde."
+    ]),
+    altMeal("Panqueques de banana y huevo con leche", "Banana - huevos - leche - queso untable - miel", [
+      food("2 bananas chicas", 2, 46, 0),
+      food("3 huevos", 18, 1, 15),
+      food("200ml leche entera", 6, 10, 7),
       food("2 cdas queso untable", 4, 3, 7),
+      food("1 cdita miel", 0, 8, 0)
+    ], [
+      "Pisa banana con huevos y cocina panqueques chicos en sarten antiadherente.",
+      "Queso untable y miel arriba. Dulce, normal y sin harinas raras."
+    ]),
+    altMeal("Sandwich de huevo, jamon y mozzarella", "Pan - huevos - jamon - mozzarella - fruta", [
+      food("2 rebanadas pan integral", 7, 34, 3),
       food("2 huevos", 12, 1, 10),
-      food("1 banana", 1, 27, 0),
+      food("70g jamon cocido natural", 14, 1, 5),
+      food("50g mozzarella", 12, 1, 9),
+      food("1 fruta", 1, 24, 0)
+    ], [
+      "Hace huevos a la plancha y armalo tipo sandwich caliente.",
+      "Es distinto al tostado clasico porque el huevo es el centro."
+    ]),
+    altMeal("Porcion de tarta de jamon, queso y huevo", "Tarta - jamon - queso - huevo - fruta - leche", [
+      food("1 porcion grande de tarta casera", 18, 34, 14),
+      food("1 huevo duro extra", 6, 1, 5),
+      food("1 fruta", 1, 24, 0),
       food("200ml leche entera", 6, 10, 7)
     ], [
-      "Unta queso untable en las tostadas.",
-      "Suma huevos a la plancha o revueltos, banana y leche."
+      "Deja tarta hecha del dia anterior y recalenta una porcion.",
+      "Huevo duro extra si ese dia queres asegurar proteina."
+    ]),
+    altMeal("Medialunas con jamon y queso, huevo y leche", "Medialunas - jamon - queso - huevo - leche", [
+      food("2 medialunas chicas", 6, 42, 16),
+      food("60g jamon cocido natural", 12, 1, 4),
+      food("50g queso en fetas", 12, 1, 8),
+      food("1 huevo duro", 6, 1, 5),
+      food("200ml leche entera", 6, 10, 7)
+    ], [
+      "Rellena las medialunas con jamon y queso y calentarlas apenas.",
+      "No es para todos los dias, pero una vez por semana encaja si el resto esta ordenado."
+    ]),
+    altMeal("Huevos con queso untable, banana y nueces", "Huevos - queso untable - banana - nueces - leche", [
+      food("3 huevos", 18, 1, 15),
+      food("2 cdas queso untable", 4, 3, 7),
+      food("1 banana", 1, 27, 0),
+      food("20g nueces", 3, 3, 13),
+      food("200ml leche entera", 6, 10, 7)
+    ], [
+      "Huevos revueltos o a la plancha con queso untable al costado.",
+      "Banana, nueces y leche completan calorias sin hacer una mezcla rara."
     ])
   ];
 }
 
+function cloneMealTemplate(template) {
+  return {
+    name: template.name,
+    desc: template.desc,
+    kcal: template.kcal,
+    foods: template.foods.map((f) => ({ ...f })),
+    prep: template.prep.slice(),
+    note: template.note || null
+  };
+}
+
 function applyMealTemplate(target, template) {
-  target.name = template.name;
-  target.desc = template.desc;
-  target.kcal = template.kcal;
-  target.foods = template.foods.map((f) => ({ ...f }));
-  target.prep = template.prep.slice();
-  target.note = null;
+  const copy = cloneMealTemplate(template);
+  target.name = copy.name;
+  target.desc = copy.desc;
+  target.kcal = copy.kcal;
+  target.foods = copy.foods;
+  target.prep = copy.prep;
+  target.note = copy.note;
+}
+
+function pickBreakfastTemplate(item, day, weekNumber, dayNumber, options, offset = 0) {
+  const seed = `${item.id}-${day.id}-${day.type}-${weekNumber}-${dayNumber}-${offset}`;
+  return options[hashString(seed) % options.length];
 }
 
 function applyProfessionalMenuRules() {
   const breakfastOptions = commonBreakfastOptions();
   const mainOptions = commonMainAltOptions();
   const snackOptions = commonSnackAltOptions();
-  allWeeks.forEach((weekDays) => {
-    weekDays.forEach((day) => {
+  allWeeks.forEach((weekDays, weekNumber) => {
+    weekDays.forEach((day, dayNumber) => {
       day.meals.forEach((m) => {
         if (m.label === "Desayuno") {
-          const template = day.id === "mar" ? breakfastOptions[0] : pickAlt(m, breakfastOptions);
+          const template = pickBreakfastTemplate(m, day, weekNumber, dayNumber, breakfastOptions);
+          const altTemplate = pickBreakfastTemplate(m, day, weekNumber, dayNumber, breakfastOptions, 5);
           applyMealTemplate(m, template);
+          m.alt = cloneMealTemplate(altTemplate.name === template.name
+            ? breakfastOptions[(breakfastOptions.indexOf(template) + 1) % breakfastOptions.length]
+            : altTemplate);
         }
         if (m.label === "Almuerzo" || m.label === "Cena") {
-          m.alt = pickAlt(m, mainOptions);
+          m.alt = cloneMealTemplate(pickAlt(m, mainOptions));
         }
         if (m.label === "Merienda" || m.label === "Media mañana") {
-          m.alt = pickAlt(m, snackOptions);
+          m.alt = cloneMealTemplate(pickAlt(m, snackOptions));
         }
       });
     });
@@ -3013,28 +3093,7 @@ function buildFallbackAlt(item) {
   ];
 
   if (label.includes("desayuno")) {
-    return pickAlt(item, [
-      altMeal("Huevos, tostadas, palta y fruta", "3 huevos - tostadas - palta - banana o manzana", [
-        food("3 huevos", 18, 1, 15),
-        food("2 tostadas integrales", 7, 34, 3),
-        food("1/2 palta", 2, 6, 12),
-        food("1 banana o manzana", 1, 25, 0)
-      ], ["Hace los huevos revueltos o a la plancha.", "Comelo con tostadas, palta y una fruta para energia estable."]),
-      altMeal("Crema de arroz proteica", "Harina de arroz - whey - leche - banana - nueces", [
-        food("60g harina de arroz", 4, 48, 1),
-        food("1 scoop whey", 24, 3, 2),
-        food("250ml leche entera", 8, 12, 8),
-        food("1 banana", 1, 27, 0),
-        food("15g nueces", 2, 2, 10)
-      ], ["Cocina la harina de arroz con leche 3-4 min.", "Retira del fuego, mezcla whey y termina con banana y nueces."]),
-      altMeal("Tostado de atun suave con queso", "Pan - atun - queso fresco - tomate - fruta", [
-        food("2 rebanadas pan integral", 7, 34, 3),
-        food("1 lata de atun al natural", 24, 0, 1),
-        food("50g queso fresco", 9, 2, 7),
-        food("Tomate + limon", 1, 5, 0),
-        food("1 fruta", 1, 24, 0)
-      ], ["Escurri el atun y mezclalo con limon.", "Arma tostado con queso y tomate; deja la fruta como cierre."])
-    ]);
+    return cloneMealTemplate(pickAlt(item, commonBreakfastOptions()));
   }
 
   if (label.includes("media")) {
@@ -3070,10 +3129,10 @@ function buildFallbackAlt(item) {
         food("1 tostada con miel", 3, 28, 1),
         food("20g pasas de uva", 1, 16, 0)
       ], ["Comelo 30-60 minutos antes de entrenar.", "Bajo en grasa para que caiga liviano."]),
-      altMeal("Arroz inflado con leche y banana", "Arroz inflado - leche - banana - miel", [
-        food("35g arroz inflado", 3, 29, 0),
+      altMeal("Banana con leche y miel", "Banana - leche - miel - pasas", [
+        food("1 banana grande", 1, 31, 0),
         food("200ml leche entera", 6, 10, 7),
-        food("1 banana", 1, 27, 0),
+        food("20g pasas de uva", 1, 16, 0),
         food("1 cdita miel", 0, 8, 0)
       ], ["Ideal si necesitas carbo rapido pero no queres entrenar pesado de estomago.", "Comelo 45 minutos antes."])
     ]);
