@@ -85,8 +85,8 @@ function sumMacros(meals) {
 // SEMANA ROTATIVA · Elige menú según número de semana ISO
 // Semana 1 → 2 → 3 → 4 → 1 → 2 → ... automáticamente
 // =====================================================
-function getISOWeekNumber() {
-  const d = new Date();
+function getISOWeekNumber(date = new Date()) {
+  const d = new Date(date);
   d.setHours(0, 0, 0, 0);
   d.setDate(d.getDate() + 3 - (d.getDay() + 6) % 7);
   const week1 = new Date(d.getFullYear(), 0, 4);
@@ -110,19 +110,19 @@ const allWeeks = [
     workout: { name: "Pecho · Tríceps", duration: "60 min", icon: "🏋️", primary: ["Pecho", "Tríceps"] },
     isRestDay: false, kcal: 2900, protein: 170, carbs: 330, fats: 80,
     tags: ["Pecho", "Tríceps", "Mantenimiento"],
-    tip: "Día de empuje. Desayuná bien — la avena te da energía sostenida para las series pesadas de pecho. Si terminás el entreno con hambre real, sumá el cottage antes de dormir.",
+    tip: "Día de empuje. Desayuná bien — la arroz inflado te da energía sostenida para las series pesadas de pecho. Si terminás el entreno con hambre real, sumá el cottage antes de dormir.",
     meals: [
-      meal("10:00", "Desayuno", "Bowl de avena con banana, manteca de maní y miel", "60g avena · banana · 2 cdas manteca de maní · miel · leche", 0, [
-        food("60g avena en hojuelas", 7, 40, 4),
+      meal("10:00", "Desayuno", "Bowl de arroz inflado con banana, manteca de maní y miel", "60g arroz inflado · banana · 2 cdas manteca de maní · miel · leche", 0, [
+        food("60g arroz inflado", 7, 40, 4),
         food("1 banana madura", 1, 27, 0),
         food("2 cdas manteca de maní", 8, 6, 16),
         food("1 cda miel", 0, 17, 0),
         food("200ml leche entera", 6, 10, 7)
       ], [
-        "Calentá la leche en el microondas 2 min. Volcá sobre la avena y dejá reposar 3 min hasta que absorba.",
-        "Cortá la banana en rodajas. Poné encima la manteca de maní y bañá con miel. El combo avena+banana+maní da energía sostenida para 3-4 horas de entreno.",
+        "Calentá la leche en el microondas 2 min. Volcá sobre la arroz inflado y dejá reposar 3 min hasta que absorba.",
+        "Cortá la banana en rodajas. Poné encima la manteca de maní y bañá con miel. El combo banana+leche+manií da energía sostenida para 3-4 horas de entreno.",
         "Tomá un café negro al lado para el boost de cafeína pre-gym si entrás cerca."
-      ], "Avena = energía de liberación lenta. Ideal para ectomorfos que entrenan al mediodía."),
+      ], "arroz inflado = energía de liberación lenta. Ideal para ectomorfos que entrenan al mediodía."),
 
       meal("11:30", "Media mañana", "Tostadas con queso fresco, tomate seco y orégano", "2 tostadas · queso fresco · tomate seco · orégano", 0, [
         food("2 tostadas integrales", 8, 28, 2),
@@ -172,14 +172,14 @@ const allWeeks = [
         "Para el puré: papas hervidas pisadas con oliva, sal y pizca de nuez moscada. Sin manteca — igual queda cremoso con oliva."
       ])),
 
-      meal("19:30", "Merienda", "Yogur griego con granola, banana y miel", "200g yogur griego · granola · banana · miel", 0, [
-        food("200g yogur griego natural", 20, 8, 10),
+      meal("19:30", "Merienda", "ricota batida con granola, banana y miel", "200g ricota batida · granola · banana · miel", 0, [
+        food("200g ricota batida natural", 20, 8, 10),
         food("30g granola sin azúcar", 3, 20, 4),
         food("1 banana", 1, 27, 0),
         food("1 cdita miel", 0, 8, 0)
       ], [
-        "Poné el yogur en el bol. Cortá la banana en rodajas arriba.",
-        "Esparcí la granola y rociá con miel. El yogur griego tiene el doble de proteína que el yogur común."
+        "Poné el queso cottage en el bol. Cortá la banana en rodajas arriba.",
+        "Esparcí la granola y rociá con miel. El ricota batida tiene el doble de proteína que el queso cottage común."
       ], null),
 
       meal("22:00", "Cena", "Fideos al tuco casero con carne molida", "80g fideos · 150g carne magra · tomate triturado · queso", 0, [
@@ -335,17 +335,17 @@ const allWeeks = [
     tags: ["Hombros", "Abdomen", "Mantenimiento"],
     tip: "Hombros es un grupo relativamente pequeño pero muy técnico. El press militar y los laterales piden buena hidratación. Asegurate de tomar 2-3 vasos antes de ir.",
     meals: [
-      meal("10:00", "Desayuno", "Panqueques de avena y banana con miel", "2 panqueques · avena · banana · huevo · miel · leche", 0, [
-        food("50g avena", 6, 33, 3),
+      meal("10:00", "Desayuno", "panqueques de banana y banana con miel", "2 panqueques · arroz inflado · banana · huevo · miel · leche", 0, [
+        food("50g arroz inflado", 6, 33, 3),
         food("1 banana madura", 1, 27, 0),
         food("2 huevos", 12, 0, 10),
         food("100ml leche entera", 3, 5, 4),
         food("1 cda miel", 0, 17, 0)
       ], [
-        "Licuá avena + banana + 2 huevos + 100ml leche hasta que no queden grumos. Dejá reposar 2 min.",
+        "Licuá banana + leche + 2 huevos + 100ml leche hasta que no queden grumos. Dejá reposar 2 min.",
         "En sartén antiadherente con aceite en aerosol, volcá porciones a fuego medio. 2 min cada lado.",
         "Apilá los panqueques y bañá con miel. Podés agregar banana extra en rodajas arriba."
-      ], "Más saciantes que las tostadas comunes. Los panqueques de avena dan energía por horas."),
+      ], "Más saciantes que las tostadas comunes. Los panqueques de banana dan energía por horas."),
 
       meal("11:30", "Media mañana", "Tostadas con palta, huevo duro y semillas", "2 tostadas · palta · huevo duro · semillas de chía", 0, [
         food("2 tostadas integrales", 8, 28, 2),
@@ -509,14 +509,14 @@ const allWeeks = [
       ])),
 
       meal("19:30", "Merienda", "Panqueques con miel y manteca de maní", "2 panqueques · banana · manteca de maní · miel · leche", 0, [
-        food("2 panqueques caseros (avena + huevo)", 10, 28, 6),
+        food("2 panqueques caseros (arroz inflado + huevo)", 10, 28, 6),
         food("1 banana", 1, 27, 0),
         food("2 cdas manteca de maní", 8, 6, 16),
         food("1 cda miel", 0, 17, 0),
         food("200ml leche entera", 6, 10, 7)
       ], [
         "Merienda densa para el día de piernas — necesitás reponer lo que gastaste.",
-        "Hacé los panqueques de avena simples (50g avena + 1 huevo + leche) y rellená con manteca de maní y banana."
+        "Hacé los panqueques de banana simples (50g arroz inflado + 1 huevo + leche) y rellená con manteca de maní y banana."
       ], null),
 
       meal("22:00", "Cena", "Arroz con pollo cremoso al limón", "180g pollo · arroz · caldo · crema light · limón", 0, [
@@ -530,15 +530,15 @@ const allWeeks = [
         "Incorporá el arroz cocido, la crema light y el jugo de limón. Revolvé 3 min a fuego bajo.",
         "El limón corta la pesadez de la crema y le da un sabor fresco completamente distinto al arroz con pollo de siempre."
       ], null,
-      altMeal("Pollo al curry suave con pan de pita", "170g pollo · curry · tomate · yogur · 2 panes pita", [
+      altMeal("Pollo al curry suave con pan de pita", "170g pollo · curry · tomate · queso cottage · 2 panes pita", [
         food("170g pechuga", 53, 0, 5),
         food("2 panes de pita", 10, 50, 2),
         food("100g tomate triturado", 1, 5, 0),
-        food("2 cdas yogur natural", 3, 3, 2),
+        food("2 cdas queso cottage", 3, 3, 2),
         food("1 cdita curry en polvo", 0, 1, 0)
       ], [
         "Salteá el pollo en cubos con cebolla, ajo y curry en polvo. Sumá tomate triturado y cociná 12 min.",
-        "Apagá, incorporá yogur natural y mezclá. Serví con pan de pita cortado para mojar."
+        "Apagá, incorporá queso cottage y mezclá. Serví con pan de pita cortado para mojar."
       ])),
 
       meal("23:30", "Antes de dormir", "Shake nocturno (obligatorio hoy)", "Piernas exige proteína nocturna", 0, [
@@ -698,15 +698,15 @@ const allWeeks = [
         food("1 banana", 1, 27, 0)
       ], ["La merienda del sábado. Mate con tostadas de maní y banana — simple y calórico."], null),
 
-      meal("22:00", "Cena", "Souvlaki de pollo con tzatziki y arroz", "160g pollo marinado · 2 panes pita · tzatziki · arroz", 0, [
+      meal("22:00", "Cena", "Souvlaki de pollo con salsa de pepino y queso crema y arroz", "160g pollo marinado · 2 panes pita · salsa de pepino y queso crema · arroz", 0, [
         food("160g pechuga en brochettes", 50, 0, 5),
         food("2 panes de pita o árabe", 8, 36, 2),
-        food("Tzatziki (yogur + pepino + ajo + eneldo)", 4, 5, 4),
+        food("salsa de pepino y queso crema (queso cottage + pepino + ajo + eneldo)", 4, 5, 4),
         food("1/2 taza arroz cocido", 2, 25, 0)
       ], [
         "Marinala pechuga en cubos con oliva + limón + ajo + orégano + pimentón, 30 min mínimo.",
         "Pinchá en palitos (si tenés) y grillá en sartén a fuego alto 6-8 min girando.",
-        "Para el tzatziki: yogur natural + pepino rallado escurrido + ajo + eneldo + sal. Servís todo junto con el arroz."
+        "Para el salsa de pepino y queso crema: queso cottage + pepino rallado escurrido + ajo + eneldo + sal. Servís todo junto con el arroz."
       ], "Una cena distinta, con personalidad. Cambia completamente el sabor de la semana.",
       altMeal("Fideos con pesto de albahaca y queso", "80g pasta · pesto casero · queso parmesano", [
         food("80g fideos secos", 10, 58, 2),
@@ -732,15 +732,15 @@ const allWeeks = [
     tags: ["Descanso total", "Recuperación", "Familia"],
     tip: "Domingo es recarga mental y física. Comé rico, descansá bien. La semana que viene empieza mejor cuando el cuerpo estuvo bien nutrido y descansado.",
     meals: [
-      meal("10:00", "Desayuno", "Pancakes de avena con frutos rojos y miel", "50g avena · 2 huevos · banana · leche · frutos rojos", 0, [
-        food("50g avena", 6, 33, 3),
+      meal("10:00", "Desayuno", "pancakes de banana con frutos rojos y miel", "50g arroz inflado · 2 huevos · banana · leche · frutos rojos", 0, [
+        food("50g arroz inflado", 6, 33, 3),
         food("2 huevos", 12, 0, 10),
         food("1 banana", 1, 27, 0),
         food("150ml leche entera", 5, 8, 5),
         food("80g frutos rojos o frutillas", 1, 10, 0),
         food("1 cda miel", 0, 17, 0)
       ], [
-        "Licuá avena + huevos + banana + leche. Dejá reposar 3 min.",
+        "Licuá harina de arroz + huevos + banana + leche. Dejá reposar 3 min.",
         "Cocinalo en sartén a fuego medio, 2 min por lado. Saldrán 3-4 pancakes.",
         "Servís con frutos rojos y un hilo de miel. Es el desayuno más festivo de la semana — disfrutalo tranquilo."
       ], null),
@@ -919,14 +919,14 @@ const allWeeks = [
     tags: ["Espalda", "Bíceps", "Tirón pesado"],
     tip: "Espalda demanda carbo. Reforzá el pre-entreno y no te saltees la media mañana.",
     meals: [
-      meal("10:00", "Desayuno", "Bol de yogur natural con avena, banana y nueces", "200g yogur · 40g avena · banana · nueces · miel", 0, [
-        food("200g yogur natural entero", 8, 10, 8),
-        food("40g avena en hojuelas", 4, 27, 3),
+      meal("10:00", "Desayuno", "Bol de queso cottage con arroz inflado, banana y nueces", "200g queso cottage · 40g arroz inflado · banana · nueces · miel", 0, [
+        food("200g queso cottage", 8, 10, 8),
+        food("40g arroz inflado", 4, 27, 3),
         food("1 banana", 1, 27, 0),
         food("20g nueces", 3, 3, 13),
         food("1 cda miel", 0, 17, 0)
       ], [
-        "Mezcla el yogur con la avena y dejá reposar 5 min para que la avena absorba.",
+        "Mezcla el queso cottage con la arroz inflado y dejá reposar 5 min para que la banana tome cuerpo.",
         "Cortá la banana en rodajas y poné arriba con las nueces picadas y la miel."
       ], null),
 
@@ -1025,13 +1025,13 @@ const allWeeks = [
         "Tomá el café con leche grande para aumentar calorías y proteína."
       ], "Una vez por semana, el desayuno café + medialunas es totalmente válido."),
 
-      meal("11:30", "Media mañana", "Yogur griego con frutos secos y miel", "200g yogur griego · almendras · nueces · miel", 0, [
-        food("200g yogur griego natural", 20, 8, 10),
+      meal("11:30", "Media mañana", "ricota batida con frutos secos y miel", "200g ricota batida · almendras · nueces · miel", 0, [
+        food("200g ricota batida natural", 20, 8, 10),
         food("15g almendras", 3, 3, 8),
         food("10g nueces", 2, 2, 7),
         food("1 cda miel", 0, 17, 0)
       ], [
-        "Yogur con los frutos secos picados y miel encima. Proteína alta y muy poca preparación."
+        "queso cottage con los frutos secos picados y miel encima. Proteína alta y muy poca preparación."
       ], null),
 
       meal("12:30", "Pre-entreno", "Banana + dátiles", "Glucosa concentrada", 0, [
@@ -1248,8 +1248,8 @@ const allWeeks = [
         "Mezclá con la pasta al dente y el parmesano. La salsa de tomate fresco es completamente diferente a la de lata."
       ])),
 
-      meal("17:00", "Merienda", "Mate con galletitas de avena y nueces", "Mate + 6-8 galletitas de avena", 0, [
-        food("8 galletitas de avena (caseras o compradas)", 5, 30, 7),
+      meal("17:00", "Merienda", "Mate con galletitas de arroz y nueces", "Mate + 6-8 galletitas de arroz", 0, [
+        food("8 galletitas de arroz (caseras o compradas)", 5, 30, 7),
         food("1 manzana", 0, 20, 0)
       ], ["Mate con galletitas y manzana. Merienda liviana para el viernes."], null),
 
@@ -1299,8 +1299,8 @@ const allWeeks = [
         "El desayuno más gourmet de las 4 semanas — salmón ahumado en casa es un lujo accesible."
       ], null),
 
-      meal("12:30", "Media mañana", "Bol de frutas con granola y yogur", "200g yogur · granola · frutas de estación · miel", 0, [
-        food("200g yogur natural", 8, 10, 8),
+      meal("12:30", "Media mañana", "Bol de frutas con granola y queso cottage", "200g queso cottage · granola · frutas de estación · miel", 0, [
+        food("200g queso cottage", 8, 10, 8),
         food("30g granola", 3, 20, 4),
         food("100g frutas variadas (banana, manzana, naranja)", 1, 25, 0),
         food("1 cdita miel", 0, 8, 0)
@@ -1326,8 +1326,8 @@ const allWeeks = [
         "Los últimos 20 min sin aluminio para que dore. Papas en gajos con oliva al horno también 40 min."
       ])),
 
-      meal("17:30", "Merienda", "Mate con alfajores caseros de avena", "Mate + 2 alfajores avena y dulce de leche", 0, [
-        food("2 alfajores de avena caseros (o comprados)", 5, 36, 7),
+      meal("17:30", "Merienda", "Mate con alfajores caseros de arroz inflado", "Mate + 2 alfajores arroz inflado y dulce de leche", 0, [
+        food("2 alfajores de maicena caseros (o comprados)", 5, 36, 7),
         food("Mate", 0, 0, 0)
       ], ["La merienda criolla del sábado. Mate con alfajores."], null),
 
@@ -1444,15 +1444,15 @@ const allWeeks = [
     tags: ["Pecho", "Tríceps", "Sabores del mundo"],
     tip: "Semana de sabores internacionales. Todo distinto a las semanas anteriores.",
     meals: [
-      meal("10:00", "Desayuno", "Smoothie bowl proteico con banana y frutos del bosque", "Avena · banana · leche · whey · frutos rojos · granola", 0, [
-        food("40g avena", 4, 27, 3),
+      meal("10:00", "Desayuno", "Smoothie bowl proteico con banana y frutos del bosque", "arroz inflado · banana · leche · whey · frutos rojos · granola", 0, [
+        food("40g arroz inflado", 4, 27, 3),
         food("1 banana congelada", 1, 27, 0),
         food("150ml leche entera", 5, 8, 5),
         food("1/2 scoop whey vainilla", 13, 1, 1),
         food("80g frutos rojos", 1, 10, 0),
         food("20g granola", 2, 13, 3)
       ], [
-        "Licuá la avena + banana congelada + leche + whey hasta que quede espesa (textura tipo helado).",
+        "Licuá la banana + leche congelada + leche + whey hasta que quede espesa (textura tipo helado).",
         "Volcá en un bol y poné los frutos rojos y la granola encima. Se come con cuchara — es la versión 'bowl' del licuado."
       ], null),
 
@@ -1498,13 +1498,13 @@ const allWeeks = [
         "Armá los tacos con palta, pollo, tomate y cebolla. Exprimí limón encima."
       ])),
 
-      meal("19:30", "Merienda", "Yogur griego con manteca de maní y banana", "200g yogur griego · manteca de maní · banana · miel", 0, [
-        food("200g yogur griego", 20, 8, 10),
+      meal("19:30", "Merienda", "ricota batida con manteca de maní y banana", "200g ricota batida · manteca de maní · banana · miel", 0, [
+        food("200g ricota batida", 20, 8, 10),
         food("1 cda manteca de maní", 4, 3, 8),
         food("1 banana", 1, 27, 0),
         food("1 cdita miel", 0, 8, 0)
       ], [
-        "Mezclá el yogur con la manteca de maní hasta integrar. Cortá la banana arriba y rociá con miel."
+        "Mezclá el queso cottage con la manteca de maní hasta integrar. Cortá la banana arriba y rociá con miel."
       ], null),
 
       meal("22:00", "Cena", "Fideos estilo pad thai con pollo y maní", "80g noodles o fideos · 160g pollo · huevo · maní · soja · limón", 0, [
@@ -1610,16 +1610,16 @@ const allWeeks = [
         food("1 cdita miel", 0, 8, 0)
       ], ["Clásico seguro para la merienda de martes."], null),
 
-      meal("22:00", "Cena", "Pollo tikka masala liviano con arroz basmati", "170g pollo · yogur · tomate · curry · garam masala · arroz", 0, [
+      meal("22:00", "Cena", "Pollo tikka masala liviano con arroz basmati", "170g pollo · queso cottage · tomate · curry · garam masala · arroz", 0, [
         food("170g pechuga en cubos", 53, 0, 5),
         food("3/4 taza arroz basmati cocido", 3, 40, 0),
         food("100ml tomate triturado", 1, 5, 0),
-        food("4 cdas yogur natural", 6, 5, 4),
+        food("4 cdas queso cottage", 6, 5, 4),
         food("1 cdita curry + 1/2 cdita garam masala", 0, 2, 1)
       ], [
-        "Marinato el pollo en yogur + curry + sal 20 min. Doré en sartén caliente.",
+        "Marinato el pollo en queso cottage + curry + sal 20 min. Doré en sartén caliente.",
         "Sumá el tomate y las especias. Cociná 10 min a fuego bajo.",
-        "Apagá e incorporá más yogur para suavizar la salsa. La versión liviana del tikka masala — sin crema pero con todo el sabor."
+        "Apagá e incorporá más queso cottage para suavizar la salsa. La versión liviana del tikka masala — sin crema pero con todo el sabor."
       ], null,
       altMeal("Burrito de pollo con queso y arroz", "2 tortillas grandes · 150g pollo · arroz · queso · palta", [
         food("2 tortillas de harina grande", 8, 60, 6),
@@ -1647,14 +1647,14 @@ const allWeeks = [
     tags: ["Hombros", "Mix internacional"],
     tip: "Menú con toques asiáticos y mediterráneos. Sabores completamente nuevos.",
     meals: [
-      meal("10:00", "Desayuno", "Pancakes americanos con arándanos y miel", "50g harina avena · 2 huevos · leche · arándanos · miel", 0, [
-        food("50g harina de avena o avena licuada", 6, 33, 3),
+      meal("10:00", "Desayuno", "Pancakes americanos con arándanos y miel", "50g harina de arroz · 2 huevos · leche · arándanos · miel", 0, [
+        food("50g harina de arroz o arroz inflado", 6, 33, 3),
         food("2 huevos", 12, 0, 10),
         food("100ml leche entera", 3, 5, 4),
         food("80g arándanos frescos o congelados", 1, 14, 0),
         food("1 cda miel o sirope", 0, 17, 0)
       ], [
-        "Mezclá harina de avena + huevos + leche + sal hasta que quede lisa. No agites de más.",
+        "Mezclá harina de arroz + huevos + leche + sal hasta que quede lisa. No agites de más.",
         "En sartén a fuego medio con manteca, cocinalo por cucharones. Cuando aparecen burbujas, dalo vuelta (2-3 min por lado).",
         "Apilá los pancakes y poné los arándanos encima con miel. Los pancakes americanos esponjosos son completamente distintos a los finos."
       ], null),
@@ -1852,23 +1852,23 @@ const allWeeks = [
     tags: ["Full body", "Opcional"],
     tip: "Viernes liviano con el menú más fresco de la semana.",
     meals: [
-      meal("10:00", "Desayuno", "Waffle proteico de avena con banana y maní", "2 waffles · avena · huevo · banana · manteca maní", 0, [
-        food("50g avena", 6, 33, 3),
+      meal("10:00", "Desayuno", "waffle proteico de banana con banana y maní", "2 waffles · arroz inflado · huevo · banana · manteca maní", 0, [
+        food("50g arroz inflado", 6, 33, 3),
         food("2 huevos", 12, 0, 10),
         food("100ml leche", 3, 5, 4),
         food("1 banana", 1, 27, 0),
         food("1 cda manteca de maní", 4, 3, 8)
       ], [
-        "Licuá avena + huevos + leche hasta obtener una mezcla espesa. Cocinalo en wafflera o sartén.",
-        "Serví con banana en rodajas y manteca de maní por encima. Los waffles de avena son una variación del panqueque con otra textura."
+        "Licuá harina de arroz + huevos + leche hasta obtener una mezcla espesa. Cocinalo en wafflera o sartén.",
+        "Serví con banana en rodajas y manteca de maní por encima. Los waffles de arroz inflado son una variación del panqueque con otra textura."
       ], "Si no tenés wafflera, hacélo como panqueques gruesos."),
 
-      meal("12:00", "Media mañana", "Bol de frutas con yogur y granola", "Frutas variadas · yogur natural · granola · miel", 0, [
+      meal("12:00", "Media mañana", "Bol de frutas con queso cottage y granola", "Frutas variadas · queso cottage · granola · miel", 0, [
         food("150g frutas (banana + manzana + naranja)", 1, 35, 0),
-        food("150g yogur natural", 6, 8, 6),
+        food("150g queso cottage", 6, 8, 6),
         food("25g granola", 2, 17, 3),
         food("1 cdita miel", 0, 8, 0)
-      ], ["Bol de frutas con yogur. Fresco y liviano para el viernes."], null),
+      ], ["Bol de frutas con queso cottage. Fresco y liviano para el viernes."], null),
 
       meal("13:30", "Almuerzo", "Salmón teriyaki con arroz y brócoli", "200g salmón · salsa teriyaki · arroz · brócoli · sésamo", 0, [
         food("200g filet de salmón", 50, 0, 26),
@@ -1892,19 +1892,19 @@ const allWeeks = [
         "Rociá con soja y sésamo. El poke bowl casero — sin necesidad de pescado crudo."
       ])),
 
-      meal("17:00", "Merienda", "Mate con galletitas de avena y maní caseras", "Mate + galletitas avena + banana", 0, [
-        food("8 galletitas de avena y maní", 6, 32, 8),
+      meal("17:00", "Merienda", "Mate con galletitas de arroz y maní caseras", "Mate + galletitas banana + leche", 0, [
+        food("8 galletitas de arroz y maní", 6, 32, 8),
         food("1 banana", 1, 27, 0)
       ], ["Merienda liviana del viernes."], null),
 
-      meal("22:00", "Cena", "Falafel casero con arroz y ensalada", "Falafel de garbanzos · arroz · ensalada · yogur · limón", 0, [
+      meal("22:00", "Cena", "Falafel casero con arroz y ensalada", "Falafel de garbanzos · arroz · ensalada · queso cottage · limón", 0, [
         food("6 falafeles caseros (garbanzos+especias+harina)", 10, 28, 8),
         food("3/4 taza arroz cocido", 3, 37, 0),
-        food("3 cdas yogur natural", 5, 4, 3),
+        food("3 cdas queso cottage", 5, 4, 3),
         food("Ensalada (pepino+tomate+cebolla+perejil)", 2, 10, 0)
       ], [
         "Para falafel: procesá garbanzos en lata escurridos + ajo + perejil + comino + sal + 2 cdas harina. Formá bolitas y horneá a 200°C por 20 min.",
-        "Servís con arroz, ensalada y yogur condimentado con limón. Los falafeles al horno son crujientes y sanos."
+        "Servís con arroz, ensalada y queso cottage condimentado con limón. Los falafeles al horno son crujientes y sanos."
       ], null,
       altMeal("Pollo con especias marroquíes y couscous", "160g pollo · cuscús · zanahoria · garbanzos · canela", [
         food("160g pechuga especiada (comino+canela+pimentón)", 50, 0, 5),
@@ -1962,7 +1962,7 @@ const allWeeks = [
       altMeal("Costillitas de cerdo agridulces con ensalada", "350g costillas · miel + soja + ajo + jengibre", [
         food("350g costillitas de cerdo", 45, 0, 20),
         food("Glaze (miel + soja + ajo + jengibre)", 2, 18, 1),
-        food("Ensalada coleslaw liviana (repollo + zanahoria + yogur)", 3, 12, 3)
+        food("Ensalada coleslaw liviana (repollo + zanahoria + queso cottage)", 3, 12, 3)
       ], [
         "Cociná las costillas tapadas con aluminio a 180°C por 45 min. Bañálas con el glaze y destapá 15 min más.",
         "El glaze de miel y soja carameliza y las hace absolutamente distintas a las costillas simples."
@@ -2010,15 +2010,15 @@ const allWeeks = [
     tags: ["Descanso", "Domingo especial"],
     tip: "Domingo de recargar energía para la semana que viene.",
     meals: [
-      meal("10:00", "Desayuno", "Pancakes de banana con chips de chocolate", "50g avena · 2 huevos · banana · 15g chocolate negro · leche", 0, [
-        food("50g avena", 6, 33, 3),
+      meal("10:00", "Desayuno", "Pancakes de banana con chips de chocolate", "50g arroz inflado · 2 huevos · banana · 15g chocolate negro · leche", 0, [
+        food("50g arroz inflado", 6, 33, 3),
         food("2 huevos", 12, 0, 10),
         food("1 banana", 1, 27, 0),
         food("100ml leche", 3, 5, 4),
         food("15g chips de chocolate negro", 2, 10, 5),
         food("1 cda miel", 0, 17, 0)
       ], [
-        "Licuá avena + huevos + banana + leche. Poné los chips de chocolate en la mezcla ya fuera del mixer.",
+        "Licuá harina de arroz + huevos + banana + leche. Poné los chips de chocolate en la mezcla ya fuera del mixer.",
         "Cocinalo en sartén. Los chips se derriten un poco y crean bolsas de chocolate — el desayuno dominical definitivo."
       ], null),
 
@@ -2144,12 +2144,12 @@ const allWeeks = [
         "Adereza con oliva y limón. Podés agregar rodajas de pan integral al costado."
       ])),
 
-      meal("19:30", "Merienda", "Yogur griego natural con nueces y fruta", "200g yogur griego · 25g nueces · banana · miel", 0, [
-        food("200g yogur griego natural", 20, 8, 10),
+      meal("19:30", "Merienda", "ricota batida natural con nueces y fruta", "200g ricota batida · 25g nueces · banana · miel", 0, [
+        food("200g ricota batida natural", 20, 8, 10),
         food("25g nueces", 4, 4, 16),
         food("1 banana", 1, 27, 0),
         food("1 cdita miel", 0, 8, 0)
-      ], ["Yogur griego con nueces y banana. Alta proteína + grasas buenas."], null),
+      ], ["ricota batida con nueces y banana. Alta proteína + grasas buenas."], null),
 
       meal("22:00", "Cena", "Carne magra al horno con vegetales asados", "180g peceto · zapallito · morrón · zanahoria · ajo · romero", 0, [
         food("180g peceto al horno", 47, 0, 6),
@@ -2186,16 +2186,16 @@ const allWeeks = [
     tags: ["Espalda", "Bíceps", "Alto proteína"],
     tip: "Espalda con foco máximo en proteína. Hoy llegamos a 180g.",
     meals: [
-      meal("10:00", "Desayuno", "Bol proteico: yogur griego + whey + avena + banana", "Yogur griego · whey · avena · banana · miel", 0, [
-        food("200g yogur griego", 20, 8, 10),
+      meal("10:00", "Desayuno", "Bol proteico: ricota batida + whey + banana + banana", "ricota batida · whey · arroz inflado · banana · miel", 0, [
+        food("200g ricota batida", 20, 8, 10),
         food("1/2 scoop whey vainilla", 13, 1, 1),
-        food("40g avena cruda", 4, 27, 3),
+        food("40g arroz inflado", 4, 27, 3),
         food("1 banana", 1, 27, 0),
         food("1 cdita miel", 0, 8, 0)
       ], [
-        "Mezclá el yogur con el whey y la miel hasta que no haya grumos.",
-        "Sumá la avena y cortá la banana encima. El desayuno más proteico del lunes: 38g en un bol.",
-        "La avena cruda se digiere bien mezclada con el yogur — no hace falta cocinarla."
+        "Mezclá el queso cottage con el whey y la miel hasta que no haya grumos.",
+        "Sumá la arroz inflado y cortá la banana encima. El desayuno más proteico del lunes: 38g en un bol.",
+        "La arroz inflado se digiere bien mezclada con el queso cottage — no hace falta cocinarla."
       ], null),
 
       meal("11:30", "Media mañana", "Sándwich de pechuga con palta y tomate", "2 rodajas pan · 100g pechuga laminada · palta · tomate", 0, [
@@ -2432,11 +2432,11 @@ const allWeeks = [
         "La batata es la guarnición más nutritiva — fibra, potasio y vitamina A."
       ])),
 
-      meal("19:30", "Merienda", "Licuado doble proteico (leche + banana + whey + avena)", "Banana · leche · whey · avena · miel", 0, [
+      meal("19:30", "Merienda", "Licuado doble proteico (leche + banana + whey + arroz inflado)", "Banana · leche · whey · arroz inflado · miel", 0, [
         food("1 banana", 1, 27, 0),
         food("250ml leche entera", 8, 12, 9),
         food("1 scoop whey", 25, 2, 2),
-        food("30g avena", 3, 20, 2),
+        food("30g arroz inflado", 3, 20, 2),
         food("1 cdita miel", 0, 8, 0)
       ], [
         "Licuá todo junto. La merienda más calórica y proteica del plan — ideal para el día de piernas.",
@@ -2477,14 +2477,14 @@ const allWeeks = [
     tags: ["Full body", "Proteico"],
     tip: "Viernes proteico puro. El menú más limpio y directo de las 4 semanas.",
     meals: [
-      meal("10:00", "Desayuno", "Porridge proteico de avena con whey, fruta y miel", "60g avena · 1 scoop whey · leche · banana · miel", 0, [
-        food("60g avena", 7, 40, 4),
+      meal("10:00", "Desayuno", "crema de arroz proteica con whey, fruta y miel", "60g arroz inflado · 1 scoop whey · leche · banana · miel", 0, [
+        food("60g arroz inflado", 7, 40, 4),
         food("1 scoop whey vainilla", 25, 2, 2),
         food("250ml leche entera", 8, 12, 9),
         food("1 banana", 1, 27, 0),
         food("1 cdita miel", 0, 8, 0)
       ], [
-        "Herví la leche con la avena 3 min revolviendo. Retirá del fuego y esperá 1 min.",
+        "Herví la leche con la arroz inflado 3 min revolviendo. Retirá del fuego y esperá 1 min.",
         "Incorporá el whey revolviendo (apagá bien el fuego antes — el calor destruye parte de la proteína).",
         "Cortá la banana encima y bañá con miel. El porridge proteico = 40g de proteína en el desayuno."
       ], null),
@@ -2573,11 +2573,11 @@ const allWeeks = [
         "El desayuno del sábado más cargado de proteína de las 4 semanas: 54g."
       ], null),
 
-      meal("12:30", "Media mañana", "Yogur griego con nueces y miel", "200g yogur griego · nueces · miel", 0, [
-        food("200g yogur griego", 20, 8, 10),
+      meal("12:30", "Media mañana", "ricota batida con nueces y miel", "200g ricota batida · nueces · miel", 0, [
+        food("200g ricota batida", 20, 8, 10),
         food("25g nueces", 4, 4, 16),
         food("1 cda miel", 0, 17, 0)
-      ], ["Yogur con nueces y miel. Simple y alta proteína."], null),
+      ], ["queso cottage con nueces y miel. Simple y alta proteína."], null),
 
       meal("14:00", "Almuerzo", "Asado proteico de carne magra con ensalada grande", "250g vacío o cuadrada · chorizo pequeño · ensalada · pan", 0, [
         food("250g vacío o cuadrada a la parrilla", 50, 0, 18),
@@ -2599,8 +2599,8 @@ const allWeeks = [
         "El cordero tiene un sabor completamente diferente a la vaca — vale la pena probarlo."
       ])),
 
-      meal("17:30", "Merienda", "Mate con alfajores de avena caseros", "Mate + alfajores avena", 0, [
-        food("2 alfajores de avena caseros", 5, 36, 7)
+      meal("17:30", "Merienda", "Mate con alfajores de maicena caseros", "Mate + alfajores arroz inflado", 0, [
+        food("2 alfajores de maicena caseros", 5, 36, 7)
       ], ["Mate con alfajores. El cierre dulce del sábado."], null),
 
       meal("22:00", "Cena", "Pollo relleno con espinaca y ricota", "180g pechuga rellena · espinaca · ricota · queso · ensalada", 0, [
@@ -2641,14 +2641,14 @@ const allWeeks = [
     tags: ["Descanso", "Proteico puro"],
     tip: "El cierre de la semana proteica. Mañana empieza la semana 1 de nuevo — renovada.",
     meals: [
-      meal("10:00", "Desayuno", "Pancakes proteicos de avena y huevo con miel", "50g avena · 2 huevos · 1 clara · banana · miel · leche", 0, [
-        food("50g avena", 6, 33, 3),
+      meal("10:00", "Desayuno", "Pancakes proteicos de arroz inflado y huevo con miel", "50g arroz inflado · 2 huevos · 1 clara · banana · miel · leche", 0, [
+        food("50g arroz inflado", 6, 33, 3),
         food("2 huevos + 1 clara", 16, 0, 10),
         food("1 banana", 1, 27, 0),
         food("100ml leche", 3, 5, 4),
         food("1 cda miel", 0, 17, 0)
       ], [
-        "Licuá avena + huevos + clara + banana + leche. Cocinalo en sartén.",
+        "Licuá harina de arroz + huevos + clara + banana + leche. Cocinalo en sartén.",
         "Con 3 huevos los pancakes quedan más proteicos y menos elásticos. Miel encima."
       ], null),
 
@@ -2709,13 +2709,262 @@ const allWeeks = [
 ]; // fin allWeeks
 
 // =====================================================
+// CALIDAD DEL PLAN
+// - Sin yogur ni avena en ninguna receta visible.
+// - Todas las comidas tienen opcion B.
+// =====================================================
+const BANNED_INGREDIENTS_RE = /(yogur|avena)/i;
+
+function cleanPlanText(value) {
+  if (typeof value !== "string") return value;
+  return value
+    .replace(/yogur griego/gi, "ricota batida")
+    .replace(/yogur natural entero/gi, "queso cottage")
+    .replace(/yogur natural/gi, "queso cottage")
+    .replace(/yogur/gi, "queso cottage")
+    .replace(/tzatziki/gi, "salsa de pepino y queso crema")
+    .replace(/harina de avena|harina avena/gi, "harina de arroz")
+    .replace(/avena en hojuelas|avena cruda|avena licuada|avena/gi, "arroz inflado")
+    .replace(/galletitas de arroz inflado/gi, "galletitas de arroz")
+    .replace(/alfajores de arroz inflado/gi, "alfajores de maicena")
+    .replace(/panqueques? de arroz inflado/gi, "panqueques de banana")
+    .replace(/pancakes? de arroz inflado/gi, "pancakes de banana")
+    .replace(/waffle proteico de arroz inflado/gi, "waffle proteico de banana")
+    .replace(/porridge proteico de arroz inflado/gi, "crema de arroz proteica")
+    .replace(/bol proteico: ricota batida \+ whey \+ arroz inflado/gi, "Bol proteico: ricota batida + whey + banana")
+    .replace(/arroz inflado \+ banana/gi, "banana + leche")
+    .replace(/arroz inflado \+ huevos/gi, "harina de arroz + huevos")
+    .replace(/arroz inflado mezclada/gi, "banana mezclada")
+    .replace(/arroz inflado absorba/gi, "banana tome cuerpo")
+    .replace(/combo arroz inflado\+banana\+man/i, "combo banana+leche+mani");
+}
+
+function cleanPlanItem(item) {
+  if (!item) return item;
+  Object.keys(item).forEach((key) => {
+    if (typeof item[key] === "string") item[key] = cleanPlanText(item[key]);
+  });
+  if (Array.isArray(item.prep)) item.prep = item.prep.map(cleanPlanText);
+  if (Array.isArray(item.foods)) item.foods.forEach((f) => { f.name = cleanPlanText(f.name); });
+  item.name = cleanPlanText(item.name);
+  item.desc = cleanPlanText(item.desc);
+  item.note = cleanPlanText(item.note);
+  return item;
+}
+
+function macroTotalsForMeal(item) {
+  return item.foods.reduce((acc, f) => {
+    acc.p += f.p; acc.c += f.c; acc.g += f.g;
+    return acc;
+  }, { p: 0, c: 0, g: 0 });
+}
+
+function hashString(value) {
+  return String(value).split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
+}
+
+function pickAlt(item, options) {
+  return options[hashString(item.id + "-" + item.label) % options.length];
+}
+
+function buildFallbackAlt(item) {
+  const label = item.label.toLowerCase();
+  const mainOptions = [
+    altMeal("Bowl de atun, arroz, palta y tomate", "Atun - arroz - palta - tomate - oliva - limon", [
+      food("1 lata grande de atun al natural", 32, 0, 2),
+      food("1 taza arroz cocido", 4, 45, 1),
+      food("1/2 palta", 2, 6, 12),
+      food("Tomate + rucula + limon", 2, 9, 0),
+      food("1 cda aceite de oliva", 0, 0, 10)
+    ], ["Mezcla arroz con atun escurrido, tomate, rucula y limon.", "Suma palta y oliva al final para meter grasas buenas sin complicarte."]),
+    altMeal("Tortilla de papa, huevo y espinaca", "Huevos - papa - espinaca - queso fresco - ensalada", [
+      food("3 huevos", 18, 1, 15),
+      food("250g papa", 5, 50, 0),
+      food("80g espinaca", 3, 3, 0),
+      food("50g queso fresco", 9, 2, 7),
+      food("Ensalada + oliva", 2, 8, 10)
+    ], ["Hervi o saltea la papa en cubos chicos.", "Suma huevos batidos, espinaca y queso; cocina tapado hasta que firme."]),
+    altMeal("Pollo, batata y brocoli al plato", "Pollo - batata - brocoli - oliva - limon", [
+      food("180g pechuga o muslo sin piel", 42, 0, 7),
+      food("250g batata", 4, 50, 0),
+      food("150g brocoli", 5, 10, 1),
+      food("1 cda aceite de oliva", 0, 0, 10)
+    ], ["Hornea batata en cubos con sal y pimenton.", "Grilla el pollo y servi con brocoli al vapor, limon y oliva."]),
+    altMeal("Lentejas rapidas con carne magra", "Lentejas - carne - arroz - zanahoria - tomate", [
+      food("1 taza lentejas cocidas", 18, 40, 1),
+      food("120g carne magra", 28, 0, 8),
+      food("1/2 taza arroz cocido", 2, 22, 0),
+      food("Zanahoria + tomate + cebolla", 3, 16, 0)
+    ], ["Saltea cebolla, tomate y zanahoria.", "Suma carne, lentejas y arroz; calenta todo junto con pimenton."])
+  ];
+
+  if (label.includes("desayuno")) {
+    return pickAlt(item, [
+      altMeal("Huevos, tostadas, palta y fruta", "3 huevos - tostadas - palta - banana o manzana", [
+        food("3 huevos", 18, 1, 15),
+        food("2 tostadas integrales", 7, 34, 3),
+        food("1/2 palta", 2, 6, 12),
+        food("1 banana o manzana", 1, 25, 0)
+      ], ["Hace los huevos revueltos o a la plancha.", "Comelo con tostadas, palta y una fruta para energia estable."]),
+      altMeal("Crema de arroz proteica", "Harina de arroz - whey - leche - banana - nueces", [
+        food("60g harina de arroz", 4, 48, 1),
+        food("1 scoop whey", 24, 3, 2),
+        food("250ml leche entera", 8, 12, 8),
+        food("1 banana", 1, 27, 0),
+        food("15g nueces", 2, 2, 10)
+      ], ["Cocina la harina de arroz con leche 3-4 min.", "Retira del fuego, mezcla whey y termina con banana y nueces."]),
+      altMeal("Tostado de atun suave con queso", "Pan - atun - queso fresco - tomate - fruta", [
+        food("2 rebanadas pan integral", 7, 34, 3),
+        food("1 lata de atun al natural", 24, 0, 1),
+        food("50g queso fresco", 9, 2, 7),
+        food("Tomate + limon", 1, 5, 0),
+        food("1 fruta", 1, 24, 0)
+      ], ["Escurri el atun y mezclalo con limon.", "Arma tostado con queso y tomate; deja la fruta como cierre."])
+    ]);
+  }
+
+  if (label.includes("media")) {
+    return pickAlt(item, [
+      altMeal("Sandwich de atun, queso y tomate", "Pan integral - atun - queso - tomate - fruta", [
+        food("2 rebanadas pan integral", 7, 34, 3),
+        food("1 lata de atun al natural", 24, 0, 1),
+        food("40g queso fresco", 7, 1, 5),
+        food("Tomate y hojas verdes", 1, 5, 0),
+        food("1 fruta", 1, 24, 0)
+      ], ["Arma el sandwich con atun escurrido, queso y tomate.", "Acompana con fruta para completar carbohidratos sin cocinar."]),
+      altMeal("Hummus, huevo y tostadas", "Hummus - huevo duro - tostadas - pepino - fruta", [
+        food("4 cdas hummus", 8, 18, 10),
+        food("2 huevos duros", 12, 1, 10),
+        food("2 tostadas", 6, 30, 2),
+        food("Pepino y tomate", 1, 6, 0),
+        food("1 fruta", 1, 24, 0)
+      ], ["Unta hummus en las tostadas.", "Suma huevo duro, pepino, tomate y fruta."]),
+      altMeal("Cottage con banana y nueces", "Cottage - banana - nueces - miel - tostadas", [
+        food("180g cottage", 22, 6, 8),
+        food("1 banana", 1, 27, 0),
+        food("20g nueces", 3, 3, 13),
+        food("1 cdita miel", 0, 8, 0),
+        food("1 tostada", 3, 15, 1)
+      ], ["Mezcla cottage con miel.", "Suma banana, nueces y una tostada si queres mas energia."])
+    ]);
+  }
+
+  if (label.includes("pre")) {
+    return pickAlt(item, [
+      altMeal("Banana, miel y tostada", "Banana - miel - tostada - pasas", [
+        food("1 banana", 1, 27, 0),
+        food("1 tostada con miel", 3, 28, 1),
+        food("20g pasas de uva", 1, 16, 0)
+      ], ["Comelo 30-60 minutos antes de entrenar.", "Bajo en grasa para que caiga liviano."]),
+      altMeal("Arroz inflado con leche y banana", "Arroz inflado - leche - banana - miel", [
+        food("35g arroz inflado", 3, 29, 0),
+        food("200ml leche entera", 6, 10, 7),
+        food("1 banana", 1, 27, 0),
+        food("1 cdita miel", 0, 8, 0)
+      ], ["Ideal si necesitas carbo rapido pero no queres entrenar pesado de estomago.", "Comelo 45 minutos antes."])
+    ]);
+  }
+
+  if (label.includes("post")) {
+    return pickAlt(item, [
+      altMeal("Whey, banana y tostadas con mermelada", "Whey - leche - banana - tostadas", [
+        food("1 scoop whey", 24, 3, 2),
+        food("250ml leche entera", 8, 12, 8),
+        food("1 banana", 1, 27, 0),
+        food("2 tostadas con mermelada", 4, 38, 2)
+      ], ["Toma el whey con leche y creatina.", "Suma tostadas si el entrenamiento fue fuerte."]),
+      altMeal("Atun con papa y limon", "Atun - papa - tomate - oliva - fruta", [
+        food("1 lata grande de atun", 32, 0, 2),
+        food("250g papa hervida", 5, 50, 0),
+        food("Tomate + limon", 1, 5, 0),
+        food("1 cda oliva", 0, 0, 10),
+        food("1 fruta", 1, 24, 0)
+      ], ["Pisa la papa con sal y limon.", "Suma atun, tomate y oliva para un post-entreno solido."])
+    ]);
+  }
+
+  if (label.includes("merienda")) {
+    return pickAlt(item, [
+      altMeal("Merienda de ricota, fruta y frutos secos", "Ricota - tostadas - banana - nueces - miel", [
+        food("160g ricota magra", 18, 6, 9),
+        food("2 tostadas", 6, 30, 2),
+        food("1 banana", 1, 27, 0),
+        food("20g nueces", 3, 3, 13),
+        food("1 cda miel", 0, 17, 0)
+      ], ["Bati la ricota con miel para que quede cremosa.", "Comela con tostadas, banana y nueces arriba."]),
+      altMeal("Wrap de atun y palta", "Tortilla - atun - palta - tomate - limon", [
+        food("1 tortilla grande", 6, 36, 5),
+        food("1 lata de atun", 24, 0, 1),
+        food("1/2 palta", 2, 6, 12),
+        food("Tomate + hojas verdes", 1, 6, 0),
+        food("1 fruta", 1, 24, 0)
+      ], ["Pisa palta con limon.", "Arma el wrap con atun, tomate y hojas verdes."]),
+      altMeal("Huevos duros, tostadas y fruta", "Huevos - tostadas - queso - fruta", [
+        food("2 huevos duros", 12, 1, 10),
+        food("2 tostadas integrales", 7, 34, 3),
+        food("50g queso fresco", 9, 2, 7),
+        food("1 fruta", 1, 24, 0)
+      ], ["Deja huevos hervidos listos en la heladera.", "Completa con tostadas, queso y fruta."])
+    ]);
+  }
+
+  if (label.includes("dormir")) {
+    return pickAlt(item, [
+      altMeal("Cierre nocturno con proteina lenta", "Cottage o ricota - leche - miel", [
+        food("150g cottage o ricota", 18, 5, 8),
+        food("200ml leche entera", 6, 10, 7),
+        food("1 cdita miel", 0, 8, 0)
+      ], ["Elegi cottage o ricota segun lo que tengas.", "Suma leche si ese dia quedaste corto de calorias."]),
+      altMeal("Shake nocturno con nueces", "Whey - leche - nueces - banana chica", [
+        food("1 scoop whey", 24, 3, 2),
+        food("250ml leche entera", 8, 12, 8),
+        food("15g nueces", 2, 2, 10),
+        food("1 banana chica", 1, 20, 0)
+      ], ["Licua whey con leche.", "Acompana con nueces o banana si faltaron calorias."])
+    ]);
+  }
+
+  return pickAlt(item, mainOptions);
+}
+
+function applyPlanQualityRules() {
+  allWeeks.forEach((weekDays) => {
+    weekDays.forEach((day) => {
+      day.tip = cleanPlanText(day.tip);
+      day.type = cleanPlanText(day.type);
+      day.meals.forEach((m) => {
+        cleanPlanItem(m);
+        if (m.alt) cleanPlanItem(m.alt);
+        if (!m.alt) m.alt = buildFallbackAlt(m);
+        cleanPlanItem(m.alt);
+        const visibleText = `${m.name} ${m.desc} ${m.note || ""} ${m.foods.map(f => f.name).join(" ")} ${m.prep.join(" ")} ${m.alt.name} ${m.alt.desc} ${m.alt.foods.map(f => f.name).join(" ")} ${m.alt.prep.join(" ")}`;
+        if (BANNED_INGREDIENTS_RE.test(visibleText)) console.warn("Ingrediente prohibido pendiente de revisar:", m.id, m.name);
+      });
+    });
+  });
+}
+
+// =====================================================
 // SEMANA ACTUAL · Selección automática por semana ISO
 // =====================================================
-function getWeekIndex() { return (getISOWeekNumber() - 1) % 4; }
+function getWeekIndex(date = new Date()) { return (getISOWeekNumber(date) - 1) % allWeeks.length; }
+function getNextMenuRefreshDate(from = new Date()) {
+  const d = new Date(from);
+  const daysUntilMonday = (8 - d.getDay()) % 7 || 7;
+  d.setDate(d.getDate() + daysUntilMonday);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+function getMenuRefreshLabel() {
+  return getNextMenuRefreshDate().toLocaleDateString("es-AR", { weekday: "long", day: "numeric", month: "short" });
+}
 let weekIndex = getWeekIndex();
 let days = allWeeks[weekIndex];
 const weekNames = ["Semana 1 · Mediterránea", "Semana 2 · Potencia criolla", "Semana 3 · Internacional mix", "Semana 4 · Proteico puro"];
-let currentWeekName = weekNames[weekIndex];
+function getCurrentWeekName() {
+  return `${weekNames[weekIndex]} · cambia ${getMenuRefreshLabel()}`;
+}
+let currentWeekName = getCurrentWeekName();
 
 
 // SUPLEMENTOS
@@ -3213,7 +3462,7 @@ function renderMeal(item) {
   const totalC = item.foods.reduce((s, f) => s + f.c, 0);
   const totalG = item.foods.reduce((s, f) => s + f.g, 0);
 
-  const hasAlt = item.alt && (item.label === "Almuerzo" || item.label === "Cena");
+  const hasAlt = Boolean(item.alt);
   const altPanel = hasAlt ? `
     <div class="alt-meal-panel" data-alt-for="${item.id}">
       <div class="alt-meal-header">
@@ -4409,6 +4658,7 @@ window.saveWeight = saveWeight;
 
 // Cleanup de localStorage viejo antes que nada
 cleanupOldData();
+applyPlanQualityRules();
 
 // FIX BUG NUTRICIONAL: sincronizar los targets del día con la suma REAL de los foods.
 // Antes los targets (kcal/protein/carbs/fats del header del día) estaban hardcoded
@@ -4476,8 +4726,8 @@ function checkDayChange() {
     if (newWeekIndex !== weekIndex) {
       weekIndex = newWeekIndex;
       days = allWeeks[weekIndex];
-      currentWeekName = weekNames[weekIndex];
     }
+    currentWeekName = getCurrentWeekName();
     const todayObj = getTodayDayObject();
     activeDay = todayObj.id;
     renderTabs();

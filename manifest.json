@@ -1,7 +1,7 @@
 {
   "name": "Dieta Rony · Mantener 78-80kg",
   "short_name": "Dieta Rony",
-  "description": "Plan de dieta de mantenimiento + recomposición para Rony Cozzi adaptado a su rutina de gym.",
+  "description": "Plan de dieta de mantenimiento y recomposición para Rony Cozzi, adaptado a su rutina de gym.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
