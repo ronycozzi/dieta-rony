@@ -1,7 +1,7 @@
 // Service Worker · Dieta Rony Cozzi
 // Network-first para HTML/JS/CSS; cache-first para assets estáticos.
 
-const VERSION = "v19-2026-05-26-plain-menu-audit";
+const VERSION = "v25-2026-06-02-real-food-shortcuts";
 const CACHE_NAME = `dieta-rony-${VERSION}`;
 const ASSETS = [
   "./",
@@ -33,15 +33,21 @@ self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
 
   const url = new URL(event.request.url);
-  const isAppFile = ["/index.html", "/styles.css", "/script.js"].some((path) =>
-    url.pathname.endsWith(path) || url.pathname === "/"
+  const isSameOrigin = url.origin === self.location.origin;
+  const accept = event.request.headers.get("accept") || "";
+  const isNavigate = event.request.mode === "navigate" || accept.includes("text/html");
+
+  const isAppFile = isSameOrigin && (
+    isNavigate ||
+    url.pathname.endsWith("/") ||
+    ["/index.html", "/styles.css", "/script.js"].some((path) => url.pathname.endsWith(path))
   );
 
   if (isAppFile) {
     event.respondWith(
       fetch(event.request)
         .then((response) => {
-          if (response.ok && url.origin === self.location.origin) {
+          if (response.ok && isSameOrigin) {
             const copy = response.clone();
             caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
           }
@@ -52,18 +58,21 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  // Para requests cross-origin (fonts, etc), evitamos responder con index.html en offline.
+  if (!isSameOrigin) return;
+
   event.respondWith(
     caches.match(event.request).then((cached) => {
       if (cached) return cached;
       return fetch(event.request)
         .then((response) => {
-          if (response.ok && url.origin === self.location.origin) {
+          if (response.ok) {
             const copy = response.clone();
             caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
           }
           return response;
         })
-        .catch(() => caches.match("./index.html"));
+        .catch(() => isNavigate ? caches.match("./index.html") : new Response("", { status: 504, statusText: "Offline" }));
     })
   );
 });

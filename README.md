@@ -39,7 +39,7 @@ Jueves piernas · Viernes full body opcional · Sábado/Domingo descanso.
 - "Resetear día"
 
 ### Nutrición
-- Suplementos base (whey + creatina) y opcionales (omega 3, vit D, magnesio)
+- Suplementos base (creatina) y opcionales (whey como comodín, omega 3, vit D, magnesio)
 - 10 reglas de mantenimiento + recomposición
 - Notificaciones programadas para cada comida y agua cada 90 min
 
@@ -72,6 +72,13 @@ Para probar el Service Worker en mobile vía LAN:
 npx serve . --listen 5173 --ssl-cert ...
 ```
 o usar ngrok / Vercel / Netlify deploy.
+
+## Validaciones
+
+Validación rápida del plan (menú renderizado limpio, sin ingredientes bloqueados, todas las comidas con opción B y kcal en rango):
+```
+node scripts/audit-plan.js
+```
 
 ## Estructura
 

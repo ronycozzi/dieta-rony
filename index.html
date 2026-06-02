@@ -2,7 +2,7 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#060C1A" />
     <meta name="color-scheme" content="dark" />
     <meta name="description" content="Plan de dieta para mantenimiento 78-80kg de Rony Cozzi." />
@@ -37,7 +37,7 @@
         <div class="sb-brand">
           <div class="sb-logo">🔥</div>
           <div class="sb-brand-text">
-            <span class="sb-app-name">Dieta App</span>
+            <span class="sb-app-name">Dieta Rony</span>
             <span class="sb-app-sub">Mantenimiento · 78-80kg</span>
           </div>
         </div>
@@ -152,10 +152,15 @@
             </div>
           </div>
           <div id="supp-base-row" class="supp-row"></div>
-        </section>
 
-        <!-- hidden extra supps slot for JS compat -->
-        <div style="display:none"><div id="supp-extra-row"></div></div>
+          <details class="supp-details" id="supp-optional">
+            <summary class="supp-details-summary">
+              <span class="supp-details-title">Opcionales</span>
+              <span class="supp-details-sub">cuando aplique</span>
+            </summary>
+            <div id="supp-extra-row" class="supp-row"></div>
+          </details>
+        </section>
 
         <!-- WEIGHT TRACKER -->
         <section class="weight-section" id="weight-section">
@@ -183,16 +188,16 @@
           </div>
           <div class="review-grid">
             <article class="review-card">
-              <h3>Recomposición con 5 entrenos</h3>
-              <p>Tu gasto es alto por metabolismo rápido y gym de lunes a viernes. El plan se mueve cerca de <strong>2800–3000 kcal en días de gym</strong> y <strong>2450–2700 en descanso</strong>, ajustando con el peso semanal.</p>
+              <h3>Recomposición (4 + viernes opcional)</h3>
+              <p>Tu gasto es alto por metabolismo rápido y gym 4 días + viernes opcional. El plan se mueve cerca de <strong>2800–3000 kcal en días de gym</strong> y <strong>2450–2700 en descanso</strong>, ajustando con el peso semanal.</p>
             </article>
             <article class="review-card">
-              <h3>Whey y creatina diarios</h3>
-              <p>El plan ya cuenta <strong>1 scoop de whey OneFit</strong> y <strong>5g de creatina</strong> todos los días. La proteína extra viene de comida real: huevos, pollo, carne, atún, pescado, queso y leche.</p>
+              <h3>Creatina base + whey comodín</h3>
+              <p>La creatina (<strong>3–5g</strong>) va todos los días. El whey es <strong>comodín</strong>: usalo solo si te quedó corta la proteína con comida real. El resto viene de huevos, pollo, carne magra, atún/pescado, queso y leche.</p>
             </article>
             <article class="review-card">
-              <h3>Viernes también cuenta</h3>
-              <p>El viernes queda como full body controlado, no como día perdido. Si descansás de forma excepcional, el selector baja un poco el objetivo de calorías sin romper la semana.</p>
+              <h3>Viernes: gym o descanso</h3>
+              <p>Si hacés full body, el día sube carbo/calorías para rendir. Si descansás, el selector baja el objetivo sin romper la semana. Elegí según energía y recuperación.</p>
             </article>
             <article class="review-card">
               <h3>Si pasás de 80kg</h3>
