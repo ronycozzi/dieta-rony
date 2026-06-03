@@ -2620,6 +2620,7 @@ textarea {
   border-radius: 0;
   white-space: normal;
   line-height: 1.35;
+  overflow-wrap: anywhere;
 }
 
 .week-tabs {
@@ -3281,6 +3282,10 @@ textarea {
   }
   .topbar-streak { display: none; }
   .topbar-watch-btn { display: none; }
+  .current-week-label {
+    padding: 13px 14px;
+    font-size: 0.72rem;
+  }
   .gym-banner-stats { gap: 4px; }
   .gym-stat-val { font-size: 0.82rem; }
   .gym-stat-lbl { font-size: 0.52rem; letter-spacing: 0.03em; }

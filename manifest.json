@@ -2,7 +2,7 @@
   "name": "Rony Fuel OS · Mantener 78-80kg",
   "short_name": "Rony Fuel",
   "id": "/dieta-rony",
-  "description": "Plan de dieta de mantenimiento y recomposición para Rony Cozzi, adaptado a su rutina de gym.",
+  "description": "Rony Fuel OS: plan de dieta, recomposición y seguimiento 78-80kg adaptado a su rutina de gym.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
