@@ -5813,8 +5813,6 @@ togglePrep = window.togglePrep = function togglePrepClean(button) {
   button.setAttribute("aria-expanded", String(isOpen));
   body.setAttribute("aria-hidden", String(!isOpen));
   const label = button.querySelector(".prep-label");
-  const icon = button.querySelector("span:first-child");
-  if (icon) icon.textContent = isOpen ? "STOP" : "PLAY";
   if (label) label.textContent = isOpen ? "Ocultar preparacion" : "Ver preparacion";
 };
 
@@ -5843,7 +5841,7 @@ renderMeal = function renderMealKitchenTicket(item) {
       <div class="recipe-sheet">
         <div class="detail-kicker">Cocina paso a paso</div>
         <button class="prep-toggle ${isAlt ? "alt-prep-toggle" : ""}" type="button" onclick="togglePrep(this)" aria-expanded="false" aria-controls="${bodyId}">
-          <span>PLAY</span> <span class="prep-label">Ver preparacion</span>
+          <span class="prep-label">Ver preparacion</span>
         </button>
         <div class="prep-body" id="${bodyId}" aria-hidden="true">
           ${renderPrepContent(mealItem)}
@@ -5883,9 +5881,9 @@ renderMeal = function renderMealKitchenTicket(item) {
       <div class="meal-head" role="button" tabindex="0" aria-expanded="false" aria-controls="${detailId}" onclick="toggleMeal(this)" onkeydown="handleMealHeadKeydown(event, this)">
         <div class="meal-time-col">
           <div class="meal-time">${item.time}</div>
-          <div class="meal-time-label">${item.label}</div>
         </div>
         <div class="meal-info-col">
+          <div class="meal-label-chip">${item.label}</div>
           <div class="meal-name">${item.name}</div>
           <div class="meal-desc">${item.desc}</div>
           <div class="meal-mini-macros">

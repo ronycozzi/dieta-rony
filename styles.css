@@ -3652,7 +3652,7 @@ body {
 
 .meal-head {
   display: grid;
-  grid-template-columns: 112px minmax(0, 1fr) 88px 46px;
+  grid-template-columns: 94px minmax(0, 1fr) 88px 46px;
   gap: 16px;
   align-items: stretch;
   padding: 0;
@@ -3661,9 +3661,10 @@ body {
 
 .meal-time-col {
   min-width: 0;
-  padding: 18px 14px 18px 20px;
+  padding: 18px 12px 18px 18px;
   background: var(--ink);
   color: #f7f3e8;
+  align-items: center;
   justify-content: center;
 }
 
@@ -3674,6 +3675,7 @@ body {
 }
 
 .meal-time-label {
+  display: none;
   width: fit-content;
   border: 1px solid rgba(247, 243, 232, 0.22);
   background: rgba(247, 243, 232, 0.08) !important;
@@ -3682,9 +3684,34 @@ body {
 }
 
 .meal-info-col {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
   align-self: center;
   padding: 16px 0;
 }
+
+.meal-label-chip {
+  width: fit-content;
+  max-width: 100%;
+  border: 2px solid var(--ink);
+  background: #f7f3e8;
+  color: var(--ink);
+  padding: 4px 8px;
+  font-size: 0.66rem;
+  font-weight: 900;
+  line-height: 1.05;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.meal[data-type^="desayuno"] .meal-label-chip { background: var(--amber-dim); }
+.meal[data-type="pre-entreno"] .meal-label-chip { background: var(--accent-dim); color: var(--accent); }
+.meal[data-type="post-entreno"] .meal-label-chip { background: rgba(22, 130, 153, 0.12); color: #116d80; }
+.meal[data-type="almuerzo"] .meal-label-chip { background: #ecefe8; }
+.meal[data-type="merienda"] .meal-label-chip { background: var(--purple-dim); color: var(--purple); }
+.meal[data-type="cena"] .meal-label-chip { background: var(--green-dim); color: var(--green); }
+.meal[data-type="antes-de-dormir"] .meal-label-chip { background: #edf0eb; color: var(--muted); }
 
 .meal-name {
   font-family: "Space Grotesk", "Plus Jakarta Sans", sans-serif;
@@ -3693,7 +3720,7 @@ body {
 }
 
 .meal-desc {
-  margin-top: 6px;
+  margin-top: 0;
   font-size: 0.86rem;
 }
 
@@ -3974,32 +4001,31 @@ body {
   }
 
   .meal-head {
-    grid-template-columns: 86px minmax(0, 1fr) 44px;
+    grid-template-columns: 74px minmax(0, 1fr) 44px;
     grid-template-rows: auto auto;
     gap: 0;
     min-height: 0;
   }
 
-  .meal-time-col {
+  .meal .meal-head > div.meal-time-col {
+    grid-column: 1;
     grid-row: 1 / span 2;
-    padding: 14px 10px 14px 16px;
+    padding: 14px 8px 14px 14px;
   }
 
-  .meal-time-label {
-    max-width: 100%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    font-size: 0.58rem;
-  }
-
-  .meal-info-col {
+  .meal .meal-head > div.meal-info-col {
     grid-column: 2;
     grid-row: 1;
     padding: 14px 12px;
+    gap: 6px;
   }
 
-  .meal-kcal {
+  .meal-label-chip {
+    max-width: 100%;
+    font-size: 0.6rem;
+  }
+
+  .meal .meal-head > div.meal-kcal {
     grid-column: 2;
     grid-row: 2;
     display: flex;
@@ -4018,7 +4044,7 @@ body {
     margin-top: 0;
   }
 
-  .meal-check {
+  .meal .meal-head > button.meal-check {
     grid-column: 3;
     grid-row: 1;
     margin-top: 14px;
@@ -4040,19 +4066,11 @@ body {
   }
 
   .meal-head {
-    grid-template-columns: 92px minmax(0, 1fr) 40px;
+    grid-template-columns: 70px minmax(0, 1fr) 40px;
   }
 
   .meal-time {
     font-size: 1.04rem;
-  }
-
-  .meal-time-label {
-    max-width: 72px;
-    white-space: normal;
-    overflow: visible;
-    text-overflow: clip;
-    line-height: 1.05;
   }
 
   .meal-name {
