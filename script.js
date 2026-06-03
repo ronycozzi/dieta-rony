@@ -3691,6 +3691,20 @@ function freshFishOptions() {
   ];
 }
 
+function freshFridayFishAltTemplate() {
+  return altMeal("Fideos frios con atun, huevo y tomate", "Fideos - atun - huevo - tomate", [
+    food("85g fideos secos", 11, 62, 2),
+    food("1 lata grande de atun", 32, 0, 2),
+    food("1 huevo duro", 6, 1, 5),
+    food("Tomate + limon", 1, 6, 0),
+    food("1 cdita aceite de oliva", 0, 0, 5)
+  ], [
+    "Hervi los fideos y enfrialos apenas.",
+    "Mezcla con atun escurrido, huevo duro, tomate, limon y oliva.",
+    "Opcion B de pescado si no queres salmon, sin repetir papa ni arroz."
+  ]);
+}
+
 function freshNightOptions() {
   return [
     altMeal("Nocturno opcional: agua o infusion", "Agua - infusion", [
@@ -3817,13 +3831,13 @@ function applyRonyFreshWeeklyMenuRules() {
 
       let lunch;
       if (isFriday) {
-        lunch = pickFreshTemplate(freshFishOptions(), seed + 10);
+        lunch = freshFishOptions()[0];
       } else {
         lunch = freshMainTemplate(seed + 10, usedMainNames, { noRice: dayNumber > 0 && dayNumber % 2 === 1 });
       }
       usedMainNames.add(lunch.name);
       usedWeekMainNames.add(lunch.name);
-      const lunchAlt = pickFreshAlt(lunch, freshMainOptions(), seed + 11, { main: true });
+      const lunchAlt = isFriday ? freshFridayFishAltTemplate() : pickFreshAlt(lunch, freshMainOptions(), seed + 11, { main: true });
 
       const dinner = freshMainTemplate(seed + 12, usedMainNames, { noRice: mealHasRice(lunch) || isFriday });
       usedMainNames.add(dinner.name);
@@ -4156,7 +4170,9 @@ function applyFreshMainVarietyRules() {
         const currentDayPrimaryNames = new Set(day.meals.filter(isMainMeal).map((mainMeal) => mainMeal.name));
         const forbiddenAltNames = new Set(currentDayPrimaryNames);
         forbiddenAltNames.delete(mealItem.name);
-        mealItem.alt = cloneMealTemplate(pickFreshMainAltAvoiding(mealItem, freshMenuSeed() + weekNumber * 149 + dayNumber * 19 + mealNumber, forbiddenAltNames));
+        mealItem.alt = isFridayFish && /salmon/i.test(mealCoreSearchText(mealItem))
+          ? cloneMealTemplate(freshFridayFishAltTemplate())
+          : cloneMealTemplate(pickFreshMainAltAvoiding(mealItem, freshMenuSeed() + weekNumber * 149 + dayNumber * 19 + mealNumber, forbiddenAltNames));
         usedNames.add(mealItem.name);
       });
     });

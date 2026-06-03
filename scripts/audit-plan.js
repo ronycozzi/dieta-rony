@@ -179,6 +179,7 @@ function audit(A) {
   const sameDayMainAltHits = [];
   const scheduleHits = [];
   const morningLoadHits = [];
+  const fridayFishHits = [];
   const mainSlots = [];
   const daySlots = [];
 
@@ -252,6 +253,20 @@ function audit(A) {
 
       if (!hasPrimaryWhey) missingPrimaryWhey.push({ weekNumber, dayNumber, id: day.id, title: day.title });
       if (!hasPrimaryCreatine) missingPrimaryCreatine.push({ weekNumber, dayNumber, id: day.id, title: day.title });
+      if (day.id === "vie") {
+        const fridayLunch = day.meals.find((meal) => /almuerzo/i.test(normalizeText(meal.label)));
+        const primaryText = fridayLunch ? visibleMealText({ ...fridayLunch, alt: null }) : "";
+        const altText = fridayLunch && fridayLunch.alt ? visibleMealText({ ...fridayLunch.alt, alt: null }) : "";
+        if (!fridayLunch || !/salmon|salm[oó]n/i.test(primaryText) || !/atun|at[uú]n|merluza|salmon|salm[oó]n/i.test(altText)) {
+          fridayFishHits.push({
+            weekNumber,
+            dayNumber,
+            id: day.id,
+            lunch: fridayLunch ? fridayLunch.name : null,
+            alt: fridayLunch && fridayLunch.alt ? fridayLunch.alt.name : null
+          });
+        }
+      }
       daySlots.push({ weekNumber, dayNumber, id: day.id, title: day.title, rice: hasRiceDay });
 
       const totals = A.calculateDayTotals(day);
@@ -381,6 +396,7 @@ function audit(A) {
   summarize("sameDayMainAltHits", sameDayMainAltHits);
   summarize("scheduleHits", scheduleHits);
   summarize("morningLoadHits", morningLoadHits);
+  summarize("fridayFishHits", fridayFishHits);
 
   assert(mealsMissingAlt.length === 0, `Audit: faltan opciones B (alt) en ${mealsMissingAlt.length} comidas.`);
   assert(dayTipHits.length === 0, `Audit: hay tips con ingredientes bloqueados (${dayTipHits.length}).`);
@@ -398,9 +414,10 @@ function audit(A) {
   assert(sameDayMainAltHits.length === 0, `Audit: hay opciones B iguales a otro plato principal del mismo dia (${sameDayMainAltHits.length}).`);
   assert(scheduleHits.length === 0, `Audit: horarios nuevos de entreno 12:00 fallaron (${scheduleHits.length}).`);
   assert(morningLoadHits.length === 0, `Audit: la manana de gym quedo muy cargada (${morningLoadHits.length}).`);
+  assert(fridayFishHits.length === 0, `Audit: el viernes debe tener salmon principal y opcion B de pescado (${fridayFishHits.length}).`);
   assert(kcalOutliers.length === 0, `Audit: hay días fuera del rango kcal confort (${kcalOutliers.length}).`);
 
-  return { kcalOutliers, mealsMissingAlt, bannedHits, specialHits, dayTipHits, wheyMisuseHits, riceAltHits, sameCarbAltHits, riceSequenceHits, sameTurnRiceHits, nextDayRiceHits, missingPrimaryWhey, missingPrimaryCreatine, duplicateMainNameHits, sameDayMainAltHits, scheduleHits, morningLoadHits };
+  return { kcalOutliers, mealsMissingAlt, bannedHits, specialHits, dayTipHits, wheyMisuseHits, riceAltHits, sameCarbAltHits, riceSequenceHits, sameTurnRiceHits, nextDayRiceHits, missingPrimaryWhey, missingPrimaryCreatine, duplicateMainNameHits, sameDayMainAltHits, scheduleHits, morningLoadHits, fridayFishHits };
 }
 
 function main() {
