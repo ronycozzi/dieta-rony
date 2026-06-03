@@ -3204,6 +3204,538 @@ function commonBreakfastOptions() {
   ];
 }
 
+// =====================================================
+// MENU NUEVO RONY
+// - Se regenera con seed semanal.
+// - Comidas normales, sostenibles y con opcion B real.
+// =====================================================
+function freshMenuSeed(date = new Date()) {
+  return date.getFullYear() * 100 + getISOWeekNumber(date);
+}
+
+function pickFreshTemplate(options, seed, predicate = () => true) {
+  const start = Math.abs(seed) % options.length;
+  for (let i = 0; i < options.length; i++) {
+    const option = options[(start + i) % options.length];
+    if (predicate(option)) return option;
+  }
+  return options[start];
+}
+
+function mealProteinGroup(item) {
+  const text = mealCoreSearchText(item);
+  if (/\b(atun|merluza|salmon|pescado)\b/.test(text)) return "pescado";
+  if (/\b(pollo|pechuga|muslo)\b/.test(text)) return "pollo";
+  if (/\b(carne|bife|churrasco|lomo|peceto|hamburguesa)\b/.test(text)) return "carne";
+  if (/\b(huevo|huevos|omelette|tortilla)\b/.test(text)) return "huevo";
+  if (/\b(jamon)\b/.test(text)) return "jamon";
+  if (/\b(lenteja|lentejas|poroto|porotos|garbanzo|garbanzos)\b/.test(text)) return "legumbre";
+  if (/\b(whey)\b/.test(text)) return "whey";
+  return "mixto";
+}
+
+function freshBreakfastOptions() {
+  return [
+    altMeal("Pancakes OneFit con banana y leche", "Pancakes proteicos - banana - leche", [
+      food("1 porcion pancakes proteicos OneFit", 17, 32, 5),
+      food("1 banana", 1, 27, 0),
+      food("200ml leche entera", 6, 10, 7),
+      food("1 cdita miel", 0, 8, 0)
+    ], [
+      "Prepara los pancakes OneFit segun el paquete.",
+      "Servilos con banana y un toque de miel. Leche al lado."
+    ]),
+    altMeal("Tostado de jamon y mozzarella con banana", "Pan - jamon - mozzarella - banana", [
+      food("2 rebanadas pan integral", 7, 34, 3),
+      food("60g jamon cocido natural", 12, 1, 4),
+      food("50g mozzarella o queso en fetas", 12, 1, 8),
+      food("1 banana", 1, 27, 0),
+      food("Cafe con leche", 3, 5, 3)
+    ], [
+      "Tostado clasico con jamon y queso.",
+      "Banana para energia facil antes del dia de gym."
+    ]),
+    altMeal("Revuelto de huevos, papa, jamon y queso", "Huevos - papa - jamon - queso - fruta", [
+      food("2 huevos", 12, 1, 10),
+      food("150g papa cocida", 3, 30, 0),
+      food("50g jamon cocido natural", 10, 1, 3),
+      food("30g queso en fetas", 7, 1, 5),
+      food("1 fruta", 1, 24, 0)
+    ], [
+      "Calenta papa en cubos y suma huevos batidos.",
+      "Termina con jamon y queso para que quede bien sabroso."
+    ]),
+    altMeal("Sandwich caliente de huevo, jamon y queso", "Pan - huevo - jamon - queso - fruta", [
+      food("2 rebanadas pan integral", 7, 34, 3),
+      food("1 huevo", 6, 1, 5),
+      food("60g jamon cocido", 12, 1, 4),
+      food("40g queso en fetas", 9, 1, 6),
+      food("1 fruta", 1, 24, 0)
+    ], [
+      "Huevo a la plancha y sandwich caliente.",
+      "Comida normal, proteica y facil de repetir."
+    ]),
+    altMeal("Tostadas con queso untable, banana y leche", "Tostadas - queso untable - banana - leche", [
+      food("2 tostadas integrales", 7, 34, 3),
+      food("2 cdas queso untable", 4, 3, 7),
+      food("1 banana", 1, 27, 0),
+      food("200ml leche entera", 6, 10, 7)
+    ], [
+      "Unta queso, suma banana en rodajas y listo.",
+      "Simple, barato y de buena adherencia."
+    ]),
+    altMeal("Omelette de mozzarella, tomate y pan", "Huevos - mozzarella - tomate - pan - fruta", [
+      food("3 huevos", 18, 1, 15),
+      food("50g mozzarella", 12, 1, 9),
+      food("Tomate", 1, 4, 0),
+      food("1 rebanada pan integral", 4, 17, 2),
+      food("1 fruta", 1, 24, 0)
+    ], [
+      "Omelette con mozzarella y tomate al costado.",
+      "Pan y fruta para que no quede bajo en energia."
+    ]),
+    altMeal("Tortilla chica de papa, huevo y queso", "Papa - huevos - queso - fruta", [
+      food("180g papa", 4, 36, 0),
+      food("2 huevos", 12, 1, 10),
+      food("35g queso en fetas", 8, 1, 6),
+      food("1 fruta", 1, 24, 0)
+    ], [
+      "Tortilla chica en sarten antiadherente.",
+      "Muy buena para dias de piernas o espalda."
+    ]),
+    altMeal("Panqueques de banana y huevo", "Banana - huevos - leche - queso untable", [
+      food("1 banana grande", 1, 31, 0),
+      food("2 huevos", 12, 1, 10),
+      food("150ml leche entera", 5, 8, 5),
+      food("1 cda queso untable", 2, 2, 4),
+      food("1 cdita miel", 0, 8, 0)
+    ], [
+      "Pisa banana con huevo y cocina panqueques chicos.",
+      "Queso untable y miel arriba. Sin harinas raras."
+    ]),
+    altMeal("Porcion de tarta de jamon, queso y huevo", "Tarta - jamon - queso - huevo - fruta", [
+      food("1 porcion grande de tarta casera", 18, 34, 14),
+      food("1 huevo duro", 6, 1, 5),
+      food("1 fruta", 1, 24, 0),
+      food("200ml leche entera", 6, 10, 7)
+    ], [
+      "Deja tarta hecha del dia anterior.",
+      "Desayuno fuerte para dias de entrenamiento."
+    ]),
+    altMeal("Medialuna con jamon y queso, huevo y leche", "Medialuna - jamon - queso - huevo - leche", [
+      food("1 medialuna grande", 3, 24, 9),
+      food("60g jamon cocido", 12, 1, 4),
+      food("50g queso en fetas", 12, 1, 8),
+      food("1 huevo duro", 6, 1, 5),
+      food("200ml leche entera", 6, 10, 7)
+    ], [
+      "Una vez por semana puede entrar si el resto del dia esta ordenado.",
+      "No es premio ni trampa: es adherencia controlada."
+    ])
+  ];
+}
+
+function freshSnackOptions() {
+  return [
+    altMeal("Sandwich de atun, queso y tomate", "Pan - atun - queso - tomate - fruta", [
+      food("2 rebanadas pan integral", 7, 34, 3),
+      food("1 lata de atun", 24, 0, 1),
+      food("35g queso en fetas", 8, 1, 5),
+      food("Tomate", 1, 5, 0),
+      food("1 fruta", 1, 24, 0)
+    ], ["Atun escurrido, queso, tomate y fruta. Practico."]),
+    altMeal("Tostado chico de jamon y queso con fruta", "Pan - jamon - queso - fruta", [
+      food("1 rebanada pan integral", 4, 17, 2),
+      food("60g jamon cocido", 12, 1, 4),
+      food("35g queso en fetas", 8, 1, 5),
+      food("1 fruta", 1, 24, 0)
+    ], ["Snack salado, simple y con proteina real."]),
+    altMeal("Huevos duros con banana", "Huevos - banana - mate", [
+      food("2 huevos duros", 12, 1, 10),
+      food("1 banana", 1, 27, 0),
+      food("Mate o cafe", 0, 0, 0)
+    ], ["Deja huevos listos. Banana para energia rapida."]),
+    altMeal("Rolls de jamon y queso con pan", "Jamon - queso - pan - fruta", [
+      food("80g jamon cocido", 16, 1, 5),
+      food("40g queso en fetas", 9, 1, 6),
+      food("1 rebanada pan integral", 4, 17, 2),
+      food("1 fruta", 1, 24, 0)
+    ], ["Rolls frios y una rebanada de pan. Cero cocina."]),
+    altMeal("Pancakes OneFit chicos con leche", "Pancakes proteicos - leche - fruta", [
+      food("1 porcion chica pancakes OneFit", 17, 28, 4),
+      food("150ml leche entera", 5, 8, 5),
+      food("1 fruta", 1, 24, 0)
+    ], ["Usalo cuando tengas ganas de algo dulce sin inventos raros."]),
+    altMeal("Licuado de leche, banana y manteca de mani", "Leche - banana - manteca de mani", [
+      food("250ml leche entera", 8, 12, 8),
+      food("1 banana", 1, 27, 0),
+      food("1 cda manteca de mani", 4, 3, 8)
+    ], ["Licuado normal para subir energia en metabolismo rapido."]),
+    altMeal("Queso untable con tostadas y fruta", "Queso untable - tostadas - fruta", [
+      food("2 tostadas integrales", 7, 34, 3),
+      food("2 cdas queso untable", 4, 3, 7),
+      food("1 fruta", 1, 24, 0)
+    ], ["Opcion simple si no queres cocinar."])
+  ];
+}
+
+function freshPreWorkoutOptions() {
+  return [
+    altMeal("Banana con miel", "Banana - miel - agua", [
+      food("1 banana", 1, 27, 0),
+      food("1 cdita miel", 0, 8, 0)
+    ], ["30-45 min antes de entrenar. Liviano y efectivo."]),
+    altMeal("Tostada con mermelada y banana", "Tostada - mermelada - banana", [
+      food("1 tostada integral", 4, 17, 2),
+      food("1 cda mermelada", 0, 13, 0),
+      food("1 banana chica", 1, 20, 0)
+    ], ["Carbo rapido sin caer pesado."]),
+    altMeal("Pan con miel y cafe", "Pan - miel - cafe", [
+      food("1 rebanada pan integral", 4, 17, 2),
+      food("1 cda miel", 0, 17, 0),
+      food("Cafe", 0, 0, 0)
+    ], ["Pre simple cuando ya comiste bien antes."]),
+    altMeal("Leche con banana chica", "Leche - banana", [
+      food("200ml leche entera", 6, 10, 7),
+      food("1 banana chica", 1, 20, 0)
+    ], ["Si toleras bien la leche antes del gym, va perfecto."])
+  ];
+}
+
+function freshPostWorkoutOptions() {
+  return [
+    altMeal("Whey OneFit, banana y creatina", "Whey - banana - creatina - agua", [
+      wheyFood("1 scoop whey OneFit con agua"),
+      food("1 banana", 1, 27, 0),
+      food("Creatina 5g", 0, 0, 0)
+    ], ["Shake directo post-entreno. Simple y consistente."]),
+    altMeal("Whey con leche, banana y creatina", "Whey - leche - banana - creatina", [
+      wheyFood("1 scoop whey OneFit"),
+      food("250ml leche entera", 8, 12, 8),
+      food("1 banana", 1, 27, 0),
+      food("Creatina 5g", 0, 0, 0)
+    ], ["Usalo cuando vengas con hambre o el entreno fue fuerte."]),
+    altMeal("Whey, tostadas con mermelada y creatina", "Whey - tostadas - creatina", [
+      wheyFood("1 scoop whey OneFit con agua"),
+      food("2 tostadas con mermelada", 4, 38, 2),
+      food("Creatina 5g", 0, 0, 0)
+    ], ["Recuperacion rapida con proteina y carbo facil."]),
+    altMeal("Whey con pancakes OneFit y creatina", "Whey - pancakes - creatina", [
+      wheyFood("1 scoop whey OneFit con agua"),
+      food("1 porcion chica pancakes OneFit", 17, 28, 4),
+      food("Creatina 5g", 0, 0, 0)
+    ], ["Post mas dulce, util si no queres otra banana."])
+  ];
+}
+
+function freshMainOptions() {
+  return [
+    altMeal("Pollo al horno con papas y ensalada", "Pollo - papas - ensalada", [
+      food("220g pollo al horno", 50, 0, 12),
+      food("280g papas", 6, 56, 0),
+      food("Ensalada grande", 2, 10, 0),
+      food("1 cdita aceite de oliva", 0, 0, 5)
+    ], ["Bandeja con pollo, papas, sal, ajo, pimenton y limon."]),
+    altMeal("Bife con pure de papa y tomate", "Bife - pure - tomate", [
+      food("190g bife magro", 44, 0, 12),
+      food("300g papa para pure", 6, 60, 0),
+      food("Tomate + hojas", 2, 8, 0)
+    ], ["Bife a la plancha, pure simple y tomate."]),
+    altMeal("Fideos con tuco de carne magra", "Pasta - carne - tomate - queso rallado", [
+      food("85g fideos secos", 11, 62, 2),
+      food("140g carne magra picada", 33, 0, 8),
+      food("Salsa de tomate casera", 2, 10, 0),
+      food("1 cdita queso rallado", 1, 0, 2)
+    ], ["Tuco simple con carne magra y pasta medida."]),
+    altMeal("Milanesa de pollo al horno con pure", "Pollo - pan rallado - papa - ensalada", [
+      food("200g pechuga rebozada al horno", 48, 10, 8),
+      food("280g papa para pure", 6, 56, 0),
+      food("Ensalada mixta", 2, 8, 0)
+    ], ["Milanesa al horno, pure y ensalada. Comida de casa."]),
+    altMeal("Pastel de papa con carne magra", "Carne - papa - huevo - mozzarella", [
+      food("180g carne magra picada", 42, 0, 10),
+      food("300g papa pisada", 6, 60, 0),
+      food("1 huevo duro", 6, 1, 5),
+      food("35g mozzarella", 8, 1, 7),
+      food("Cebolla + morron + tomate", 2, 12, 0)
+    ], ["Carne con verduras, pure arriba y horno hasta dorar."]),
+    altMeal("Tarta de pollo, jamon y queso con ensalada", "Tarta - pollo - jamon - queso - ensalada", [
+      food("1 porcion grande de tarta", 18, 34, 14),
+      food("120g pollo extra", 34, 0, 4),
+      food("Ensalada grande", 2, 10, 0)
+    ], ["Tarta casera y ensalada grande para completar volumen."]),
+    altMeal("Atun con papa, huevo y tomate", "Atun - papa - huevo - tomate", [
+      food("1 lata grande de atun", 32, 0, 2),
+      food("300g papa hervida", 6, 60, 0),
+      food("2 huevos duros", 12, 1, 10),
+      food("Tomate + limon", 1, 6, 0)
+    ], ["Atun escurrido, papa, huevo, tomate y limon."]),
+    altMeal("Hamburguesas caseras con papas", "Carne - pan - papas - queso", [
+      food("2 hamburguesas magras caseras", 40, 0, 14),
+      food("1 pan de hamburguesa", 5, 28, 3),
+      food("250g papas al horno", 5, 50, 0),
+      food("1 feta de queso", 6, 1, 5),
+      food("Lechuga + tomate", 1, 5, 0)
+    ], ["Hamburguesas caseras, papas al horno y verdura."]),
+    altMeal("Arroz con pollo y verduras", "Pollo - arroz - verduras", [
+      food("200g pollo", 46, 0, 7),
+      food("1 taza arroz cocido", 4, 50, 0),
+      food("Verduras salteadas", 3, 14, 1),
+      food("1 cdita aceite de oliva", 0, 0, 5)
+    ], ["Arroz medido con pollo y verduras."]),
+    altMeal("Pollo con batata y ensalada", "Pollo - batata - ensalada", [
+      food("210g pollo grillado", 48, 0, 7),
+      food("280g batata", 5, 56, 0),
+      food("Ensalada grande", 2, 10, 0)
+    ], ["Pollo simple, batata al horno y ensalada."]),
+    altMeal("Carne al horno con batata y verduras", "Carne - batata - verduras", [
+      food("190g carne magra al horno", 44, 0, 12),
+      food("260g batata", 5, 52, 0),
+      food("Zanahoria + cebolla + morron", 3, 16, 0)
+    ], ["Carne al horno con verduras y batata."]),
+    altMeal("Pollo al curry suave con papas", "Pollo - papa - queso untable - curry", [
+      food("200g pollo", 46, 0, 7),
+      food("260g papa", 5, 52, 0),
+      food("2 cdas queso untable", 4, 3, 7),
+      food("Verduras", 2, 10, 0)
+    ], ["Curry suave con tomate y queso untable, servido con papa."]),
+    altMeal("Tacos de carne con queso y ensalada", "Tortillas - carne - queso - ensalada", [
+      food("2 tortillas medianas", 8, 48, 6),
+      food("170g carne magra", 40, 0, 10),
+      food("40g queso en fetas", 9, 1, 6),
+      food("Tomate + lechuga", 2, 8, 0)
+    ], ["Tacos simples con carne, queso y ensalada."]),
+    altMeal("Guiso de lentejas con carne y pan", "Lentejas - carne - verduras - pan", [
+      food("1.5 tazas lentejas cocidas", 27, 60, 2),
+      food("120g carne magra", 28, 0, 8),
+      food("Verduras para guiso", 3, 16, 0),
+      food("1 rebanada pan", 4, 17, 2)
+    ], ["Guiso rapido de lentejas y carne, con verduras y pan medido."]),
+    altMeal("Pizza casera de pollo y mozzarella", "Prepizza - pollo - mozzarella - tomate", [
+      food("1 prepizza individual", 10, 62, 6),
+      food("120g pollo", 34, 0, 4),
+      food("70g mozzarella", 16, 2, 14),
+      food("Salsa de tomate", 2, 10, 0)
+    ], ["Pizza casera con proteina real y queso medido."]),
+    altMeal("Empanadas de carne al horno con ensalada", "Empanadas - carne - huevo - ensalada", [
+      food("3 tapas de empanada", 9, 51, 6),
+      food("150g carne magra", 35, 0, 8),
+      food("1 huevo duro", 6, 1, 5),
+      food("Ensalada grande", 3, 10, 0)
+    ], ["Empanadas al horno y ensalada grande."]),
+    altMeal("Noquis de papa con carne y tomate", "Noquis - carne - tomate - queso rallado", [
+      food("250g noquis de papa", 8, 70, 2),
+      food("130g carne magra", 30, 0, 8),
+      food("Salsa de tomate", 2, 10, 0),
+      food("1 cdita queso rallado", 1, 0, 2)
+    ], ["Noquis con salsa de tomate y carne magra."]),
+    altMeal("Omelette grande con papa, jamon y queso", "Huevos - papa - jamon - queso", [
+      food("3 huevos", 18, 1, 15),
+      food("220g papa", 5, 44, 0),
+      food("60g jamon cocido", 12, 1, 4),
+      food("40g queso en fetas", 9, 1, 6),
+      food("Ensalada", 2, 8, 0)
+    ], ["Omelette grande con papa y ensalada."]),
+    altMeal("Arroz con atun, huevo y palta", "Arroz - atun - huevo - palta", [
+      food("1 taza arroz cocido", 4, 50, 0),
+      food("1 lata grande de atun", 32, 0, 2),
+      food("2 huevos duros", 12, 1, 10),
+      food("1/4 palta", 1, 3, 6),
+      food("Tomate", 1, 6, 0)
+    ], ["Bowl simple de arroz, atun, huevo y palta medida."]),
+    altMeal("Salpicon de pollo con papa y huevo", "Pollo - papa - huevo - verduras", [
+      food("190g pollo cocido", 44, 0, 6),
+      food("260g papa", 5, 52, 0),
+      food("2 huevos duros", 12, 1, 10),
+      food("Verduras frescas", 3, 12, 0)
+    ], ["Salpicon frio con pollo, papa, huevo y verduras."])
+  ];
+}
+
+function freshFishOptions() {
+  return [
+    altMeal("Salmon con papa al horno y ensalada", "Salmon - papa - ensalada", [
+      food("200g salmon", 44, 0, 22),
+      food("260g papa al horno", 5, 52, 0),
+      food("Ensalada grande", 2, 10, 0)
+    ], ["Salmon simple con limon, papa y ensalada."]),
+    altMeal("Merluza con pure, huevo y tomate", "Merluza - papa - huevo - tomate", [
+      food("230g merluza", 46, 0, 4),
+      food("300g papa para pure", 6, 60, 0),
+      food("1 huevo duro", 6, 1, 5),
+      food("Tomate", 1, 6, 0)
+    ], ["Merluza al horno con limon, pure y huevo."]),
+    altMeal("Atun con papa, huevo y ensalada", "Atun - papa - huevo - ensalada", [
+      food("1 lata grande de atun", 32, 0, 2),
+      food("280g papa hervida", 6, 56, 0),
+      food("2 huevos duros", 12, 1, 10),
+      food("Ensalada grande", 2, 10, 0)
+    ], ["Atun, papa, huevo y ensalada."])
+  ];
+}
+
+function freshNightOptions() {
+  return [
+    altMeal("Nocturno opcional: agua o infusion", "Agua - infusion", [
+      food("Agua o infusion sin azucar", 0, 0, 0)
+    ], ["Si llegaste bien a calorias y proteina, no hace falta comer mas."]),
+    altMeal("Leche con banana chica", "Leche - banana chica", [
+      food("200ml leche entera", 6, 10, 7),
+      food("1 banana chica", 1, 20, 0)
+    ], ["Refuerzo simple si el dia quedo corto."]),
+    altMeal("Tostado chico de jamon y queso", "Pan - jamon - queso", [
+      food("1 rebanada pan integral", 4, 17, 2),
+      food("50g jamon cocido", 10, 1, 3),
+      food("30g queso en fetas", 7, 1, 5)
+    ], ["Refuerzo salado, chico y normal."])
+  ];
+}
+
+function pickFreshAlt(primary, options, seed, { main = false } = {}) {
+  const primaryCarb = mealCarbGroup(primary);
+  const primaryProtein = mealProteinGroup(primary);
+  const tryPick = (predicate) => {
+    const start = Math.abs(seed) % options.length;
+    for (let i = 0; i < options.length; i++) {
+      const option = options[(start + i) % options.length];
+      if (predicate(option)) return option;
+    }
+    return null;
+  };
+  const strict = (option) => option.name !== primary.name
+    && (!main || !mealHasRice(option))
+    && (!main || primaryCarb === "otro" || mealCarbGroup(option) !== primaryCarb)
+    && mealProteinGroup(option) !== primaryProtein;
+  const relaxed = (option) => option.name !== primary.name
+    && (!main || !mealHasRice(option))
+    && (!main || primaryCarb === "otro" || mealCarbGroup(option) !== primaryCarb);
+  return tryPick(strict) || tryPick(relaxed) || pickFreshTemplate(options, seed, (option) => option.name !== primary.name) || options[0];
+}
+
+function freshMeal(time, label, primary, alt) {
+  return mealFromTemplate(time, label, primary, alt);
+}
+
+function freshMainTemplate(seed, usedNames = new Set(), { noRice = false, noFish = true } = {}) {
+  const options = freshMainOptions().filter((item) => {
+    if (usedNames.has(item.name)) return false;
+    if (noRice && mealHasRice(item)) return false;
+    if (noFish && mealProteinGroup(item) === "pescado") return false;
+    return true;
+  });
+  return pickFreshTemplate(options.length ? options : freshMainOptions(), seed);
+}
+
+function pickFreshMainAltAvoiding(primary, seed, forbiddenNames = new Set()) {
+  const options = freshMainOptions();
+  const primaryCarb = mealCarbGroup(primary);
+  const primaryProtein = mealProteinGroup(primary);
+  const tryPick = (predicate) => {
+    const start = Math.abs(seed) % options.length;
+    for (let i = 0; i < options.length; i++) {
+      const option = options[(start + i) % options.length];
+      if (predicate(option)) return option;
+    }
+    return null;
+  };
+
+  return tryPick((option) => option.name !== primary.name
+    && !forbiddenNames.has(option.name)
+    && !mealHasRice(option)
+    && (primaryCarb === "otro" || mealCarbGroup(option) !== primaryCarb)
+    && mealProteinGroup(option) !== primaryProtein)
+    || tryPick((option) => option.name !== primary.name
+      && !forbiddenNames.has(option.name)
+      && !mealHasRice(option)
+      && (primaryCarb === "otro" || mealCarbGroup(option) !== primaryCarb))
+    || tryPick((option) => option.name !== primary.name
+      && !mealHasRice(option)
+      && (primaryCarb === "otro" || mealCarbGroup(option) !== primaryCarb)
+      && mealProteinGroup(option) !== primaryProtein)
+    || tryPick((option) => option.name !== primary.name
+      && !mealHasRice(option)
+      && (primaryCarb === "otro" || mealCarbGroup(option) !== primaryCarb))
+    || tryPick((option) => option.name !== primary.name && !forbiddenNames.has(option.name) && !mealHasRice(option))
+    || pickFreshAlt(primary, options, seed, { main: true });
+}
+
+function applyRonyFreshWeeklyMenuRules() {
+  const seedBase = freshMenuSeed();
+  allWeeks.forEach((weekDays, weekNumber) => {
+    const weekSeed = seedBase + weekNumber * 101;
+    const usedWeekMainNames = new Set();
+    weekDays.forEach((day, dayNumber) => {
+      const seed = weekSeed + dayNumber * 17;
+      const isFriday = day.id === "vie";
+      const isWeekend = day.id === "sab" || day.id === "dom";
+      const isGymDay = !isWeekend;
+      const usedMainNames = new Set(usedWeekMainNames);
+
+      day.isRestDay = !isGymDay;
+      if (isFriday) {
+        day.isRestDay = false;
+        day.type = "Dia de gym - Full body";
+        day.tags = ["Full body", "Quinto dia", "Metabolismo rapido"];
+      }
+      day.tip = isGymDay
+        ? "Menu nuevo semanal: comida normal, carbo util para entrenar, whey y creatina diarios."
+        : "Descanso activo: suficiente proteina, comida simple y calorias sin forzar.";
+
+      const breakfast = pickFreshTemplate(freshBreakfastOptions(), seed);
+      const breakfastAlt = pickFreshAlt(breakfast, freshBreakfastOptions(), seed + 1);
+      const snackA = pickFreshTemplate(freshSnackOptions(), seed + 2);
+      const snackAAlt = pickFreshAlt(snackA, freshSnackOptions(), seed + 3);
+      const snackB = pickFreshTemplate(freshSnackOptions(), seed + 4, (item) => item.name !== snackA.name);
+      const snackBAlt = pickFreshAlt(snackB, freshSnackOptions(), seed + 5);
+      const pre = pickFreshTemplate(freshPreWorkoutOptions(), seed + 6);
+      const preAlt = pickFreshAlt(pre, freshPreWorkoutOptions(), seed + 7);
+      const post = pickFreshTemplate(freshPostWorkoutOptions(), seed + 8);
+      const postAlt = pickFreshAlt(post, freshPostWorkoutOptions(), seed + 9);
+
+      let lunch;
+      if (isFriday) {
+        lunch = pickFreshTemplate(freshFishOptions(), seed + 10);
+      } else {
+        lunch = freshMainTemplate(seed + 10, usedMainNames, { noRice: dayNumber > 0 && dayNumber % 2 === 1 });
+      }
+      usedMainNames.add(lunch.name);
+      usedWeekMainNames.add(lunch.name);
+      const lunchAlt = pickFreshAlt(lunch, freshMainOptions(), seed + 11, { main: true });
+
+      const dinner = freshMainTemplate(seed + 12, usedMainNames, { noRice: mealHasRice(lunch) || isFriday });
+      usedMainNames.add(dinner.name);
+      usedWeekMainNames.add(dinner.name);
+      const dinnerAlt = pickFreshAlt(dinner, freshMainOptions(), seed + 13, { main: true });
+      const night = pickFreshTemplate(freshNightOptions(), seed + 14);
+      const nightAlt = pickFreshAlt(night, freshNightOptions(), seed + 15);
+
+      if (isGymDay) {
+        day.meals = [
+          freshMeal("10:00", "Desayuno", breakfast, breakfastAlt),
+          freshMeal("11:30", "Media mañana", snackA, snackAAlt),
+          freshMeal("12:30", "Pre-entreno", pre, preAlt),
+          freshMeal("14:30", "Post-entreno", post, postAlt),
+          freshMeal("16:00", "Almuerzo", lunch, lunchAlt),
+          freshMeal("19:30", "Merienda", snackB, snackBAlt),
+          freshMeal("22:00", "Cena", dinner, dinnerAlt),
+          freshMeal("23:30", "Antes de dormir", night, nightAlt)
+        ];
+      } else {
+        const restWhey = wheyWithBananaAndCreatineTemplate("Whey OneFit + banana + creatina");
+        const restSnackAlt = pickFreshAlt(restWhey, freshSnackOptions(), seed + 16);
+        day.meals = [
+          freshMeal("10:30", "Desayuno", breakfast, breakfastAlt),
+          freshMeal("12:30", "Media mañana", snackA, snackAAlt),
+          freshMeal("14:00", "Almuerzo", lunch, lunchAlt),
+          freshMeal("18:00", "Merienda", restWhey, restSnackAlt),
+          freshMeal("21:30", "Cena", dinner, dinnerAlt),
+          freshMeal("23:30", "Antes de dormir", night, nightAlt)
+        ];
+      }
+    });
+  });
+}
+
 function cloneMealTemplate(template) {
   return {
     name: template.name,
@@ -3478,6 +4010,41 @@ function applyRiceRotationRules() {
     replaceMainMealWithRiceFree(finalSlots[0], 53);
     normalizeMainAltCarbs(finalSlots[0], 59);
   }
+}
+
+function applyFreshMainVarietyRules() {
+  allWeeks.forEach((weekDays, weekNumber) => {
+    const usedNames = new Set();
+    const usedAltNames = new Set();
+    weekDays.forEach((day, dayNumber) => {
+      const dayPrimaryNames = new Set(day.meals.filter(isMainMeal).map((mealItem) => mealItem.name));
+      day.meals.forEach((mealItem, mealNumber) => {
+        if (!isMainMeal(mealItem)) return;
+
+        const isFridayFish = day.id === "vie" && mealItem.label === "Almuerzo" && mealProteinGroup(mealItem) === "pescado";
+        const shouldReplace = usedNames.has(mealItem.name)
+          || (!isFridayFish && mealProteinGroup(mealItem) === "pescado");
+
+        if (shouldReplace) {
+          const seed = freshMenuSeed() + weekNumber * 131 + dayNumber * 17 + mealNumber;
+          const template = pickFreshTemplate(freshMainOptions(), seed, (option) => {
+            if (usedNames.has(option.name)) return false;
+            if (mealHasRice(option)) return false;
+            if (mealProteinGroup(option) === "pescado") return false;
+            return true;
+          });
+          applyMealTemplate(mealItem, template);
+        }
+
+        const forbiddenAltNames = new Set(dayPrimaryNames);
+        usedAltNames.forEach((name) => forbiddenAltNames.add(name));
+        forbiddenAltNames.delete(mealItem.name);
+        mealItem.alt = cloneMealTemplate(pickFreshMainAltAvoiding(mealItem, freshMenuSeed() + weekNumber * 149 + dayNumber * 19 + mealNumber, forbiddenAltNames));
+        usedAltNames.add(mealItem.alt.name);
+        usedNames.add(mealItem.name);
+      });
+    });
+  });
 }
 
 function mealFromTemplate(time, label, template, altTemplate) {
@@ -3767,8 +4334,9 @@ function lightPreWorkoutTemplate() {
 }
 
 function trimHighCalorieDaysAfterSupplements() {
-  allWeeks.forEach((weekDays) => {
-    weekDays.forEach((day) => {
+  const lighterSnacks = lightSnackOptions();
+  allWeeks.forEach((weekDays, weekNumber) => {
+    weekDays.forEach((day, dayNumber) => {
       const target = day.isRestDay ? 2600 : 2850;
       const maxComfort = target + (day.isRestDay ? 160 : 180);
       if (calculateDayTotals(day).kcal <= maxComfort + 25) return;
@@ -3783,6 +4351,27 @@ function trimHighCalorieDaysAfterSupplements() {
           "Opcion simple si queres algo con un poco mas de mordida.",
           "Mantiene energia sin subir demasiado el total del dia."
         ]);
+      }
+
+      if (calculateDayTotals(day).kcal <= maxComfort + 25) return;
+
+      const night = day.meals.find((m) => /dormir/i.test(m.label) && m.kcal > 0);
+      if (night) {
+        applyMealTemplate(night, freshNightOptions()[0]);
+        night.alt = cloneMealTemplate(freshNightOptions()[2]);
+      }
+
+      if (calculateDayTotals(day).kcal <= maxComfort + 25) return;
+
+      const flexibleSnack = [...day.meals].reverse().find((m) => {
+        if (!/(media|merienda)/i.test(m.label)) return false;
+        if (/whey|creatina/i.test(mealSearchText(m))) return false;
+        return m.kcal > 260;
+      });
+      if (flexibleSnack) {
+        const template = lighterSnacks[(weekNumber + dayNumber) % lighterSnacks.length];
+        applyMealTemplate(flexibleSnack, template);
+        flexibleSnack.alt = cloneMealTemplate(lighterSnacks[(weekNumber + dayNumber + 1) % lighterSnacks.length]);
       }
     });
   });
@@ -5874,16 +6463,26 @@ applyFiveDayTrainingRules();
 applyPlainMenuRules();
 applyWholeFoodPriorityRules();
 applyPostWorkoutWholeFoodRules();
+applyRonyFreshWeeklyMenuRules();
 applyPlanQualityRules();
+applyRiceRotationRules();
+applyFreshMainVarietyRules();
 applyRiceRotationRules();
 applyCalorieBalanceRules();
 // Segundo pase: algunos dÃ­as quedan por arriba del maxComfort reciÃ©n despuÃ©s de ajustes del primer pase.
 applyCalorieBalanceRules();
 applyRiceRotationRules();
+applyFreshMainVarietyRules();
+applyRiceRotationRules();
 applyMinimumEnergyFloorRules();
+applyRiceRotationRules();
+applyFreshMainVarietyRules();
 applyRiceRotationRules();
 ensureDailySupplementRules();
 trimHighCalorieDaysAfterSupplements();
+applyMinimumEnergyFloorRules();
+applyRiceRotationRules();
+applyFreshMainVarietyRules();
 auditPlanCompliance();
 
 // FIX BUG NUTRICIONAL: sincronizar los targets del día con la suma REAL de los foods.

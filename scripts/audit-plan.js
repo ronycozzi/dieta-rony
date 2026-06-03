@@ -34,8 +34,10 @@ function buildAuditPrelude(prelude) {
   applyPlainMenuRules,
   applyWholeFoodPriorityRules,
   applyPostWorkoutWholeFoodRules,
+  applyRonyFreshWeeklyMenuRules,
   applyPlanQualityRules,
   applyRiceRotationRules,
+  applyFreshMainVarietyRules,
   applyCalorieBalanceRules,
   applyMinimumEnergyFloorRules,
   ensureDailySupplementRules,
@@ -79,15 +81,25 @@ function applyRules(A) {
     "applyPlainMenuRules",
     "applyWholeFoodPriorityRules",
     "applyPostWorkoutWholeFoodRules",
+    "applyRonyFreshWeeklyMenuRules",
     "applyPlanQualityRules",
+    "applyRiceRotationRules",
+    "applyFreshMainVarietyRules",
     "applyRiceRotationRules",
     "applyCalorieBalanceRules",
     "applyCalorieBalanceRules",
+    "applyRiceRotationRules",
+    "applyFreshMainVarietyRules",
     "applyRiceRotationRules",
     "applyMinimumEnergyFloorRules",
     "applyRiceRotationRules",
+    "applyFreshMainVarietyRules",
+    "applyRiceRotationRules",
     "ensureDailySupplementRules",
-    "trimHighCalorieDaysAfterSupplements"
+    "trimHighCalorieDaysAfterSupplements",
+    "applyMinimumEnergyFloorRules",
+    "applyRiceRotationRules",
+    "applyFreshMainVarietyRules"
   ];
 
   for (const fnName of ordered) {
@@ -159,6 +171,8 @@ function audit(A) {
   const nextDayRiceHits = [];
   const missingPrimaryWhey = [];
   const missingPrimaryCreatine = [];
+  const duplicateMainNameHits = [];
+  const sameDayMainAltHits = [];
   const mainSlots = [];
   const daySlots = [];
 
@@ -222,6 +236,14 @@ function audit(A) {
         }
       });
 
+      const primaryMainNames = new Set(day.meals.filter((meal) => typeof A.isMainMeal === "function" && A.isMainMeal(meal)).map((meal) => normalizeText(meal.name)));
+      day.meals.forEach((meal, mealNumber) => {
+        if (typeof A.isMainMeal !== "function" || !A.isMainMeal(meal) || !meal.alt) return;
+        if (primaryMainNames.has(normalizeText(meal.alt.name))) {
+          sameDayMainAltHits.push({ weekNumber, dayNumber, mealNumber, label: meal.label, name: meal.name, alt: meal.alt.name });
+        }
+      });
+
       if (!hasPrimaryWhey) missingPrimaryWhey.push({ weekNumber, dayNumber, id: day.id, title: day.title });
       if (!hasPrimaryCreatine) missingPrimaryCreatine.push({ weekNumber, dayNumber, id: day.id, title: day.title });
       daySlots.push({ weekNumber, dayNumber, id: day.id, title: day.title, rice: hasRiceDay });
@@ -257,6 +279,14 @@ function audit(A) {
     if (daySlots[i - 1].rice && daySlots[i].rice) nextDayRiceHits.push({ previous: daySlots[i - 1], current: daySlots[i] });
   }
 
+  const namesByWeek = new Map();
+  mainSlots.forEach((slot) => {
+    const key = `${slot.weekNumber}:${normalizeText(slot.name)}`;
+    const previous = namesByWeek.get(key);
+    if (previous) duplicateMainNameHits.push({ previous, current: slot });
+    else namesByWeek.set(key, slot);
+  });
+
   const summarize = (label, arr) => {
     if (!arr.length) return;
     const preview = arr.slice(0, 8);
@@ -277,6 +307,8 @@ function audit(A) {
   summarize("nextDayRiceHits", nextDayRiceHits);
   summarize("missingPrimaryWhey", missingPrimaryWhey);
   summarize("missingPrimaryCreatine", missingPrimaryCreatine);
+  summarize("duplicateMainNameHits", duplicateMainNameHits);
+  summarize("sameDayMainAltHits", sameDayMainAltHits);
 
   assert(mealsMissingAlt.length === 0, `Audit: faltan opciones B (alt) en ${mealsMissingAlt.length} comidas.`);
   assert(dayTipHits.length === 0, `Audit: hay tips con ingredientes bloqueados (${dayTipHits.length}).`);
@@ -290,9 +322,11 @@ function audit(A) {
   assert(nextDayRiceHits.length === 0, `Audit: hay arroz en almuerzo/cena en días seguidos (${nextDayRiceHits.length}).`);
   assert(missingPrimaryWhey.length === 0, `Audit: faltan whey diarios principales (${missingPrimaryWhey.length}).`);
   assert(missingPrimaryCreatine.length === 0, `Audit: faltan creatinas diarias principales (${missingPrimaryCreatine.length}).`);
+  assert(duplicateMainNameHits.length === 0, `Audit: hay platos principales repetidos en la misma semana (${duplicateMainNameHits.length}).`);
+  assert(sameDayMainAltHits.length === 0, `Audit: hay opciones B iguales a otro plato principal del mismo dia (${sameDayMainAltHits.length}).`);
   assert(kcalOutliers.length === 0, `Audit: hay días fuera del rango kcal confort (${kcalOutliers.length}).`);
 
-  return { kcalOutliers, mealsMissingAlt, bannedHits, specialHits, dayTipHits, wheyMisuseHits, riceAltHits, sameCarbAltHits, riceSequenceHits, sameTurnRiceHits, nextDayRiceHits, missingPrimaryWhey, missingPrimaryCreatine };
+  return { kcalOutliers, mealsMissingAlt, bannedHits, specialHits, dayTipHits, wheyMisuseHits, riceAltHits, sameCarbAltHits, riceSequenceHits, sameTurnRiceHits, nextDayRiceHits, missingPrimaryWhey, missingPrimaryCreatine, duplicateMainNameHits, sameDayMainAltHits };
 }
 
 function main() {
