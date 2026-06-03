@@ -3,15 +3,16 @@
 App web (PWA instalable) para seguir un plan de dieta de **recomposición**:
 ganar músculo sin subir de peso, manteniendo entre 78 y 80 kg.
 
-Plan adaptado a rutina de gym de **4 días + 1 opcional**:
+Plan adaptado a rutina de gym de **5 días por semana** y entreno fijo a las **12:00**:
 Lunes pecho/tríceps · Martes espalda/bíceps · Miércoles hombros/abdomen ·
-Jueves piernas · Viernes full body opcional · Sábado/Domingo descanso.
+Jueves piernas · Viernes full body · Sábado/Domingo descanso.
 
 ## Funcionalidades
 
 ### Plan
 - 7 días con kcal y macros calibrados por tipo de entreno
 - Comidas con preparaciones detalladas paso a paso (4-7 pasos cada una)
+- Días de gym con desayuno liviano 09:45, pre-entreno 11:15, post-entreno 13:10 y almuerzo fuerte 14:15
 - Sin yogur, avena, harina de arroz, arroz inflado, ricota, cottage, locro ni combinaciones raras fuera del criterio definido para Rony
 - Pescado 1x semana (salmón viernes) por omega 3
 
@@ -39,7 +40,7 @@ Jueves piernas · Viernes full body opcional · Sábado/Domingo descanso.
 - "Resetear día"
 
 ### Nutrición
-- Suplementos base (creatina) y opcionales (whey como comodín, omega 3, vit D, magnesio)
+- Suplementos base (creatina + whey diarios) y opcionales (omega 3, vit D, magnesio)
 - 10 reglas de mantenimiento + recomposición
 - Notificaciones programadas para cada comida y agua cada 90 min
 
