@@ -12,7 +12,7 @@ Jueves piernas · Viernes full body opcional · Sábado/Domingo descanso.
 ### Plan
 - 7 días con kcal y macros calibrados por tipo de entreno
 - Comidas con preparaciones detalladas paso a paso (4-7 pasos cada una)
-- Sin yogur ni avena en ninguna receta (preferencia personal)
+- Sin yogur, avena, harina de arroz, arroz inflado, ricota, cottage, locro ni combinaciones raras fuera del criterio definido para Rony
 - Pescado 1x semana (salmón viernes) por omega 3
 
 ### Tracking
@@ -86,7 +86,7 @@ node scripts/audit-plan.js
 brewco-web/
 ├── index.html      ← UI completa
 ├── styles.css      ← Tema oscuro, responsive, safe area iOS
-├── script.js       ← Toda la lógica (~1200 líneas)
+├── script.js       ← Toda la lógica y dataset semanal
 ├── favicon.svg     ← Ícono PWA
 ├── manifest.json   ← PWA manifest
 ├── sw.js           ← Service Worker (offline + auto-update)

@@ -53,6 +53,11 @@ function getTodayKey() {
   return formatLocalDateKey(new Date());
 }
 
+function getPlanDayIndex(date = new Date()) {
+  const dayIdx = date.getDay();
+  return dayIdx === 0 ? 7 : dayIdx;
+}
+
 function cleanupOldData() {
   try {
     const today = new Date();
@@ -2780,6 +2785,15 @@ function mealSearchText(item) {
   ].join(" "));
 }
 
+function mealCoreSearchText(item) {
+  if (!item) return "";
+  return plainText([
+    item.name,
+    item.desc,
+    ...(item.foods || []).map((f) => f.name)
+  ].join(" "));
+}
+
 function isTooSpecialForRony(item) {
   const text = mealSearchText(item);
   return PLAIN_MENU_BLOCKLIST.some((term) => text.includes(term));
@@ -3280,6 +3294,192 @@ function simpleFishOptions() {
   ];
 }
 
+function riceFreeMainOptions() {
+  return [
+    altMeal("Carne magra con papa y ensalada", "Carne magra - papa - ensalada - oliva", [
+      food("180g carne magra", 42, 0, 10),
+      food("280g papa al horno o hervida", 6, 56, 0),
+      food("Ensalada grande", 2, 10, 0),
+      food("1 cdita aceite de oliva", 0, 0, 5)
+    ], [
+      "Carne simple con papa y ensalada grande.",
+      "Es el reemplazo directo cuando el plan venia con demasiado arroz."
+    ]),
+    altMeal("Pollo con papas al horno y tomate", "Pollo - papas - tomate - oliva", [
+      food("190g pollo grillado", 44, 0, 6),
+      food("260g papas al horno", 5, 52, 0),
+      food("Tomate + hojas verdes", 2, 8, 0),
+      food("1 cdita aceite de oliva", 0, 0, 5)
+    ], [
+      "Pollo a la plancha u horno con papas.",
+      "Usa limon, ajo, sal y pimienta. Normal y sostenible."
+    ]),
+    altMeal("Fideos con tuco de carne medido", "Pasta - carne magra - tomate - queso rallado", [
+      food("85g fideos secos", 11, 62, 2),
+      food("130g carne magra picada", 30, 0, 8),
+      food("Salsa de tomate casera", 2, 10, 0),
+      food("1 cdita queso rallado", 1, 0, 2)
+    ], [
+      "Fideos medidos con tuco de carne magra.",
+      "Buena carga de carbo para gym sin repetir arroz."
+    ]),
+    altMeal("Pastel de papa con carne magra", "Carne magra - papa - huevo - mozzarella", [
+      food("180g carne magra picada", 42, 0, 10),
+      food("300g papa pisada", 6, 60, 0),
+      food("1 huevo duro", 6, 1, 5),
+      food("35g mozzarella", 8, 1, 7),
+      food("Cebolla + morron + tomate", 2, 12, 0)
+    ], [
+      "Saltea carne con cebolla, morron y tomate.",
+      "Arma con pure de papa, huevo y mozzarella. Horno hasta dorar."
+    ]),
+    altMeal("Atun con papa, huevo y tomate", "Atun - papa - huevo - tomate - oliva", [
+      food("1 lata grande de atun al natural", 32, 0, 2),
+      food("280g papa hervida", 6, 56, 0),
+      food("1 huevo duro", 6, 1, 5),
+      food("Tomate + limon", 1, 6, 0),
+      food("1 cdita aceite de oliva", 0, 0, 5)
+    ], [
+      "Atun escurrido con papa y huevo duro.",
+      "Opcion rapida, alta en proteina y sin arroz."
+    ]),
+    altMeal("Tortilla de papa, huevo y mozzarella", "Huevos - papa - mozzarella - ensalada", [
+      food("3 huevos", 18, 1, 15),
+      food("260g papa", 5, 52, 0),
+      food("40g mozzarella", 9, 1, 8),
+      food("Ensalada grande", 2, 10, 0)
+    ], [
+      "Cocina la papa en cubos y mezclala con huevo batido.",
+      "Termina con mozzarella y ensalada al costado."
+    ])
+  ];
+}
+
+function mealHasRice(item) {
+  const text = mealCoreSearchText(item);
+  return /\barroz\b|basmati|jazmin|jasmin|arboreo|risotto|paella|chaufa|fideos de arroz|noodles de arroz/.test(text);
+}
+
+function mealCarbGroup(item) {
+  const text = mealCoreSearchText(item);
+  if (mealHasRice(item)) return "arroz";
+  if (/\b(fideo|fideos|pasta|noodle|noodles|espagueti|tallarines)\b/.test(text)) return "pasta";
+  if (/\b(papa|papas|pure|batata|pastel de papa)\b/.test(text)) return "papa";
+  if (/\b(pan|tostada|tostado|tortilla|wrap|burrito|pizza)\b/.test(text)) return "pan";
+  if (/\b(lenteja|lentejas|garbanzo|garbanzos|poroto|porotos)\b/.test(text)) return "legumbre";
+  return "otro";
+}
+
+function isMainMeal(item) {
+  const label = plainText(item?.label);
+  return label.includes("almuerzo") || label.includes("cena");
+}
+
+function pickRiceFreeMainTemplate(item, weekNumber, dayNumber, offset = 0, avoidGroups = []) {
+  const avoid = new Set(avoidGroups.filter(Boolean));
+  const options = riceFreeMainOptions().filter((option) => !mealHasRice(option) && !avoid.has(mealCarbGroup(option)));
+  const pool = options.length ? options : riceFreeMainOptions().filter((option) => !mealHasRice(option));
+  return pool[hashString(`${item.id}-${weekNumber}-${dayNumber}-${offset}`) % pool.length];
+}
+
+function setRiceFreeAlt(item, weekNumber, dayNumber, offset = 0) {
+  const primaryGroup = mealCarbGroup(item);
+  let template = pickRiceFreeMainTemplate(item, weekNumber, dayNumber, offset, [primaryGroup]);
+  item.alt = cloneMealTemplate(template);
+
+  if (mealCarbGroup(item.alt) === primaryGroup && primaryGroup !== "otro") {
+    template = pickRiceFreeMainTemplate(item, weekNumber, dayNumber, offset + 3, [primaryGroup, mealCarbGroup(item.alt)]);
+    item.alt = cloneMealTemplate(template);
+  }
+}
+
+function collectMainMealSlots() {
+  const slots = [];
+  allWeeks.forEach((weekDays, weekNumber) => {
+    weekDays.forEach((day, dayNumber) => {
+      day.meals.forEach((mealItem, mealNumber) => {
+        if (isMainMeal(mealItem)) slots.push({ weekNumber, dayNumber, mealNumber, meal: mealItem });
+      });
+    });
+  });
+  return slots;
+}
+
+function collectDaySlots() {
+  const slots = [];
+  allWeeks.forEach((weekDays, weekNumber) => {
+    weekDays.forEach((day, dayNumber) => {
+      slots.push({ weekNumber, dayNumber, day });
+    });
+  });
+  return slots;
+}
+
+function dayHasRiceMain(day) {
+  return day.meals.some((mealItem) => isMainMeal(mealItem) && mealHasRice(mealItem));
+}
+
+function replaceMainMealWithRiceFree(slot, offset = 0) {
+  const template = pickRiceFreeMainTemplate(slot.meal, slot.weekNumber, slot.dayNumber, offset);
+  applyMealTemplate(slot.meal, template);
+  setRiceFreeAlt(slot.meal, slot.weekNumber, slot.dayNumber, offset + 1);
+}
+
+function normalizeMainAltCarbs(slot, offset = 0) {
+  const mealItem = slot.meal;
+  if (!mealItem.alt) return;
+
+  const primaryGroup = mealCarbGroup(mealItem);
+  const altGroup = mealCarbGroup(mealItem.alt);
+  if (mealHasRice(mealItem.alt) || (primaryGroup !== "otro" && primaryGroup === altGroup)) {
+    setRiceFreeAlt(mealItem, slot.weekNumber, slot.dayNumber, offset);
+  }
+}
+
+function applyRiceRotationRules() {
+  const slots = collectMainMealSlots();
+  slots.forEach((slot, index) => {
+    const previous = slots[index - 1];
+    if (previous && mealHasRice(previous.meal) && mealHasRice(slot.meal)) {
+      replaceMainMealWithRiceFree(slot, index + 7);
+    }
+
+    const currentDayIndex = slot.weekNumber * 7 + slot.dayNumber;
+    const previousSameTurn = [...slots].slice(0, index).reverse().find((candidate) => {
+      const candidateDayIndex = candidate.weekNumber * 7 + candidate.dayNumber;
+      return candidate.meal.label === slot.meal.label && currentDayIndex - candidateDayIndex === 1;
+    });
+    if (previousSameTurn && mealHasRice(previousSameTurn.meal) && mealHasRice(slot.meal)) {
+      replaceMainMealWithRiceFree(slot, index + 17);
+    }
+
+    normalizeMainAltCarbs(slot, index + 11);
+  });
+
+  collectDaySlots().forEach((daySlot, index, daySlots) => {
+    const previousDay = daySlots[index - 1];
+    if (!previousDay || !dayHasRiceMain(previousDay.day)) return;
+
+    daySlot.day.meals.forEach((mealItem, mealNumber) => {
+      if (!isMainMeal(mealItem) || !mealHasRice(mealItem)) return;
+      replaceMainMealWithRiceFree({
+        weekNumber: daySlot.weekNumber,
+        dayNumber: daySlot.dayNumber,
+        mealNumber,
+        meal: mealItem
+      }, index + mealNumber + 31);
+    });
+  });
+
+  const finalSlots = collectMainMealSlots();
+  finalSlots.forEach((slot, index) => normalizeMainAltCarbs(slot, index + 41));
+
+  if (finalSlots.length > 1 && mealHasRice(finalSlots[finalSlots.length - 1].meal) && mealHasRice(finalSlots[0].meal)) {
+    replaceMainMealWithRiceFree(finalSlots[0], 53);
+    normalizeMainAltCarbs(finalSlots[0], 59);
+  }
+}
+
 function mealFromTemplate(time, label, template, altTemplate) {
   const item = meal(time, label, template.name, template.desc, 0, template.foods.map((f) => ({ ...f })), template.prep.slice(), template.note || null);
   item.alt = cloneMealTemplate(altTemplate);
@@ -3303,12 +3503,41 @@ function hasCreatine(mealItem) {
   return /creatina/i.test(text);
 }
 
+function hasWhey(mealItem) {
+  const text = `${mealItem.name} ${mealItem.desc} ${mealItem.foods.map((f) => f.name).join(" ")} ${mealItem.prep.join(" ")}`;
+  return /\bwhey\b/i.test(text);
+}
+
 function addCreatineToMeal(mealItem) {
   if (hasCreatine(mealItem)) return;
   mealItem.foods.push(food("Creatina 5g", 0, 0, 0));
   if (!/creatina/i.test(mealItem.name)) mealItem.name = `${mealItem.name} + creatina`;
   if (!/creatina/i.test(mealItem.desc)) mealItem.desc = `${mealItem.desc} - creatina 5g`;
   mealItem.prep.push("Sumale 5g de creatina. Todos los dias, entrenes o descanses.");
+}
+
+function addWheyToMeal(mealItem) {
+  if (hasWhey(mealItem)) return;
+  mealItem.foods.push(wheyFood("1 scoop whey OneFit con agua"));
+  if (!/\bwhey\b/i.test(mealItem.name)) mealItem.name = `${mealItem.name} + whey`;
+  if (!/\bwhey\b/i.test(mealItem.desc)) mealItem.desc = `${mealItem.desc} - whey diario`;
+  mealItem.prep.push("Toma el scoop diario de whey OneFit con agua o leche, segun tolerancia y calorias del dia.");
+}
+
+function ensureDailySupplementRules() {
+  allWeeks.forEach((weekDays) => {
+    weekDays.forEach((day) => {
+      const supplementSlot = day.meals.find((m) => /post-entreno/i.test(m.label))
+        || day.meals.find((m) => /merienda/i.test(m.label))
+        || day.meals.find((m) => /dormir/i.test(m.label))
+        || day.meals.find((m) => /desayuno/i.test(m.label))
+        || day.meals[0];
+      if (!supplementSlot) return;
+
+      if (!day.meals.some(hasWhey)) addWheyToMeal(supplementSlot);
+      if (!day.meals.some(hasCreatine)) addCreatineToMeal(supplementSlot);
+    });
+  });
 }
 
 function applyProfessionalMenuRules() {
@@ -3522,6 +3751,38 @@ function applyMinimumEnergyFloorRules() {
             food("30g queso en fetas o mozzarella", 7, 1, 5)
           ], ["Refuerzo salado y simple si no queres leche y banana."])
         ));
+      }
+    });
+  });
+}
+
+function lightPreWorkoutTemplate() {
+  return altMeal("Banana pre-entreno simple", "Banana - miel - agua", [
+    food("1 banana", 1, 27, 0),
+    food("1 cdita miel", 0, 8, 0)
+  ], [
+    "Comelo 30-45 minutos antes de entrenar.",
+    "Es suficiente cuando el resto del dia ya viene alto en calorias."
+  ]);
+}
+
+function trimHighCalorieDaysAfterSupplements() {
+  allWeeks.forEach((weekDays) => {
+    weekDays.forEach((day) => {
+      const target = day.isRestDay ? 2600 : 2850;
+      const maxComfort = target + (day.isRestDay ? 160 : 180);
+      if (calculateDayTotals(day).kcal <= maxComfort + 25) return;
+
+      const preWorkout = day.meals.find((m) => /pre-entreno/i.test(m.label) && m.kcal > 180);
+      if (preWorkout) {
+        applyMealTemplate(preWorkout, lightPreWorkoutTemplate());
+        preWorkout.alt = altMeal("Banana y tostada pre-entreno", "Banana - tostada - agua", [
+          food("1 banana", 1, 27, 0),
+          food("1 tostada integral", 4, 17, 2)
+        ], [
+          "Opcion simple si queres algo con un poco mas de mordida.",
+          "Mantiene energia sin subir demasiado el total del dia."
+        ]);
       }
     });
   });
@@ -4038,13 +4299,27 @@ function celebrateGoal() {
 }
 
 function toggleMeal(head) {
-  head.closest(".meal").classList.toggle("open");
+  const meal = head.closest(".meal");
+  if (!meal) return;
+  const isOpen = meal.classList.toggle("open");
+  head.setAttribute("aria-expanded", String(isOpen));
+  const detail = meal.querySelector(".meal-detail");
+  if (detail) detail.setAttribute("aria-hidden", String(!isOpen));
+}
+
+function handleMealHeadKeydown(event, head) {
+  if (event.key !== "Enter" && event.key !== " ") return;
+  event.preventDefault();
+  toggleMeal(head);
 }
 
 function togglePrep(button) {
   const body = button.nextElementSibling;
+  if (!body) return;
   const isOpen = body.classList.toggle("open");
   button.classList.toggle("open", isOpen);
+  button.setAttribute("aria-expanded", String(isOpen));
+  body.setAttribute("aria-hidden", String(!isOpen));
   const label = button.querySelector(".prep-label");
   if (label) label.textContent = isOpen ? "Ocultar preparación" : "Ver preparación";
 }
@@ -4162,9 +4437,10 @@ function renderTabs() {
   // Show current week name above the tabs
   const tabsEl = document.querySelector("#week-tabs");
   const weekLabelEl = document.querySelector("#current-week-label");
+  const todayPlanDayIndex = getPlanDayIndex();
   if (weekLabelEl) weekLabelEl.textContent = currentWeekName;
   tabsEl.innerHTML = days.map((day) => {
-    const isToday = day.dayIndex === new Date().getDay();
+    const isToday = day.dayIndex === todayPlanDayIndex;
     return `
       <button class="tab-btn ${day.id === activeDay ? "active" : ""} ${isToday ? "is-today" : ""} ${day.isRestDay ? "rest-tab" : ""}" type="button" onclick="setActiveDay('${day.id}')">
         ${day.tab}
@@ -4227,6 +4503,8 @@ function renderActiveDay() {
   const day = days.find((item) => item.id === activeDay);
   const doneMeals = day.meals.filter((item) => isDone(item.id));
   const consumed = sumMacros(doneMeals);
+  const todayObj = getTodayDayObject();
+  const isViewingToday = day.id === todayObj.id;
 
   const isFridayWithoutGym = day.id === "vie" && localStorage.getItem(STORAGE.fridayMode) === "rest";
   const adjustedKcal = isFridayWithoutGym ? day.kcal - 200 : day.kcal;
@@ -4234,6 +4512,13 @@ function renderActiveDay() {
   document.querySelector("#day-container").innerHTML = `
     <section class="panel active">
       <div class="day-header">
+        <div class="day-context-strip ${isViewingToday ? "is-today" : "is-planning"}" role="status" aria-live="polite">
+          <div>
+            <span class="day-context-kicker">${isViewingToday ? "Hoy real" : "Planificación"}</span>
+            <strong>${isViewingToday ? "Estás viendo el día operativo de hoy." : `Estás viendo ${day.title}. Hoy real es ${todayObj.title}.`}</strong>
+          </div>
+          ${isViewingToday ? "" : `<button class="day-context-action" type="button" onclick="scrollToTodayPanel()">Volver a hoy</button>`}
+        </div>
         <div class="day-header-top">
           <div class="day-icon ${day.isRestDay ? "rest" : ""}">${day.workout.icon}</div>
           <div>
@@ -4289,7 +4574,14 @@ function renderActiveDay() {
   // FIX: restaurar estado abierto de comidas y preparaciones después del re-render
   openMealIds.forEach((id) => {
     const checkBtn = document.querySelector(`[onclick*="toggleMealCheck"][onclick*="'${id}'"]`);
-    if (checkBtn) checkBtn.closest(".meal")?.classList.add("open");
+    const meal = checkBtn?.closest(".meal");
+    if (meal) {
+      meal.classList.add("open");
+      const head = meal.querySelector(".meal-head");
+      const detail = meal.querySelector(".meal-detail");
+      if (head) head.setAttribute("aria-expanded", "true");
+      if (detail) detail.setAttribute("aria-hidden", "false");
+    }
   });
   openPrepMealIds.forEach((id) => {
     const checkBtn = document.querySelector(`[onclick*="toggleMealCheck"][onclick*="'${id}'"]`);
@@ -4300,6 +4592,8 @@ function renderActiveDay() {
       if (prepBody) prepBody.classList.add("open");
       if (prepToggle) {
         prepToggle.classList.add("open");
+        prepToggle.setAttribute("aria-expanded", "true");
+        prepBody?.setAttribute("aria-hidden", "false");
         const label = prepToggle.querySelector(".prep-label");
         if (label) label.textContent = "Ocultar preparación";
       }
@@ -4338,7 +4632,9 @@ function toggleAltMeal(mealId) {
   const btn = document.querySelector(`[data-alt-btn="${mealId}"]`);
   if (!panel) return;
   const isOpen = panel.classList.toggle("open");
+  panel.setAttribute("aria-hidden", String(!isOpen));
   if (btn) {
+    btn.setAttribute("aria-expanded", String(isOpen));
     btn.innerHTML = isOpen
       ? '<span class="alt-btn-icon">⬆</span> Ver opción principal'
       : '<span class="alt-btn-icon">🔄</span> No me convence · Ver opción B';
@@ -4353,6 +4649,10 @@ function renderMeal(item) {
   const isUpcoming = day ? isUpcomingMeal(item, day) : false;
   const todayObj = getTodayDayObject();
   const isToday = day && day.id === todayObj.id;
+  const detailId = `meal-detail-${item.id}`;
+  const prepId = `meal-prep-${item.id}`;
+  const altId = `meal-alt-${item.id}`;
+  const altPrepId = `meal-alt-prep-${item.id}`;
   const note = item.note ? `<div class="meal-note">📝 ${item.note}</div>` : "";
   const totalP = item.foods.reduce((s, f) => s + f.p, 0);
   const totalC = item.foods.reduce((s, f) => s + f.c, 0);
@@ -4360,7 +4660,7 @@ function renderMeal(item) {
 
   const hasAlt = Boolean(item.alt);
   const altPanel = hasAlt ? `
-    <div class="alt-meal-panel" data-alt-for="${item.id}">
+    <div class="alt-meal-panel" id="${altId}" data-alt-for="${item.id}" aria-hidden="true">
       <div class="alt-meal-header">
         <span class="alt-badge">Opción B</span>
         <span class="alt-kcal">${item.alt.kcal} kcal</span>
@@ -4373,10 +4673,10 @@ function renderMeal(item) {
         <span class="mm g">${item.alt.foods.reduce((s,f)=>s+f.g,0)}g G</span>
       </div>
       <div class="food-list">${item.alt.foods.map(renderFood).join("")}</div>
-      <button class="prep-toggle alt-prep-toggle" type="button" onclick="togglePrep(this)">
+      <button class="prep-toggle alt-prep-toggle" type="button" onclick="togglePrep(this)" aria-expanded="false" aria-controls="${altPrepId}">
         <span>▶</span> <span class="prep-label">Ver preparación</span>
       </button>
-      <div class="prep-body">
+      <div class="prep-body" id="${altPrepId}" aria-hidden="true">
         ${item.alt.prep.map((step, index) => `
           <div class="prep-step"><div class="prep-num">${index + 1}</div><div class="prep-text">${step}</div></div>
         `).join("")}
@@ -4385,7 +4685,7 @@ function renderMeal(item) {
   ` : "";
 
   const altBtn = hasAlt ? `
-    <button class="alt-meal-btn" type="button" data-alt-btn="${item.id}" onclick="event.stopPropagation(); toggleAltMeal('${item.id}')">
+    <button class="alt-meal-btn" type="button" data-alt-btn="${item.id}" onclick="event.stopPropagation(); toggleAltMeal('${item.id}')" aria-expanded="false" aria-controls="${altId}">
       <span class="alt-btn-icon">🔄</span> No me convence · Ver opción B
     </button>
   ` : "";
@@ -4395,7 +4695,7 @@ function renderMeal(item) {
     <article class="meal ${done ? 'done' : ''} ${isUpcoming ? 'is-upcoming' : ''}" data-type="${typeSlug}">
       <div class="meal-type-stripe"></div>
       ${isUpcoming ? '<div class="upcoming-tag">⏰ Toca ahora</div>' : ""}
-      <div class="meal-head" onclick="toggleMeal(this)">
+      <div class="meal-head" role="button" tabindex="0" aria-expanded="false" aria-controls="${detailId}" onclick="toggleMeal(this)" onkeydown="handleMealHeadKeydown(event, this)">
         <div class="meal-time-col">
           <div class="meal-time">${item.time}</div>
           <div class="meal-time-label">${item.label}</div>
@@ -4417,13 +4717,13 @@ function renderMeal(item) {
           <span class="mc-dot"></span>
         </button>
       </div>
-      <div class="meal-detail">
+      <div class="meal-detail" id="${detailId}" aria-hidden="true">
         ${note}
         <div class="food-list">${item.foods.map(renderFood).join("")}</div>
-        <button class="prep-toggle" type="button" onclick="togglePrep(this)">
+        <button class="prep-toggle" type="button" onclick="togglePrep(this)" aria-expanded="false" aria-controls="${prepId}">
           <span>▶</span> <span class="prep-label">Ver preparación</span>
         </button>
-        <div class="prep-body">
+        <div class="prep-body" id="${prepId}" aria-hidden="true">
           ${item.prep.map((step, index) => `
             <div class="prep-step"><div class="prep-num">${index + 1}</div><div class="prep-text">${step}</div></div>
           `).join("")}
@@ -4635,7 +4935,7 @@ function updateGreeting() {
 }
 
 function getTodayDayObject() {
-  const dayIdx = new Date().getDay();
+  const dayIdx = getPlanDayIndex();
   return days.find((d) => d.dayIndex === dayIdx) || days[0];
 }
 
@@ -4685,14 +4985,22 @@ function updateGymBanner() {
 
 function updateNextMeal() {
   const now = new Date();
-  const currentDay = days.find((item) => item.id === activeDay);
-  const next = currentDay.meals.find((item) => {
+  const todayObj = getTodayDayObject();
+  const viewedDay = days.find((item) => item.id === activeDay) || todayObj;
+  const scheduleDay = todayObj || viewedDay;
+  const next = scheduleDay.meals.find((item) => {
     const [hour, minute] = item.time.split(":").map(Number);
     const target = new Date();
     target.setHours(hour, minute, 0, 0);
     return target > now;
   });
   const el = document.querySelector("#next-meal");
+  const labelEl = document.querySelector("#next-meal-label");
+  if (labelEl) {
+    labelEl.textContent = viewedDay.id === scheduleDay.id
+      ? "⏰ Hoy · próxima comida"
+      : `⏰ Hoy real · viendo ${viewedDay.title}`;
+  }
   if (el) {
     if (next) {
       const [h, mn] = next.time.split(":").map(Number);
@@ -4702,9 +5010,15 @@ function updateNextMeal() {
       const hoursLeft = Math.floor(diffMin / 60);
       const minsLeft = diffMin % 60;
       const timeLeft = hoursLeft > 0 ? `en ${hoursLeft}h ${minsLeft}min` : `en ${minsLeft} min`;
-      el.innerHTML = `Próxima: <strong>${next.time}</strong> · ${next.name} <span class="next-meal-time">${timeLeft}</span>`;
+      const context = viewedDay.id === scheduleDay.id
+        ? ""
+        : `<span class="next-meal-context">La tarjeta sigue anclada a hoy para no mezclar horarios ficticios.</span>`;
+      el.innerHTML = `Próxima: <strong>${next.time}</strong> · ${next.name} <span class="next-meal-time">${timeLeft}</span>${context}`;
     } else {
-      el.textContent = "Ya no quedan comidas para este día. Descansá bien.";
+      const suffix = viewedDay.id === scheduleDay.id
+        ? "Ya no quedan comidas para hoy. Descansá bien."
+        : `Hoy ya cerró. Seguís viendo ${viewedDay.title}.`;
+      el.textContent = suffix;
     }
   }
   // FIX: actualizar la clase is-upcoming sin re-renderizar todo el día (preserva estado abierto/cerrado)
@@ -5561,10 +5875,15 @@ applyPlainMenuRules();
 applyWholeFoodPriorityRules();
 applyPostWorkoutWholeFoodRules();
 applyPlanQualityRules();
+applyRiceRotationRules();
 applyCalorieBalanceRules();
 // Segundo pase: algunos dÃ­as quedan por arriba del maxComfort reciÃ©n despuÃ©s de ajustes del primer pase.
 applyCalorieBalanceRules();
+applyRiceRotationRules();
 applyMinimumEnergyFloorRules();
+applyRiceRotationRules();
+ensureDailySupplementRules();
+trimHighCalorieDaysAfterSupplements();
 auditPlanCompliance();
 
 // FIX BUG NUTRICIONAL: sincronizar los targets del día con la suma REAL de los foods.
