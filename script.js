@@ -6,6 +6,9 @@
 // =====================================================
 
 const WATER_GOAL = 10;
+const WATER_REMINDER_INTERVAL_MIN = 90;
+const WATER_REMINDER_START_MIN = 9 * 60;
+const WATER_REMINDER_END_MIN = 21 * 60;
 const STORAGE = {
   meals:           "rony-dieta-meals",
   water:           "rony-dieta-water",
@@ -121,17 +124,17 @@ const allWeeks = [
     tags: ["Pecho", "Tríceps", "Mantenimiento"],
     tip: "Día de empuje. Desayuná bien — carbo real (papa, pan, fruta) te da energía sostenida para las series pesadas de pecho. Si terminás el entreno con hambre real, sumá un refuerzo simple antes de dormir.",
     meals: [
-      meal("10:00", "Desayuno", "Bowl de arroz inflado con banana, manteca de maní y miel", "60g arroz inflado · banana · 2 cdas manteca de maní · miel · leche", 0, [
-        food("60g arroz inflado", 7, 40, 4),
+      meal("10:00", "Desayuno", "Tostadas integrales con banana, manteca de maní y miel", "2 tostadas integrales · banana · 2 cdas manteca de maní · miel · leche", 0, [
+        food("2 tostadas integrales", 7, 40, 4),
         food("1 banana madura", 1, 27, 0),
         food("2 cdas manteca de maní", 8, 6, 16),
         food("1 cda miel", 0, 17, 0),
         food("200ml leche entera", 6, 10, 7)
       ], [
-        "Calentá la leche en el microondas 2 min. Volcá sobre la arroz inflado y dejá reposar 3 min hasta que absorba.",
-        "Cortá la banana en rodajas. Poné encima la manteca de maní y bañá con miel. El combo banana+leche+manií da energía sostenida para 3-4 horas de entreno.",
+        "Calentá la leche en el microondas 2 min y tostá el pan aparte.",
+        "Cortá la banana en rodajas. Poné encima la manteca de maní y bañá con miel. El combo banana+leche+maní da energía sostenida para 3-4 horas de entreno.",
         "Tomá un café negro al lado para el boost de cafeína pre-gym si entrás cerca."
-      ], "arroz inflado = energía de liberación lenta. Ideal para ectomorfos que entrenan al mediodía."),
+      ], "pan integral = energía de liberación lenta. Ideal para ectomorfos que entrenan al mediodía."),
 
       meal("11:30", "Media mañana", "Tostadas con queso fresco, tomate seco y orégano", "2 tostadas · queso fresco · tomate seco · orégano", 0, [
         food("2 tostadas integrales", 8, 28, 2),
@@ -344,8 +347,8 @@ const allWeeks = [
     tags: ["Hombros", "Abdomen", "Mantenimiento"],
     tip: "Hombros es un grupo relativamente pequeño pero muy técnico. El press militar y los laterales piden buena hidratación. Asegurate de tomar 2-3 vasos antes de ir.",
     meals: [
-      meal("10:00", "Desayuno", "panqueques de banana y banana con miel", "2 panqueques · arroz inflado · banana · huevo · miel · leche", 0, [
-        food("50g arroz inflado", 6, 33, 3),
+      meal("10:00", "Desayuno", "panqueques de banana y banana con miel", "2 panqueques · pan integral · banana · huevo · miel · leche", 0, [
+        food("2 tostadas integrales", 6, 33, 3),
         food("1 banana madura", 1, 27, 0),
         food("2 huevos", 12, 0, 10),
         food("100ml leche entera", 3, 5, 4),
@@ -518,14 +521,14 @@ const allWeeks = [
       ])),
 
       meal("19:30", "Merienda", "Panqueques con miel y manteca de maní", "2 panqueques · banana · manteca de maní · miel · leche", 0, [
-        food("2 panqueques caseros (arroz inflado + huevo)", 10, 28, 6),
+        food("2 panqueques proteicos caseros", 10, 28, 6),
         food("1 banana", 1, 27, 0),
         food("2 cdas manteca de maní", 8, 6, 16),
         food("1 cda miel", 0, 17, 0),
         food("200ml leche entera", 6, 10, 7)
       ], [
         "Merienda densa para el día de piernas — necesitás reponer lo que gastaste.",
-        "Hacé los panqueques de banana simples (50g arroz inflado + 1 huevo + leche) y rellená con manteca de maní y banana."
+        "Hacé los panqueques de banana simples (2 tostadas integrales + 1 huevo + leche) y rellená con manteca de maní y banana."
       ], null),
 
       meal("22:00", "Cena", "Arroz con pollo cremoso al limón", "180g pollo · arroz · caldo · crema light · limón", 0, [
@@ -646,7 +649,7 @@ const allWeeks = [
         "Armá con pollo + pepino en bastones + palta. Enrollá apretando bien."
       ])),
 
-      meal("23:30", "Antes de dormir", "queso untable con miel o leche tibia", "Proteína lenta", 0, [
+      meal("23:30", "Antes de dormir", "queso untable con miel o leche", "Proteína lenta", 0, [
         food("100g queso untable", 11, 3, 4),
         food("1 cdita miel", 0, 8, 0)
       ], ["Opcional. Solo si llegaste corto de proteína o tenés hambre real."], "Opcional.")
@@ -726,9 +729,9 @@ const allWeeks = [
         "Mezclá la pasta con el pesto. Servís con más queso encima. En 15 min tenés una cena con sabor italiano real."
       ])),
 
-      meal("23:30", "Antes de dormir", "Leche tibia o queso untable", "Descanso profundo con proteína lenta", 0, [
-        food("250ml leche entera tibia", 8, 12, 9)
-      ], ["Un vaso de leche tibia antes de dormir. Mejora la calidad del sueño."], "Opcional.")
+      meal("23:30", "Antes de dormir", "leche o queso untable", "Descanso profundo con proteína lenta", 0, [
+        food("250ml leche entera", 8, 12, 9)
+      ], ["Un vaso de leche antes de dormir. Mejora la calidad del sueño."], "Opcional.")
     ]
   },
 
@@ -741,15 +744,15 @@ const allWeeks = [
     tags: ["Descanso total", "Recuperación", "Familia"],
     tip: "Domingo es recarga mental y física. Comé rico, descansá bien. La semana que viene empieza mejor cuando el cuerpo estuvo bien nutrido y descansado.",
     meals: [
-      meal("10:00", "Desayuno", "pancakes de banana con frutos rojos y miel", "50g arroz inflado · 2 huevos · banana · leche · frutos rojos", 0, [
-        food("50g arroz inflado", 6, 33, 3),
+      meal("10:00", "Desayuno", "pancakes de banana con frutos rojos y miel", "2 tostadas integrales · 2 huevos · banana · leche · frutos rojos", 0, [
+        food("2 tostadas integrales", 6, 33, 3),
         food("2 huevos", 12, 0, 10),
         food("1 banana", 1, 27, 0),
         food("150ml leche entera", 5, 8, 5),
         food("80g frutos rojos o frutillas", 1, 10, 0),
         food("1 cda miel", 0, 17, 0)
       ], [
-        "Licuá harina de arroz + huevos + banana + leche. Dejá reposar 3 min.",
+        "Licuá premezcla de pancakes proteicos + huevos + banana + leche. Dejá reposar 3 min.",
         "Cocinalo en sartén a fuego medio, 2 min por lado. Saldrán 3-4 pancakes.",
         "Servís con frutos rojos y un hilo de miel. Es el desayuno más festivo de la semana — disfrutalo tranquilo."
       ], null),
@@ -807,9 +810,9 @@ const allWeeks = [
         "Batata en bastones con oliva y sal a 200°C por 25 min. Armá las hamburguesas con palta y vegetales."
       ])),
 
-      meal("23:30", "Antes de dormir", "Shake o leche tibia", "Proteína nocturna", 0, [
-        food("1 scoop whey o 250ml leche entera tibia", 20, 10, 8)
-      ], ["Shake con leche entera o leche tibia sola. Cerrá la semana bien."], "Opcional. Que descanses bien.")
+      meal("23:30", "Antes de dormir", "Shake o leche", "Proteína nocturna", 0, [
+        food("1 scoop whey o 250ml leche entera", 20, 10, 8)
+      ], ["Shake con leche entera o leche sola. Cerrá la semana bien."], "Opcional. Que descanses bien.")
     ]
   }
 ], // fin Semana 1
@@ -928,14 +931,14 @@ const allWeeks = [
     tags: ["Espalda", "Bíceps", "Tirón pesado"],
     tip: "Espalda demanda carbo. Reforzá el pre-entreno y no te saltees la media mañana.",
     meals: [
-      meal("10:00", "Desayuno", "Crema de arroz proteica con banana y nueces", "Harina de arroz - whey - leche - banana - nueces", 0, [
-        food("60g harina de arroz", 4, 48, 1),
+      meal("10:00", "Desayuno", "pancakes proteicos con banana y nueces", "premezcla de pancakes proteicos - whey - leche - banana - nueces", 0, [
+        food("60g premezcla de pancakes proteicos", 4, 48, 1),
         food("1 scoop whey", 24, 3, 2),
         food("250ml leche entera", 8, 12, 8),
         food("1 banana", 1, 27, 0),
         food("15g nueces", 2, 2, 10)
       ], [
-        "Cocina la harina de arroz con la leche 3-4 min, revolviendo.",
+        "Prepará la premezcla de pancakes proteicos con la leche 3-4 min, revolviendo.",
         "Retira del fuego, mezcla el whey y termina con banana en rodajas y nueces.",
         "Buen desayuno para espalda: carbo alto, proteina suficiente y grasa moderada."
       ], null),
@@ -1284,7 +1287,7 @@ const allWeeks = [
         "Incorporá el arroz integral y el sésamo. Salteá 2 min más."
       ])),
 
-      meal("23:30", "Antes de dormir", "queso untable o leche tibia", "Cierre proteico del día", 0, [
+      meal("23:30", "Antes de dormir", "queso untable o leche", "Cierre proteico del día", 0, [
         food("100g queso untable con miel o 250ml leche", 11, 11, 4)
       ], ["Opcional según proteína del día."], "Opcional.")
     ]
@@ -1338,7 +1341,7 @@ const allWeeks = [
         "Los últimos 20 min sin aluminio para que dore. Papas en gajos con oliva al horno también 40 min."
       ])),
 
-      meal("17:30", "Merienda", "Mate con alfajores caseros de arroz inflado", "Mate + 2 alfajores arroz inflado y dulce de leche", 0, [
+      meal("17:30", "Merienda", "Mate con alfajores caseros de pan integral", "Mate + 2 alfajores de maicena y dulce de leche", 0, [
         food("2 alfajores de maicena caseros (o comprados)", 5, 36, 7),
         food("Mate", 0, 0, 0)
       ], ["La merienda criolla del sábado. Mate con alfajores."], null),
@@ -1363,9 +1366,9 @@ const allWeeks = [
         "Armá el plato con quinoa de base, los morrones y el pollo encima."
       ])),
 
-      meal("23:30", "Antes de dormir", "queso untable o leche tibia", "Cierre del sábado", 0, [
-        food("250ml leche entera tibia", 8, 12, 9)
-      ], ["Opcional. Un vaso de leche tibia cierra bien el sábado."], "Opcional.")
+      meal("23:30", "Antes de dormir", "queso untable o leche", "Cierre del sábado", 0, [
+        food("250ml leche entera", 8, 12, 9)
+      ], ["Opcional. Un vaso de leche cierra bien el sábado."], "Opcional.")
     ]
   },
 
@@ -1456,8 +1459,8 @@ const allWeeks = [
     tags: ["Pecho", "Tríceps", "Sabores del mundo"],
     tip: "Semana de sabores internacionales. Todo distinto a las semanas anteriores.",
     meals: [
-      meal("10:00", "Desayuno", "Smoothie bowl proteico con banana y frutos del bosque", "arroz inflado · banana · leche · whey · frutos rojos · granola", 0, [
-        food("40g arroz inflado", 4, 27, 3),
+      meal("10:00", "Desayuno", "Licuado proteico con banana y frutos del bosque", "pan integral · banana · leche · whey · frutos rojos · granola", 0, [
+        food("2 tostadas integrales", 4, 27, 3),
         food("1 banana congelada", 1, 27, 0),
         food("150ml leche entera", 5, 8, 5),
         food("1/2 scoop whey vainilla", 13, 1, 1),
@@ -1659,14 +1662,14 @@ const allWeeks = [
     tags: ["Hombros", "Mix internacional"],
     tip: "Menú con toques asiáticos y mediterráneos. Sabores completamente nuevos.",
     meals: [
-      meal("10:00", "Desayuno", "Pancakes americanos con arándanos y miel", "50g harina de arroz · 2 huevos · leche · arándanos · miel", 0, [
-        food("50g harina de arroz o arroz inflado", 6, 33, 3),
+      meal("10:00", "Desayuno", "Pancakes americanos con arándanos y miel", "50g premezcla de pancakes proteicos · 2 huevos · leche · arándanos · miel", 0, [
+        food("50g premezcla de pancakes proteicos o pan integral", 6, 33, 3),
         food("2 huevos", 12, 0, 10),
         food("100ml leche entera", 3, 5, 4),
         food("80g arándanos frescos o congelados", 1, 14, 0),
         food("1 cda miel o sirope", 0, 17, 0)
       ], [
-        "Mezclá harina de arroz + huevos + leche + sal hasta que quede lisa. No agites de más.",
+        "Mezclá premezcla de pancakes proteicos + huevos + leche + sal hasta que quede lisa. No agites de más.",
         "En sartén a fuego medio con manteca, cocinalo por cucharones. Cuando aparecen burbujas, dalo vuelta (2-3 min por lado).",
         "Apilá los pancakes y poné los arándanos encima con miel. Los pancakes americanos esponjosos son completamente distintos a los finos."
       ], null),
@@ -1864,15 +1867,15 @@ const allWeeks = [
     tags: ["Full body", "Opcional"],
     tip: "Viernes liviano con el menú más fresco de la semana.",
     meals: [
-      meal("10:00", "Desayuno", "waffle proteico de banana con banana y maní", "2 waffles · arroz inflado · huevo · banana · manteca maní", 0, [
-        food("50g arroz inflado", 6, 33, 3),
+      meal("10:00", "Desayuno", "pancakes proteicos de banana con maní", "2 waffles · pan integral · huevo · banana · manteca maní", 0, [
+        food("2 tostadas integrales", 6, 33, 3),
         food("2 huevos", 12, 0, 10),
         food("100ml leche", 3, 5, 4),
         food("1 banana", 1, 27, 0),
         food("1 cda manteca de maní", 4, 3, 8)
       ], [
-        "Licuá harina de arroz + huevos + leche hasta obtener una mezcla espesa. Cocinalo en wafflera o sartén.",
-        "Serví con banana en rodajas y manteca de maní por encima. Los waffles de arroz inflado son una variación del panqueque con otra textura."
+        "Licuá premezcla de pancakes proteicos + huevos + leche hasta obtener una mezcla espesa. Cocinalo en wafflera o sartén.",
+        "Serví con banana en rodajas y manteca de maní por encima. Los waffles de pan integral son una variación del panqueque con otra textura."
       ], "Si no tenés wafflera, hacélo como panqueques gruesos."),
 
       meal("12:00", "Media mañana", "Bol de frutas con queso untable y granola", "Frutas variadas · queso untable · granola · miel", 0, [
@@ -1927,8 +1930,8 @@ const allWeeks = [
         "Mezclá el cuscús con los garbanzos y la zanahoria. Servís el pollo encima."
       ])),
 
-      meal("23:30", "Antes de dormir", "queso untable o leche tibia", "Cierre del viernes", 0, [
-        food("100g queso untable con miel o leche tibia 250ml", 11, 11, 4)
+      meal("23:30", "Antes de dormir", "queso untable o leche", "Cierre del viernes", 0, [
+        food("100g queso untable con miel o leche 250ml", 11, 11, 4)
       ], ["Opcional."], "Opcional.")
     ]
   },
@@ -2007,8 +2010,8 @@ const allWeeks = [
         "Aderezá con limón, oliva y sal. La pasta fría en verano es un plato que cambia todo."
       ])),
 
-      meal("23:30", "Antes de dormir", "Leche tibia o queso untable", "Cierre del sábado", 0, [
-        food("250ml leche entera tibia", 8, 12, 9)
+      meal("23:30", "Antes de dormir", "leche o queso untable", "Cierre del sábado", 0, [
+        food("250ml leche entera", 8, 12, 9)
       ], ["Opcional."], "Opcional.")
     ]
   },
@@ -2022,15 +2025,15 @@ const allWeeks = [
     tags: ["Descanso", "Domingo especial"],
     tip: "Domingo de recargar energía para la semana que viene.",
     meals: [
-      meal("10:00", "Desayuno", "Pancakes de banana con chips de chocolate", "50g arroz inflado · 2 huevos · banana · 15g chocolate negro · leche", 0, [
-        food("50g arroz inflado", 6, 33, 3),
+      meal("10:00", "Desayuno", "Pancakes de banana con chips de chocolate", "2 tostadas integrales · 2 huevos · banana · 15g chocolate negro · leche", 0, [
+        food("2 tostadas integrales", 6, 33, 3),
         food("2 huevos", 12, 0, 10),
         food("1 banana", 1, 27, 0),
         food("100ml leche", 3, 5, 4),
         food("15g chips de chocolate negro", 2, 10, 5),
         food("1 cda miel", 0, 17, 0)
       ], [
-        "Licuá harina de arroz + huevos + banana + leche. Poné los chips de chocolate en la mezcla ya fuera del mixer.",
+        "Licuá premezcla de pancakes proteicos + huevos + banana + leche. Poné los chips de chocolate en la mezcla ya fuera del mixer.",
         "Cocinalo en sartén. Los chips se derriten un poco y crean bolsas de chocolate — el desayuno dominical definitivo."
       ], null),
 
@@ -2198,16 +2201,16 @@ const allWeeks = [
     tags: ["Espalda", "Bíceps", "Alto proteína"],
     tip: "Espalda con foco máximo en proteína. Hoy llegamos a 180g.",
     meals: [
-      meal("10:00", "Desayuno", "Bol proteico: queso untable + whey + banana + banana", "queso untable · whey · arroz inflado · banana · miel", 0, [
+      meal("10:00", "Desayuno", "Tostadas con queso untable, whey y banana", "queso untable · whey · pan integral · banana · miel", 0, [
         food("200g queso untable", 20, 8, 10),
         food("1/2 scoop whey vainilla", 13, 1, 1),
-        food("40g arroz inflado", 4, 27, 3),
+        food("2 tostadas integrales", 4, 27, 3),
         food("1 banana", 1, 27, 0),
         food("1 cdita miel", 0, 8, 0)
       ], [
         "Mezclá el queso untable con el whey y la miel hasta que no haya grumos.",
-        "Sumá la arroz inflado y cortá la banana encima. El desayuno más proteico del lunes: 38g en un bol.",
-        "La arroz inflado se digiere bien mezclada con el queso untable — no hace falta cocinarla."
+        "Sumá el pan integral y cortá la banana encima. El desayuno más proteico del lunes: 38g en un bol.",
+        "El pan integral se digiere bien con el queso untable — no hace falta cocinarlo."
       ], null),
 
       meal("11:30", "Media mañana", "Sándwich de pechuga con palta y tomate", "2 rodajas pan · 100g pechuga laminada · palta · tomate", 0, [
@@ -2444,11 +2447,11 @@ const allWeeks = [
         "La batata es la guarnición más nutritiva — fibra, potasio y vitamina A."
       ])),
 
-      meal("19:30", "Merienda", "Licuado doble proteico (leche + banana + whey + arroz inflado)", "Banana · leche · whey · arroz inflado · miel", 0, [
+      meal("19:30", "Merienda", "Licuado doble proteico (leche + banana + whey + pan integral)", "Banana · leche · whey · pan integral · miel", 0, [
         food("1 banana", 1, 27, 0),
         food("250ml leche entera", 8, 12, 9),
         food("1 scoop whey", 25, 2, 2),
-        food("30g arroz inflado", 3, 20, 2),
+        food("1 tostada integral", 3, 20, 2),
         food("1 cdita miel", 0, 8, 0)
       ], [
         "Licuá todo junto. La merienda más calórica y proteica del plan — ideal para el día de piernas.",
@@ -2489,14 +2492,14 @@ const allWeeks = [
     tags: ["Full body", "Proteico"],
     tip: "Viernes proteico puro. El menú más limpio y directo de las 4 semanas.",
     meals: [
-      meal("10:00", "Desayuno", "crema de arroz proteica con whey, fruta y miel", "60g arroz inflado · 1 scoop whey · leche · banana · miel", 0, [
-        food("60g arroz inflado", 7, 40, 4),
+      meal("10:00", "Desayuno", "pancakes proteicos con whey, fruta y miel", "2 tostadas integrales · 1 scoop whey · leche · banana · miel", 0, [
+        food("2 tostadas integrales", 7, 40, 4),
         food("1 scoop whey vainilla", 25, 2, 2),
         food("250ml leche entera", 8, 12, 9),
         food("1 banana", 1, 27, 0),
         food("1 cdita miel", 0, 8, 0)
       ], [
-        "Herví la leche con la arroz inflado 3 min revolviendo. Retirá del fuego y esperá 1 min.",
+        "Calentá la leche aparte y prepará las tostadas al lado. Retirá del fuego y esperá 1 min.",
         "Incorporá el whey revolviendo (apagá bien el fuego antes — el calor destruye parte de la proteína).",
         "Cortá la banana encima y bañá con miel. El porridge proteico = 40g de proteína en el desayuno."
       ], null),
@@ -2611,7 +2614,7 @@ const allWeeks = [
         "El cordero tiene un sabor completamente diferente a la vaca — vale la pena probarlo."
       ])),
 
-      meal("17:30", "Merienda", "Mate con alfajores de maicena caseros", "Mate + alfajores arroz inflado", 0, [
+      meal("17:30", "Merienda", "Mate con alfajores de maicena caseros", "Mate + alfajores de maicena", 0, [
         food("2 alfajores de maicena caseros", 5, 36, 7)
       ], ["Mate con alfajores. El cierre dulce del sábado."], null),
 
@@ -2653,14 +2656,14 @@ const allWeeks = [
     tags: ["Descanso", "Proteico puro"],
     tip: "El cierre de la semana proteica. Mañana empieza la semana 1 de nuevo — renovada.",
     meals: [
-      meal("10:00", "Desayuno", "Pancakes proteicos de arroz inflado y huevo con miel", "50g arroz inflado · 2 huevos · 1 clara · banana · miel · leche", 0, [
-        food("50g arroz inflado", 6, 33, 3),
+      meal("10:00", "Desayuno", "Pancakes proteicos de banana y huevo con miel", "2 tostadas integrales · 2 huevos · 1 clara · banana · miel · leche", 0, [
+        food("2 tostadas integrales", 6, 33, 3),
         food("2 huevos + 1 clara", 16, 0, 10),
         food("1 banana", 1, 27, 0),
         food("100ml leche", 3, 5, 4),
         food("1 cda miel", 0, 17, 0)
       ], [
-        "Licuá harina de arroz + huevos + clara + banana + leche. Cocinalo en sartén.",
+        "Licuá premezcla de pancakes proteicos + huevos + clara + banana + leche. Cocinalo en sartén.",
         "Con 3 huevos los pancakes quedan más proteicos y menos elásticos. Miel encima."
       ], null),
 
@@ -2725,7 +2728,7 @@ const allWeeks = [
 // - Sin ingredientes que Rony ya marco como no sostenibles.
 // - Todas las comidas tienen opcion B.
 // =====================================================
-const BANNED_INGREDIENTS_RE = /(yogur|avena|harina de arroz|arroz inflado|cottage|ricota|locro|leche caliente|manzana con manteca de man[ií])/i;
+const BANNED_INGREDIENTS_RE = /(yogur|avena|harina de arroz|arroz inflado|cottage|ricota|locro|leche caliente|leche tibia|manzana con manteca de man[ií])/i;
 const PLAIN_MENU_BLOCKLIST = [
   "souvlaki", "falafel", "gyoza", "wonton", "satay", "teriyaki",
   "quinoa", "esparrago", "datil", "datiles", "granola", "chia", "lino",
@@ -3163,13 +3166,13 @@ function wheyFood(label = "1 scoop whey con agua") {
   return food(label, WHEY.p, WHEY.c, WHEY.g);
 }
 
-function wheyWithBananaAndCreatineTemplate(name = "Whey (opcional) + banana + creatina") {
+function wheyWithBananaAndCreatineTemplate(name = "Whey diario + banana + creatina") {
   return altMeal(name, "Whey - banana - agua - creatina", [
     wheyFood(),
     food("1 banana", 1, 27, 0),
     food("Creatina 5g", 0, 0, 0)
   ], [
-    "Usalo solo si ese dia te quedaste corto de proteina con comida real.",
+    "Usá este shake para cumplir tu scoop diario cuando no quieras meter otra comida sólida.",
     "La creatina va todos los dias; el horario no es magico, lo importante es cumplirla."
   ]);
 }
@@ -3843,37 +3846,44 @@ function freshPostWorkoutOptions() {
 
 function freshNoonPostWorkoutOptions() {
   return [
-    altMeal("Whey OneFit, banana y creatina", "Whey - banana - creatina - agua", [
-      wheyFood("1 scoop whey OneFit con agua"),
+    altMeal("Atun con papa y limon", "Atun - papa - tomate - oliva - creatina", [
+      food("1 lata grande de atun", 32, 0, 2),
+      food("220g papa hervida", 5, 44, 0),
+      food("Tomate + limon", 1, 5, 0),
+      food("1 cdita oliva", 0, 0, 5),
+      food("Creatina 5g", 0, 0, 0)
+    ], [
+      "Post-entreno real, rapido y facil de repetir.",
+      "Atun, papa y creatina para llegar firme al almuerzo sin depender del shaker."
+    ]),
+    altMeal("Sandwich caliente de jamon y queso + banana", "Pan - jamon - queso - banana - creatina", [
+      food("2 rebanadas pan integral", 7, 34, 3),
+      food("60g jamon cocido natural", 12, 1, 4),
+      food("40g queso en fetas", 9, 1, 6),
       food("1 banana", 1, 27, 0),
       food("Creatina 5g", 0, 0, 0)
     ], [
-      "Apenas salis del gym, shake con agua y banana.",
-      "Despues viene el almuerzo fuerte, asi que no hace falta meter algo pesado aca."
+      "Sandwich normal con carbo rapido y proteina real.",
+      "Banana y creatina completan el corte del entrenamiento sin hacer un plato raro."
     ]),
-    altMeal("Whey OneFit con leche y creatina", "Whey - leche - creatina", [
-      wheyFood("1 scoop whey OneFit"),
-      food("250ml leche entera", 8, 12, 8),
+    altMeal("Arroz con huevo, queso y tomate", "Arroz - huevo - queso - tomate - creatina", [
+      food("3/4 taza arroz cocido", 3, 38, 0),
+      food("2 huevos", 12, 1, 10),
+      food("30g queso en fetas", 7, 1, 5),
+      food("Tomate", 1, 5, 0),
       food("Creatina 5g", 0, 0, 0)
     ], [
-      "Usalo si salis con hambre o si ese dia te cuesta llegar a calorias.",
-      "Si la leche te cae pesada, cambia por agua y suma la banana."
+      "Bowl corto con arroz, huevo y queso: simple, real y rendidor.",
+      "Tomate y creatina para cerrar el post sin caer en otro batido fijo."
     ]),
-    altMeal("Whey OneFit, tostada con mermelada y creatina", "Whey - tostada - creatina", [
-      wheyFood("1 scoop whey OneFit con agua"),
-      food("1 tostada con mermelada", 3, 28, 1),
-      food("Creatina 5g", 0, 0, 0)
-    ], [
-      "Recuperacion rapida sin llenarte demasiado antes del almuerzo.",
-      "Tostada y mermelada para reponer carbo simple."
-    ]),
-    altMeal("Whey OneFit con fruta y creatina", "Whey - fruta - creatina", [
-      wheyFood("1 scoop whey OneFit con agua"),
+    altMeal("Tortilla de papa chica con fruta", "Papa - huevo - fruta - creatina", [
+      food("180g papa hervida", 4, 36, 0),
+      food("2 huevos", 12, 1, 10),
       food("1 fruta", 1, 24, 0),
       food("Creatina 5g", 0, 0, 0)
     ], [
-      "La version mas corta del post-entreno.",
-      "Ideal si a las 14:15 vas a almorzar bien."
+      "Tortilla chica hecha de antemano y una fruta para salir del paso.",
+      "Se banca perfecto un almuerzo fuerte una hora despues."
     ])
   ];
 }
@@ -4145,10 +4155,10 @@ function applyRonyFreshWeeklyMenuRules() {
         day.tags = ["Full body", "Quinto dia", "Entreno 12:00", "Metabolismo rapido"];
       }
       day.tip = isGymDay
-        ? "Entreno fijo 12:00: desayuno liviano al levantarte, pre simple 11:15, post con whey y creatina, y almuerzo fuerte despues."
-        : "Descanso activo: desayuno liviano, whey y creatina diarios, comida simple y calorias sin forzar.";
+        ? "Entreno fijo 12:00: desayuno liviano al levantarte, pre simple 11:15, post real con creatina y whey diario, y almuerzo fuerte despues."
+        : "Descanso activo: desayuno liviano, creatina y whey diarios, comida simple y calorias sin forzar.";
       if (isGymDay && !day.tags.includes("Entreno 12:00")) day.tags = [...day.tags, "Entreno 12:00"];
-      if (!day.tags.includes("Whey diario")) day.tags = [...day.tags, "Whey diario"];
+      if (!day.tags.includes("Comida real base")) day.tags = [...day.tags, "Comida real base"];
 
       const breakfastOptions = freshLightBreakfastOptions();
       const postOptions = freshNoonPostWorkoutOptions();
@@ -4178,8 +4188,8 @@ function applyRonyFreshWeeklyMenuRules() {
       const dinnerAlt = pickFreshAlt(dinner, freshMainOptions(), seed + 13, { main: true });
       const night = pickFreshTemplate(freshNightOptions(), seed + 14);
       const nightAlt = pickFreshAlt(night, freshNightOptions(), seed + 15);
-      const restWheyForNoonSchedule = wheyWithBananaAndCreatineTemplate("Whey OneFit + banana + creatina");
-      const restSnackAltForNoonSchedule = pickFreshAlt(restWheyForNoonSchedule, freshSnackOptions(), seed + 16);
+      const restSnack = pickFreshTemplate(freshSnackOptions(), seed + 16, (item) => item.name !== snackB.name);
+      const restSnackAltForNoonSchedule = wheyWithBananaAndCreatineTemplate("Whey diario + banana + creatina");
 
       day.meals = isGymDay
         ? [
@@ -4194,7 +4204,7 @@ function applyRonyFreshWeeklyMenuRules() {
         : [
           freshMeal(REST_DAY_TIMES.breakfast, "Desayuno liviano", breakfast, breakfastAlt),
           freshMeal(REST_DAY_TIMES.lunch, "Almuerzo", lunch, lunchAlt),
-          freshMeal(REST_DAY_TIMES.snack, "Merienda", restWheyForNoonSchedule, restSnackAltForNoonSchedule),
+          freshMeal(REST_DAY_TIMES.snack, "Merienda", restSnack, restSnackAltForNoonSchedule),
           freshMeal(REST_DAY_TIMES.dinner, "Cena", dinner, dinnerAlt),
           freshMeal(REST_DAY_TIMES.night, "Antes de dormir", night, nightAlt)
         ];
@@ -4551,9 +4561,9 @@ function addCreatineToMeal(mealItem) {
 function addWheyToMeal(mealItem) {
   if (hasWhey(mealItem)) return;
   mealItem.foods.push(wheyFood("1 scoop whey OneFit con agua"));
-  if (!/\bwhey\b/i.test(mealItem.name)) mealItem.name = `${mealItem.name} + whey`;
+  if (!/\bwhey\b/i.test(mealItem.name)) mealItem.name = `${mealItem.name} + whey diario`;
   if (!/\bwhey\b/i.test(mealItem.desc)) mealItem.desc = `${mealItem.desc} - whey diario`;
-  mealItem.prep.push("Toma el scoop diario de whey OneFit con agua o leche, segun tolerancia y calorias del dia.");
+  mealItem.prep.push("Tomá 1 scoop de whey OneFit. Va todos los días para cerrar proteína sin forzar comida extra.");
 }
 
 function ensureDailySupplementRules() {
@@ -4620,11 +4630,11 @@ function applyWholeFoodPriorityRules() {
             food("Agua o infusion sin azucar", 0, 0, 0)
           ], [
             "Si ya llegaste a la proteina del dia, no comas de mas antes de dormir.",
-            "Si te quedaste corto, usa la opcion B (comodin de proteina) con agua o leche."
+            "Si te cuesta cerrar proteina, usa la opcion B con agua o leche."
           ]));
-          m.alt = altMeal("Whey con agua (opcional)", "Whey - agua", [
+          m.alt = altMeal("Whey diario con agua", "Whey - agua", [
             wheyFood()
-          ], ["Usalo solo cuando falto proteina real en el dia."]);
+          ], ["Usalo para cumplir tu scoop diario sin sumar otra comida pesada."]);
         }
       });
     });
@@ -4665,7 +4675,7 @@ function applyPostWorkoutWholeFoodRules() {
         if (!/post-entreno/i.test(m.label)) return;
         const template = pickBreakfastTemplate(m, day, weekNumber, dayNumber, options, 9);
         applyMealTemplate(m, template);
-        m.alt = wheyWithBananaAndCreatineTemplate("Whey + banana + creatina (comodin)");
+        m.alt = wheyWithBananaAndCreatineTemplate("Whey diario + banana + creatina");
       });
     });
   });
@@ -4691,7 +4701,7 @@ function applyFiveDayTrainingRules() {
         postSlot.label = "Post-entreno";
         postSlot.time = postSlot.time < "15:00" ? "17:00" : postSlot.time;
         applyMealTemplate(postSlot, solidPostWorkoutTemplate());
-        postSlot.alt = wheyWithBananaAndCreatineTemplate("Whey + banana + creatina (opcional)");
+        postSlot.alt = wheyWithBananaAndCreatineTemplate("Whey diario + banana + creatina");
       }
     }
   });
@@ -5146,15 +5156,15 @@ const supplementsBase = [
     name: "Creatina monohidrato",
     detail: "3-5g por día, todos los días. No se cicla y no depende de entrenar ese día; funciona por saturación y constancia.",
     when: "Con cualquier comida (o con el post-entreno). La clave es cumplirla todos los días."
-  },
-  {
-    name: "Whey protein",
-    detail: "1 scoop diario de OneFit para asegurar proteina sin forzar comida enorme. En dias de gym queda post-entreno; en descanso queda en merienda.",
-    when: "Todos los dias. Mejor post-entreno a las 13:10 o merienda en descanso."
   }
 ];
 
 const supplementsOptional = [
+  {
+    name: "Whey protein",
+    detail: "Comodin de 1 scoop cuando ese dia no llegas a la proteina con comida real. Prioridad: huevos, pollo, carne magra, atun, salmon, leche y quesos.",
+    when: "Opcional. Mejor post-entreno o al cierre del dia si quedaste corto."
+  },
   {
     name: "Omega 3 (EPA + DHA)",
     detail: "1-2g por día con almuerzo o cena. Reduce inflamación, mejora la recuperación post-gym y la salud cardiovascular. Más útil si comés poco pescado.",
@@ -5182,8 +5192,8 @@ const supplementsOptional = [
 // =====================================================
 const rules = [
   ["⚖️", "Mantenimiento 78-80kg", "Pesate cada lunes en ayunas. Si pasás de 80kg, achicá 1 porción de carbo en almuerzo/cena. Si bajás de 77kg, sumá 200 kcal/día. El objetivo es recomposición, no subir."],
-  ["🥩", "Proteína primero", "Prioridad: comida real (huevos, pollo, carne magra, atún, pescado, queso y leche). El whey ahora queda diario, pero no reemplaza almuerzo ni cena."],
-  ["🥛", "Leche entera si la tolerás", "Densa en calorías y útil. Si te cae pesada, usá agua para el whey. Para 78-80kg, no hace falta forzar más calorías."],
+  ["🥩", "Proteína primero", "Prioridad: comida real (huevos, pollo, carne magra, atún, pescado, queso y leche). El whey va diario para cerrar proteína sin forzar platos enormes."],
+  ["🥛", "Leche entera si la tolerás", "Densa en calorías y útil. Si te cae pesada, tomá el whey con agua. Para 78-80kg, no hace falta forzar más calorías."],
   ["💧", "Hidratación 3L+", "Mínimo 2.5L. En días de gym (especialmente piernas) o calor: 3-3.5L. La sed es señal tardía. La app te recuerda cada 90 min."],
   ["💊", "Creatina TODOS los días", "3-5g, incluso días de descanso. Lo que importa es que esté siempre presente en el músculo. Saltearla 1 día no rompe nada, pero la constancia es la clave."],
   ["🛌", "Dormir 8-9 horas", "El músculo crece cuando dormís. Con menos de 7h, perdés progreso aunque comas perfecto. Establecé una hora fija."],
@@ -5266,8 +5276,8 @@ const shopping = {
     "Ajo · 1 cabeza"
   ],
   "Suplementos": [
-    "Whey protein OneFit · 1 scoop diario",
     "Creatina monohidrato · 3-5g diario",
+    "Whey protein OneFit · 1 scoop diario",
     "Omega 3 (opcional pero recomendado)",
     "Vitamina D3 (opcional)",
     "Magnesio o ZMA (opcional)"
@@ -5364,17 +5374,6 @@ function handleMealHeadKeydown(event, head) {
   if (event.key !== "Enter" && event.key !== " ") return;
   event.preventDefault();
   toggleMeal(head);
-}
-
-function togglePrep(button) {
-  const body = button.nextElementSibling;
-  if (!body) return;
-  const isOpen = body.classList.toggle("open");
-  button.classList.toggle("open", isOpen);
-  button.setAttribute("aria-expanded", String(isOpen));
-  body.setAttribute("aria-hidden", String(!isOpen));
-  const label = button.querySelector(".prep-label");
-  if (label) label.textContent = isOpen ? "Ocultar preparación" : "Ver preparación";
 }
 
 // =====================================================
@@ -5547,10 +5546,10 @@ function renderProgressBar(label, current, target, color) {
 function renderActiveDay() {
   // FIX: preservar estado abierto/cerrado de comidas y preparaciones antes de re-renderizar
   const openMealIds = Array.from(document.querySelectorAll(".meal.open"))
-    .map((m) => m.querySelector("[onclick*='toggleMealCheck']")?.getAttribute("onclick")?.match(/'([^']+)'/)?.[1])
+    .map((m) => m.dataset.mealId)
     .filter(Boolean);
   const openPrepMealIds = Array.from(document.querySelectorAll(".prep-body.open"))
-    .map((p) => p.closest(".meal")?.querySelector("[onclick*='toggleMealCheck']")?.getAttribute("onclick")?.match(/'([^']+)'/)?.[1])
+    .map((p) => p.id)
     .filter(Boolean);
 
   const day = days.find((item) => item.id === activeDay);
@@ -5627,30 +5626,25 @@ function renderActiveDay() {
 
   // FIX: restaurar estado abierto de comidas y preparaciones después del re-render
   openMealIds.forEach((id) => {
-    const checkBtn = document.querySelector(`[onclick*="toggleMealCheck"][onclick*="'${id}'"]`);
-    const meal = checkBtn?.closest(".meal");
+    const meal = document.querySelector(`.meal[data-meal-id="${id}"]`);
     if (meal) {
       meal.classList.add("open");
-      const head = meal.querySelector(".meal-head");
+      const head = meal.querySelector(".meal-open-btn");
       const detail = meal.querySelector(".meal-detail");
       if (head) head.setAttribute("aria-expanded", "true");
       if (detail) detail.setAttribute("aria-hidden", "false");
     }
   });
   openPrepMealIds.forEach((id) => {
-    const checkBtn = document.querySelector(`[onclick*="toggleMealCheck"][onclick*="'${id}'"]`);
-    const meal = checkBtn?.closest(".meal");
-    if (meal) {
-      const prepBody = meal.querySelector(".prep-body");
-      const prepToggle = meal.querySelector(".prep-toggle");
-      if (prepBody) prepBody.classList.add("open");
-      if (prepToggle) {
-        prepToggle.classList.add("open");
-        prepToggle.setAttribute("aria-expanded", "true");
-        prepBody?.setAttribute("aria-hidden", "false");
-        const label = prepToggle.querySelector(".prep-label");
-        if (label) label.textContent = "Ocultar preparación";
-      }
+    const prepBody = document.getElementById(id);
+    const prepToggle = prepBody?.previousElementSibling;
+    if (prepBody && prepToggle?.classList.contains("prep-toggle")) {
+      prepBody.classList.add("open");
+      prepToggle.classList.add("open");
+      prepToggle.setAttribute("aria-expanded", "true");
+      prepBody.setAttribute("aria-hidden", "false");
+      const label = prepToggle.querySelector(".prep-label");
+      if (label) label.textContent = "Ocultar preparación";
     }
   });
 }
@@ -5681,6 +5675,8 @@ function isUpcomingMeal(item, day) {
 // =====================================================
 // OPCIÓN B · Mostrar/ocultar alternativa en almuerzo y cena
 // =====================================================
+// OPCION B + PREPARACION + TARJETA DE COMIDA
+// =====================================================
 function toggleAltMeal(mealId) {
   const panel = document.querySelector(`[data-alt-for="${mealId}"]`);
   const btn = document.querySelector(`[data-alt-btn="${mealId}"]`);
@@ -5690,122 +5686,14 @@ function toggleAltMeal(mealId) {
   if (btn) {
     btn.setAttribute("aria-expanded", String(isOpen));
     btn.innerHTML = isOpen
-      ? '<span class="alt-btn-icon">⬆</span> Ver opción principal'
-      : '<span class="alt-btn-icon">🔄</span> No me convence · Ver opción B';
+      ? '<span class="alt-btn-icon">A</span> Volver a opci?n principal'
+      : '<span class="alt-btn-icon">B</span> No me convence - Ver opci?n B';
     btn.classList.toggle("active", isOpen);
   }
 }
 window.toggleAltMeal = toggleAltMeal;
 
-function renderMeal(item) {
-  const done = isDone(item.id);
-  const day = days.find((d) => d.id === activeDay);
-  const isUpcoming = day ? isUpcomingMeal(item, day) : false;
-  const todayObj = getTodayDayObject();
-  const isToday = day && day.id === todayObj.id;
-  const detailId = `meal-detail-${item.id}`;
-  const prepId = `meal-prep-${item.id}`;
-  const altId = `meal-alt-${item.id}`;
-  const altPrepId = `meal-alt-prep-${item.id}`;
-  const note = item.note ? `<div class="meal-note">📝 ${item.note}</div>` : "";
-  const totalP = item.foods.reduce((s, f) => s + f.p, 0);
-  const totalC = item.foods.reduce((s, f) => s + f.c, 0);
-  const totalG = item.foods.reduce((s, f) => s + f.g, 0);
-
-  const hasAlt = Boolean(item.alt);
-  const altPanel = hasAlt ? `
-    <div class="alt-meal-panel" id="${altId}" data-alt-for="${item.id}" aria-hidden="true">
-      <div class="alt-meal-header">
-        <span class="alt-badge">Opción B</span>
-        <span class="alt-kcal">${item.alt.kcal} kcal</span>
-      </div>
-      <div class="alt-meal-name">${item.alt.name}</div>
-      <div class="alt-meal-desc">${item.alt.desc}</div>
-      <div class="alt-macro-row">
-        <span class="mm p">${item.alt.foods.reduce((s,f)=>s+f.p,0)}g P</span>
-        <span class="mm c">${item.alt.foods.reduce((s,f)=>s+f.c,0)}g C</span>
-        <span class="mm g">${item.alt.foods.reduce((s,f)=>s+f.g,0)}g G</span>
-      </div>
-      <div class="food-list">${item.alt.foods.map(renderFood).join("")}</div>
-      <button class="prep-toggle alt-prep-toggle" type="button" onclick="togglePrep(this)" aria-expanded="false" aria-controls="${altPrepId}">
-        <span>▶</span> <span class="prep-label">Ver preparación</span>
-      </button>
-      <div class="prep-body" id="${altPrepId}" aria-hidden="true">
-        ${item.alt.prep.map((step, index) => `
-          <div class="prep-step"><div class="prep-num">${index + 1}</div><div class="prep-text">${step}</div></div>
-        `).join("")}
-      </div>
-    </div>
-  ` : "";
-
-  const altBtn = hasAlt ? `
-    <button class="alt-meal-btn" type="button" data-alt-btn="${item.id}" onclick="event.stopPropagation(); toggleAltMeal('${item.id}')" aria-expanded="false" aria-controls="${altId}">
-      <span class="alt-btn-icon">🔄</span> No me convence · Ver opción B
-    </button>
-  ` : "";
-
-  const typeSlug = item.label.toLowerCase().replace(/[\s\/]/g,'-');
-  return `
-    <article class="meal ${done ? 'done' : ''} ${isUpcoming ? 'is-upcoming' : ''}" data-type="${typeSlug}">
-      <div class="meal-type-stripe"></div>
-      ${isUpcoming ? '<div class="upcoming-tag">⏰ Toca ahora</div>' : ""}
-      <div class="meal-head" role="button" tabindex="0" aria-expanded="false" aria-controls="${detailId}" onclick="toggleMeal(this)" onkeydown="handleMealHeadKeydown(event, this)">
-        <div class="meal-time-col">
-          <div class="meal-time">${item.time}</div>
-          <div class="meal-time-label">${item.label}</div>
-        </div>
-        <div class="meal-info-col">
-          <div class="meal-name">${item.name}</div>
-          <div class="meal-desc">${item.desc}</div>
-          <div class="meal-mini-macros">
-            <span class="mm p">${totalP}g P</span>
-            <span class="mm c">${totalC}g C</span>
-            <span class="mm g">${totalG}g G</span>
-          </div>
-        </div>
-        <div class="meal-kcal">
-          <div class="meal-kcal-val">${item.kcal}</div>
-          <div class="meal-kcal-lbl">kcal</div>
-        </div>
-        <button class="meal-check ${done ? 'checked' : ''} ${isToday ? '' : 'disabled-day'}" type="button" ${isToday ? `onclick="event.stopPropagation(); toggleMealCheck(this, '${item.id}')"` : 'disabled title="Solo podés marcar el día de hoy"'} aria-label="${done ? 'Desmarcar comida' : 'Marcar comida'}">
-          <span class="mc-dot"></span>
-        </button>
-      </div>
-      <div class="meal-detail" id="${detailId}" aria-hidden="true">
-        ${note}
-        <div class="food-list">${item.foods.map(renderFood).join("")}</div>
-        <button class="prep-toggle" type="button" onclick="togglePrep(this)" aria-expanded="false" aria-controls="${prepId}">
-          <span>▶</span> <span class="prep-label">Ver preparación</span>
-        </button>
-        <div class="prep-body" id="${prepId}" aria-hidden="true">
-          ${item.prep.map((step, index) => `
-            <div class="prep-step"><div class="prep-num">${index + 1}</div><div class="prep-text">${step}</div></div>
-          `).join("")}
-        </div>
-        ${altBtn}
-        ${altPanel}
-      </div>
-    </article>
-  `;
-}
-
-
-toggleAltMeal = window.toggleAltMeal = function toggleAltMealClean(mealId) {
-  const panel = document.querySelector(`[data-alt-for="${mealId}"]`);
-  const btn = document.querySelector(`[data-alt-btn="${mealId}"]`);
-  if (!panel) return;
-  const isOpen = panel.classList.toggle("open");
-  panel.setAttribute("aria-hidden", String(!isOpen));
-  if (btn) {
-    btn.setAttribute("aria-expanded", String(isOpen));
-    btn.innerHTML = isOpen
-      ? '<span class="alt-btn-icon">A</span> Volver a opcion principal'
-      : '<span class="alt-btn-icon">B</span> No me convence - Ver opcion B';
-    btn.classList.toggle("active", isOpen);
-  }
-};
-
-togglePrep = window.togglePrep = function togglePrepClean(button) {
+function togglePrep(button) {
   const body = button.nextElementSibling;
   if (!body) return;
   const isOpen = body.classList.toggle("open");
@@ -5813,10 +5701,9 @@ togglePrep = window.togglePrep = function togglePrepClean(button) {
   button.setAttribute("aria-expanded", String(isOpen));
   body.setAttribute("aria-hidden", String(!isOpen));
   const label = button.querySelector(".prep-label");
-  if (label) label.textContent = isOpen ? "Ocultar preparacion" : "Ver preparacion";
-};
-
-renderMeal = function renderMealKitchenTicket(item) {
+  if (label) label.textContent = isOpen ? "Ocultar preparaci?n" : "Ver preparaci?n";
+}
+function renderMeal(item) {
   const done = isDone(item.id);
   const day = days.find((d) => d.id === activeDay);
   const isUpcoming = day ? isUpcomingMeal(item, day) : false;
@@ -5841,7 +5728,7 @@ renderMeal = function renderMealKitchenTicket(item) {
       <div class="recipe-sheet">
         <div class="detail-kicker">Cocina paso a paso</div>
         <button class="prep-toggle ${isAlt ? "alt-prep-toggle" : ""}" type="button" onclick="togglePrep(this)" aria-expanded="false" aria-controls="${bodyId}">
-          <span class="prep-label">Ver preparacion</span>
+          <span class="prep-label">Ver preparaci?n</span>
         </button>
         <div class="prep-body" id="${bodyId}" aria-hidden="true">
           ${renderPrepContent(mealItem)}
@@ -5853,7 +5740,7 @@ renderMeal = function renderMealKitchenTicket(item) {
   const altPanel = hasAlt ? `
     <div class="alt-meal-panel" id="${altId}" data-alt-for="${item.id}" aria-hidden="true">
       <div class="alt-meal-header">
-        <span class="alt-badge">Opcion B</span>
+        <span class="alt-badge">Opci?n B</span>
         <span class="alt-kcal">${item.alt.kcal} kcal</span>
       </div>
       <div class="alt-meal-name">${item.alt.name}</div>
@@ -5869,34 +5756,36 @@ renderMeal = function renderMealKitchenTicket(item) {
 
   const altBtn = hasAlt ? `
     <button class="alt-meal-btn" type="button" data-alt-btn="${item.id}" onclick="event.stopPropagation(); toggleAltMeal('${item.id}')" aria-expanded="false" aria-controls="${altId}">
-      <span class="alt-btn-icon">B</span> No me convence - Ver opcion B
+      <span class="alt-btn-icon">B</span> No me convence - Ver opci?n B
     </button>
   ` : "";
 
   const typeSlug = slug(item.label);
   return `
-    <article class="meal ${done ? "done" : ""} ${isUpcoming ? "is-upcoming" : ""}" data-type="${typeSlug}">
+    <article class="meal ${done ? "done" : ""} ${isUpcoming ? "is-upcoming" : ""}" data-type="${typeSlug}" data-meal-id="${item.id}">
       <div class="meal-type-stripe"></div>
       ${isUpcoming ? '<div class="upcoming-tag">Toca ahora</div>' : ""}
-      <div class="meal-head" role="button" tabindex="0" aria-expanded="false" aria-controls="${detailId}" onclick="toggleMeal(this)" onkeydown="handleMealHeadKeydown(event, this)">
-        <div class="meal-time-col">
-          <div class="meal-time">${item.time}</div>
-        </div>
-        <div class="meal-info-col">
-          <div class="meal-label-chip">${item.label}</div>
-          <div class="meal-name">${item.name}</div>
-          <div class="meal-desc">${item.desc}</div>
-          <div class="meal-mini-macros">
-            <span class="mm p">${totalP}g P</span>
-            <span class="mm c">${totalC}g C</span>
-            <span class="mm g">${totalG}g G</span>
+      <div class="meal-head">
+        <button class="meal-open-btn" type="button" aria-expanded="false" aria-controls="${detailId}" onclick="toggleMeal(this)" onkeydown="handleMealHeadKeydown(event, this)" aria-label="Abrir detalle de ${item.label}: ${item.name}">
+          <div class="meal-time-col">
+            <div class="meal-time">${item.time}</div>
           </div>
-        </div>
-        <div class="meal-kcal">
-          <div class="meal-kcal-val">${item.kcal}</div>
-          <div class="meal-kcal-lbl">kcal</div>
-        </div>
-        <button class="meal-check ${done ? "checked" : ""} ${isToday ? "" : "disabled-day"}" type="button" ${isToday ? `onclick="event.stopPropagation(); toggleMealCheck(this, '${item.id}')"` : 'disabled title="Solo podes marcar el dia de hoy"'} aria-label="${done ? "Desmarcar comida" : "Marcar comida"}">
+          <div class="meal-info-col">
+            <div class="meal-label-chip">${item.label}</div>
+            <div class="meal-name">${item.name}</div>
+            <div class="meal-desc">${item.desc}</div>
+            <div class="meal-mini-macros">
+              <span class="mm p">${totalP}g P</span>
+              <span class="mm c">${totalC}g C</span>
+              <span class="mm g">${totalG}g G</span>
+            </div>
+          </div>
+          <div class="meal-kcal">
+            <div class="meal-kcal-val">${item.kcal}</div>
+            <div class="meal-kcal-lbl">kcal</div>
+          </div>
+        </button>
+        <button class="meal-check ${done ? "checked" : ""} ${isToday ? "" : "disabled-day"}" type="button" ${isToday ? `onclick="event.stopPropagation(); toggleMealCheck(this, '${item.id}')"` : 'disabled title="Solo pod?s marcar el d?a de hoy"'} aria-label="${done ? "Desmarcar comida" : "Marcar comida"}">
           <span class="mc-dot"></span>
         </button>
       </div>
@@ -5908,8 +5797,7 @@ renderMeal = function renderMealKitchenTicket(item) {
       </div>
     </article>
   `;
-};
-
+}
 
 function renderFood(item) {
   return `
@@ -5926,7 +5814,7 @@ function renderFood(item) {
 
 const SUPP_ICONS = {
   "Whey protein": "🥛",
-  "Whey protein (comodín)": "🥛",
+  "Whey protein diario": "🥛",
   "Creatina monohidrato": "⚡",
   "Omega 3 (EPA + DHA)": "🐟",
   "Vitamina D3": "☀️",
@@ -6371,24 +6259,14 @@ function getWeightHistory() {
   return JSON.parse(localStorage.getItem(STORAGE.weight) || "[]");
 }
 
-// Seed inicial: precarga el peso del jueves pasado SOLO la primera vez que se abre la app
+// Compatibilidad: antes se precargaba 78kg. Desde ahora el primer peso lo carga Rony.
 function seedInitialWeight() {
-  // Si ya se hizo el seed alguna vez, no volver a hacerlo aunque el history esté vacío
   if (localStorage.getItem(STORAGE.weightSeeded) === "1") return;
   const history = getWeightHistory();
   if (history.length > 0) {
     localStorage.setItem(STORAGE.weightSeeded, "1");
     return;
   }
-  const today = new Date();
-  const dayDiff = (today.getDay() - 4 + 7) % 7 || 7;
-  const lastThursday = new Date(today);
-  lastThursday.setDate(today.getDate() - dayDiff);
-  const seed = [{
-    date: formatLocalDateKey(lastThursday),
-    kg: 78
-  }];
-  localStorage.setItem(STORAGE.weight, JSON.stringify(seed));
   localStorage.setItem(STORAGE.weightSeeded, "1");
 }
 
@@ -6579,16 +6457,15 @@ function scheduleMealNotifs() {
     scheduledNotifs.push(id);
   });
 
-  let waterTime = new Date();
-  if (waterTime.getHours() < 9) {
-    waterTime.setHours(9, 0, 0, 0);
-  } else {
-    const minsFromStart = (waterTime.getHours() - 9) * 60 + waterTime.getMinutes();
-    const blocks = Math.floor(minsFromStart / 90) + 1;
-    waterTime.setHours(9, 0, 0, 0);
-    waterTime.setMinutes(blocks * 90);
+  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+  let reminderMinute = WATER_REMINDER_START_MIN;
+  if (nowMinutes >= WATER_REMINDER_START_MIN) {
+    const blocks = Math.floor((nowMinutes - WATER_REMINDER_START_MIN) / WATER_REMINDER_INTERVAL_MIN) + 1;
+    reminderMinute = WATER_REMINDER_START_MIN + blocks * WATER_REMINDER_INTERVAL_MIN;
   }
-  while (waterTime.getHours() <= 22 && waterTime.getDate() === now.getDate()) {
+  while (reminderMinute <= WATER_REMINDER_END_MIN) {
+    const waterTime = new Date();
+    waterTime.setHours(Math.floor(reminderMinute / 60), reminderMinute % 60, 0, 0);
     const diff = waterTime - now;
     if (diff > 0) {
       const id = setTimeout(() => {
@@ -6596,7 +6473,7 @@ function scheduleMealNotifs() {
       }, diff);
       scheduledNotifs.push(id);
     }
-    waterTime = new Date(waterTime.getTime() + 90 * 60000);
+    reminderMinute += WATER_REMINDER_INTERVAL_MIN;
   }
 }
 
@@ -6893,14 +6770,16 @@ function generateICS() {
     });
   });
 
-  // Recordatorios de agua diarios cada 2 horas (9, 11, 13, 15, 17, 19, 21)
-  for (let h = 9; h <= 21; h += 2) {
+  // Recordatorios de agua diarios cada 90 minutos (9:00 a 21:00)
+  for (let minute = WATER_REMINDER_START_MIN; minute <= WATER_REMINDER_END_MIN; minute += WATER_REMINDER_INTERVAL_MIN) {
+    const h = Math.floor(minute / 60);
+    const min = minute % 60;
     const start = nextOccurrenceOfDay(new Date().getDay());
-    start.setHours(h, 0, 0, 0);
+    start.setHours(h, min, 0, 0);
     const end = new Date(start.getTime() + 5 * 60 * 1000);
     lines.push(
       "BEGIN:VEVENT",
-      `UID:water-${h}@dieta-rony`,
+      `UID:water-${h}-${String(min).padStart(2, "0")}@dieta-rony`,
       "SUMMARY:💧 Tomar agua",
       "DESCRIPTION:Acordate de hidratarte. Meta diaria: 10 vasos (2.5L).",
       `DTSTART;TZID=${TZ}:${formatICSLocal(start)}`,
@@ -6963,7 +6842,7 @@ function showCalendarHelp() {
       "2. iOS te va a preguntar dónde abrir el archivo\n" +
       "3. Elegí 'Calendario'\n" +
       "4. Tocá 'Aceptar' y 'OK'\n\n" +
-      "Listo: a partir de ahora vas a recibir notificaciones nativas del iPhone para cada comida (5 min antes), agua (cada 2h) y pesarte los lunes — TODO funciona aunque la app esté cerrada.\n\n" +
+      "Listo: a partir de ahora vas a recibir notificaciones nativas del iPhone para cada comida (5 min antes), agua cada 90 min y pesarte los lunes — TODO funciona aunque la app esté cerrada.\n\n" +
       "Si después modificamos el plan, volvés a descargar y los eventos se actualizan automáticamente (mismos IDs).";
   } else {
     message =

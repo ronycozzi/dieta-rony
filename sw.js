@@ -1,7 +1,7 @@
 // Service Worker · Dieta Rony Cozzi
 // Network-first para HTML/JS/CSS; cache-first para assets estáticos.
 
-const VERSION = "v35-2026-06-03-meal-label-fixes";
+const VERSION = "v37-2026-06-03-cleanup-pwa-a11y";
 const CACHE_NAME = `dieta-rony-${VERSION}`;
 const ASSETS = [
   "./",
@@ -10,7 +10,10 @@ const ASSETS = [
   "./script.js",
   "./favicon.svg",
   "./manifest.json",
-  "./assets/rony-cozzi.jpg"
+  "./assets/rony-cozzi.jpg",
+  "./assets/icon-192.png",
+  "./assets/icon-512.png",
+  "./assets/apple-touch-icon.png"
 ];
 
 self.addEventListener("install", (event) => {

@@ -140,6 +140,38 @@ function assert(condition, message) {
   if (!condition) throw new Error(message);
 }
 
+function countMatches(text, pattern) {
+  return (text.match(pattern) || []).length;
+}
+
+function auditSourceQuality(src) {
+  const menuCut = src.indexOf("// CALIDAD DEL PLAN");
+  assert(menuCut !== -1, "Audit: no se encontro el corte de calidad del plan.");
+  const rawMenuSource = src.slice(0, menuCut).toLowerCase();
+  const rawBlockedTerms = [
+    "arroz inflado",
+    "harina de arroz",
+    "avena",
+    "yogur",
+    "cottage",
+    "ricota",
+    "locro",
+    "leche caliente",
+    "leche tibia",
+    "manzana con manteca"
+  ];
+  const rawHits = rawBlockedTerms.filter((term) => rawMenuSource.includes(term));
+  assert(rawHits.length === 0, `Audit: el menu crudo conserva ingredientes bloqueados: ${rawHits.join(", ")}.`);
+
+  ["togglePrep", "toggleAltMeal", "renderMeal"].forEach((name) => {
+    const functionDefs = countMatches(src, new RegExp(`\\bfunction\\s+${name}\\s*\\(`, "g"));
+    const functionAssignments = countMatches(src, new RegExp(`\\b${name}\\s*=\\s*function\\b`, "g"));
+    assert(functionDefs === 1 && functionAssignments === 0, `Audit: ${name} debe tener una sola definicion canonica.`);
+  });
+
+  assert(!/<div class="meal-head"[^>]*role="button"/.test(src), "Audit: meal-head no debe volver a ser un role=button con controles adentro.");
+}
+
 function auditDayIndexMapping(A) {
   assert(typeof A.getPlanDayIndex === "function", "Audit: falta getPlanDayIndex().");
   const sunday = new Date("2026-06-07T12:00:00");
@@ -175,6 +207,7 @@ function audit(A) {
   const nextDayRiceHits = [];
   const missingPrimaryWhey = [];
   const missingPrimaryCreatine = [];
+  const optionalWheyHits = [];
   const duplicateMainNameHits = [];
   const sameDayMainAltHits = [];
   const scheduleHits = [];
@@ -226,6 +259,9 @@ function audit(A) {
 
         if (/whey/i.test(mainVisible) && !/(desayuno|media|merienda|post-entreno|antes de dormir|refuerzo)/i.test(meal.label)) {
           wheyMisuseHits.push({ weekNumber, dayNumber, mealNumber, label: meal.label, name: meal.name });
+        }
+        if (/whey/i.test(mainVisible) && /\b(opcional|solo si falta|si falta proteina)\b/i.test(mainVisible)) {
+          optionalWheyHits.push({ weekNumber, dayNumber, mealNumber, label: meal.label, name: meal.name });
         }
 
         if (typeof A.isMainMeal === "function" && A.isMainMeal(meal)) {
@@ -392,6 +428,7 @@ function audit(A) {
   summarize("nextDayRiceHits", nextDayRiceHits);
   summarize("missingPrimaryWhey", missingPrimaryWhey);
   summarize("missingPrimaryCreatine", missingPrimaryCreatine);
+  summarize("optionalWheyHits", optionalWheyHits);
   summarize("duplicateMainNameHits", duplicateMainNameHits);
   summarize("sameDayMainAltHits", sameDayMainAltHits);
   summarize("scheduleHits", scheduleHits);
@@ -410,6 +447,7 @@ function audit(A) {
   assert(nextDayRiceHits.length === 0, `Audit: hay arroz en almuerzo/cena en días seguidos (${nextDayRiceHits.length}).`);
   assert(missingPrimaryWhey.length === 0, `Audit: faltan whey diarios principales (${missingPrimaryWhey.length}).`);
   assert(missingPrimaryCreatine.length === 0, `Audit: faltan creatinas diarias principales (${missingPrimaryCreatine.length}).`);
+  assert(optionalWheyHits.length === 0, `Audit: el whey diario no puede quedar como opcional (${optionalWheyHits.length}).`);
   assert(duplicateMainNameHits.length === 0, `Audit: hay platos principales repetidos en la misma semana (${duplicateMainNameHits.length}).`);
   assert(sameDayMainAltHits.length === 0, `Audit: hay opciones B iguales a otro plato principal del mismo dia (${sameDayMainAltHits.length}).`);
   assert(scheduleHits.length === 0, `Audit: horarios nuevos de entreno 12:00 fallaron (${scheduleHits.length}).`);
@@ -417,11 +455,12 @@ function audit(A) {
   assert(fridayFishHits.length === 0, `Audit: el viernes debe tener salmon principal y opcion B de pescado (${fridayFishHits.length}).`);
   assert(kcalOutliers.length === 0, `Audit: hay días fuera del rango kcal confort (${kcalOutliers.length}).`);
 
-  return { kcalOutliers, mealsMissingAlt, bannedHits, specialHits, dayTipHits, wheyMisuseHits, riceAltHits, sameCarbAltHits, riceSequenceHits, sameTurnRiceHits, nextDayRiceHits, missingPrimaryWhey, missingPrimaryCreatine, duplicateMainNameHits, sameDayMainAltHits, scheduleHits, morningLoadHits, fridayFishHits };
+  return { kcalOutliers, mealsMissingAlt, bannedHits, specialHits, dayTipHits, wheyMisuseHits, riceAltHits, sameCarbAltHits, riceSequenceHits, sameTurnRiceHits, nextDayRiceHits, missingPrimaryWhey, missingPrimaryCreatine, optionalWheyHits, duplicateMainNameHits, sameDayMainAltHits, scheduleHits, morningLoadHits, fridayFishHits };
 }
 
 function main() {
   const src = readAppScript();
+  auditSourceQuality(src);
   const { prelude, marker } = sliceForAudit(src);
   const code = buildAuditPrelude(prelude);
   const A = runPrelude(code);

@@ -4094,3 +4094,84 @@ body {
     font-size: 0.66rem;
   }
 }
+
+/* Interaction repair: the meal opener and the check control are siblings. */
+.meal-head {
+  grid-template-columns: minmax(0, 1fr) 52px;
+  align-items: stretch;
+}
+
+.meal-open-btn {
+  appearance: none;
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  display: grid;
+  grid-template-columns: 94px minmax(0, 1fr) 88px;
+  gap: 16px;
+  align-items: stretch;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+}
+
+.meal-open-btn:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: -6px;
+}
+
+.meal-head > .meal-check {
+  align-self: center;
+  justify-self: center;
+}
+
+@media (max-width: 900px) {
+  .meal-head {
+    grid-template-columns: minmax(0, 1fr) 44px;
+    grid-template-rows: auto;
+  }
+
+  .meal-open-btn {
+    grid-template-columns: 74px minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    gap: 0;
+  }
+
+  .meal .meal-open-btn > div.meal-time-col {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+    padding: 14px 8px 14px 14px;
+  }
+
+  .meal .meal-open-btn > div.meal-info-col {
+    grid-column: 2;
+    grid-row: 1;
+    padding: 14px 12px;
+    gap: 6px;
+  }
+
+  .meal .meal-open-btn > div.meal-kcal {
+    grid-column: 2;
+    grid-row: 2;
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    justify-self: start;
+    border-left: 0;
+    padding: 0 12px 14px;
+  }
+
+  .meal-head > .meal-check {
+    grid-column: 2;
+    grid-row: 1;
+    margin-top: 14px;
+  }
+}
+
+@media (max-width: 600px) {
+  .meal-open-btn {
+    grid-template-columns: 70px minmax(0, 1fr);
+  }
+}
