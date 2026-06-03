@@ -3312,3 +3312,767 @@ textarea {
     height: 30px;
   }
 }
+
+/* =====================================================
+   RONY FUEL COMMAND V34
+   Stronger product redesign: sport command center + kitchen ticket UX.
+===================================================== */
+:root {
+  --bg: #e7ece8;
+  --ink: #10110e;
+  --ink2: #22251f;
+  --muted: #697065;
+  --muted2: #90978c;
+  --surface: #fffef8;
+  --surface2: #f3f5ef;
+  --surface3: #e2e7df;
+  --line: #c9d1c5;
+  --line2: #aeb9aa;
+  --accent: #e64025;
+  --accent-2: #ff7a3d;
+  --accent-dim: rgba(230, 64, 37, 0.11);
+  --accent-glow: rgba(230, 64, 37, 0.22);
+  --green: #08784b;
+  --green-dim: rgba(8, 120, 75, 0.11);
+  --amber: #c77a00;
+  --amber-dim: rgba(199, 122, 0, 0.13);
+  --purple: #4d46a3;
+  --purple-dim: rgba(77, 70, 163, 0.11);
+  --shadow: 0 22px 60px rgba(16, 17, 14, 0.14);
+  --shadow-soft: 0 10px 30px rgba(16, 17, 14, 0.08);
+}
+
+body {
+  background:
+    linear-gradient(90deg, rgba(16, 17, 14, 0.055) 1px, transparent 1px),
+    linear-gradient(rgba(16, 17, 14, 0.045) 1px, transparent 1px),
+    linear-gradient(135deg, #e7ece8 0%, #f6f4e9 46%, #e2ebe4 100%);
+  background-size: 36px 36px, 36px 36px, auto;
+}
+
+.app-layout {
+  grid-template-columns: 318px minmax(0, 1fr);
+}
+
+.sidebar {
+  background: #0d0f0c;
+  border-right: 0;
+  box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.08);
+}
+
+.sidebar::before {
+  content: "FUEL\A 12:00";
+  white-space: pre;
+  position: absolute;
+  right: 14px;
+  bottom: 18px;
+  color: rgba(255, 255, 255, 0.045);
+  font-family: "Space Grotesk", "Plus Jakarta Sans", sans-serif;
+  font-size: 4.2rem;
+  font-weight: 700;
+  line-height: 0.84;
+  pointer-events: none;
+}
+
+.sb-brand {
+  border-bottom: 0;
+  padding-bottom: 12px;
+}
+
+.sb-logo {
+  border-radius: 4px;
+  background: #f7f3e8;
+  color: #0d0f0c;
+}
+
+.sb-profile,
+.sb-macros-block {
+  border-radius: 4px;
+  border-color: rgba(247, 243, 232, 0.18);
+  background: rgba(247, 243, 232, 0.055);
+}
+
+.sb-nav-item,
+.sb-action-btn,
+.sb-macro-item {
+  border-radius: 4px;
+}
+
+.sb-nav-active,
+.sb-nav-item:hover {
+  background: #f7f3e8 !important;
+  color: #0d0f0c !important;
+}
+
+.sb-primary,
+.sb-watch {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.main-content {
+  max-width: none;
+  padding: 28px clamp(16px, 3vw, 46px) 46px;
+  gap: 18px;
+}
+
+.bento-header {
+  grid-template-columns: minmax(420px, 1.55fr) minmax(270px, 0.9fr) minmax(230px, 0.72fr);
+  gap: 14px;
+  margin-bottom: 2px;
+}
+
+.gym-banner-inner {
+  position: relative;
+  min-height: 210px;
+  overflow: hidden;
+  border: 0;
+  border-radius: 0;
+  background: #0d0f0c;
+  color: #f7f3e8;
+  box-shadow: var(--shadow);
+}
+
+.gym-banner-inner::after {
+  content: "12:00";
+  position: absolute;
+  right: 16px;
+  bottom: -24px;
+  color: rgba(247, 243, 232, 0.055);
+  font-family: "Space Grotesk", "Plus Jakarta Sans", sans-serif;
+  font-size: clamp(4rem, 8vw, 8rem);
+  font-weight: 700;
+  line-height: 1;
+}
+
+.gym-banner-rest {
+  background: #253025;
+}
+
+.gym-banner-left {
+  position: relative;
+  z-index: 1;
+  align-items: flex-start;
+}
+
+.gym-banner-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 4px;
+  border-color: rgba(247, 243, 232, 0.18);
+  background: rgba(247, 243, 232, 0.08);
+}
+
+.gym-banner-title {
+  color: #f7f3e8;
+  font-size: clamp(1.6rem, 2.8vw, 3.1rem);
+  line-height: 0.96;
+  max-width: 650px;
+}
+
+.gym-banner-sub {
+  max-width: 520px;
+  margin-top: 10px;
+  color: rgba(247, 243, 232, 0.70);
+  font-size: 0.92rem;
+}
+
+.gym-banner-stats {
+  position: relative;
+  z-index: 1;
+  align-self: end;
+}
+
+.gym-stat {
+  min-width: 86px;
+  border-left-color: rgba(247, 243, 232, 0.18);
+}
+
+.gym-stat-val {
+  color: #ff7a3d;
+  font-size: 1.18rem;
+}
+
+.gym-stat-lbl {
+  color: rgba(247, 243, 232, 0.58);
+}
+
+.bento-next,
+.bento-water,
+.week-overview,
+.plan-block,
+.supp-section,
+.weight-section,
+.review-section,
+.shopping-list {
+  border-radius: 0;
+  border: 2px solid var(--ink);
+  background: var(--surface);
+  box-shadow: 8px 8px 0 rgba(16, 17, 14, 0.14);
+}
+
+.bento-next,
+.bento-water {
+  padding: 22px;
+}
+
+.bento-card-label,
+.section-eyebrow,
+.detail-kicker,
+.dt-title {
+  color: var(--accent);
+  font-weight: 900;
+  letter-spacing: 0.08em;
+}
+
+.section-title {
+  font-size: clamp(1.55rem, 1.6vw + 1rem, 2.7rem);
+  line-height: 0.98;
+}
+
+.current-week-label {
+  background: var(--ink);
+  color: #f7f3e8;
+  border-bottom: 0;
+}
+
+.week-tabs {
+  background: #dfe6df;
+  border-bottom: 2px solid var(--ink);
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.tab-btn {
+  min-width: 0;
+  width: 100%;
+  border-radius: 0;
+  border: 2px solid var(--ink);
+  box-shadow: 3px 3px 0 rgba(16, 17, 14, 0.16);
+}
+
+.tab-btn.active {
+  background: var(--accent);
+  border-color: var(--ink);
+  color: #fff;
+  box-shadow: 3px 3px 0 var(--ink);
+}
+
+.panel.active {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) clamp(300px, 29vw, 390px);
+  gap: 16px;
+  align-items: start;
+}
+
+.day-header {
+  grid-column: 1 / -1;
+  border: 2px solid var(--ink);
+  border-radius: 0;
+  background: #f7f3e8;
+  box-shadow: 6px 6px 0 rgba(16, 17, 14, 0.12);
+}
+
+.day-icon,
+.day-context-action,
+.quick-btn,
+.weight-save-btn,
+.sl-btn,
+.watch-notif-btn {
+  border-radius: 0;
+}
+
+.day-context-strip,
+.workout-info,
+.friday-toggle,
+.workout-tag,
+.tip-card,
+.day-total {
+  border-radius: 0;
+  border: 2px solid var(--ink);
+  background: var(--surface);
+}
+
+.day-total {
+  grid-column: 2;
+  grid-row: 2;
+  position: sticky;
+  top: 22px;
+  padding: 18px;
+  box-shadow: 6px 6px 0 rgba(16, 17, 14, 0.12);
+}
+
+.tip-card {
+  grid-column: 2;
+  grid-row: 3;
+}
+
+.quick-actions {
+  grid-column: 2;
+  grid-row: 4;
+  justify-content: stretch;
+}
+
+.quick-btn {
+  width: 100%;
+}
+
+.meal {
+  grid-column: 1;
+  border: 2px solid var(--ink);
+  border-radius: 0;
+  background: #fffef8;
+  box-shadow: 6px 6px 0 rgba(16, 17, 14, 0.10);
+  margin-bottom: 16px;
+  overflow: visible;
+}
+
+.meal:hover {
+  border-color: var(--ink);
+  box-shadow: 8px 8px 0 rgba(16, 17, 14, 0.16);
+  transform: translate(-1px, -1px);
+}
+
+.meal.done {
+  background: #f2fbf4;
+  box-shadow: 4px 4px 0 rgba(8, 120, 75, 0.16);
+}
+
+.meal.is-upcoming {
+  border-color: var(--accent);
+  box-shadow: 8px 8px 0 var(--accent-glow);
+}
+
+.meal-type-stripe {
+  left: -2px;
+  top: -2px;
+  bottom: -2px;
+  width: 8px;
+}
+
+.meal-head {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr) 88px 46px;
+  gap: 16px;
+  align-items: stretch;
+  padding: 0;
+  min-height: 116px;
+}
+
+.meal-time-col {
+  min-width: 0;
+  padding: 18px 14px 18px 20px;
+  background: var(--ink);
+  color: #f7f3e8;
+  justify-content: center;
+}
+
+.meal-time {
+  color: #fff;
+  font-size: 1.28rem;
+  line-height: 0.95;
+}
+
+.meal-time-label {
+  width: fit-content;
+  border: 1px solid rgba(247, 243, 232, 0.22);
+  background: rgba(247, 243, 232, 0.08) !important;
+  color: rgba(247, 243, 232, 0.78) !important;
+  border-radius: 0;
+}
+
+.meal-info-col {
+  align-self: center;
+  padding: 16px 0;
+}
+
+.meal-name {
+  font-family: "Space Grotesk", "Plus Jakarta Sans", sans-serif;
+  font-size: clamp(1.05rem, 0.7vw + 0.9rem, 1.45rem);
+  line-height: 1.04;
+}
+
+.meal-desc {
+  margin-top: 6px;
+  font-size: 0.86rem;
+}
+
+.meal-kcal {
+  display: grid;
+  place-items: center;
+  border-left: 2px solid var(--ink);
+  padding-left: 0;
+}
+
+.meal-kcal-val {
+  font-size: 1.5rem;
+  color: var(--accent);
+}
+
+.meal-check {
+  align-self: center;
+  justify-self: center;
+  border-radius: 0;
+  border: 2px solid var(--ink);
+  background: #fff;
+}
+
+.meal-check.checked {
+  border-color: var(--ink);
+  background: var(--green);
+}
+
+.meal.open .meal-detail {
+  max-height: 9000px;
+  padding: 18px 18px 20px 26px;
+}
+
+.meal-detail {
+  border-top: 2px solid var(--ink);
+}
+
+.meal-detail-grid {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.82fr) minmax(280px, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.ingredient-sheet,
+.recipe-sheet {
+  min-width: 0;
+}
+
+.detail-kicker {
+  margin-bottom: 10px;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+}
+
+.food-list {
+  margin-top: 0;
+  border-top: 2px solid var(--ink);
+}
+
+.food-item {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line2);
+}
+
+.food-name {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.fm,
+.mm,
+.alt-kcal {
+  border-radius: 0;
+  border: 1px solid var(--ink);
+  background: #fff;
+}
+
+.prep-toggle {
+  width: 100%;
+  justify-content: center;
+  margin-top: 0;
+  border: 2px solid var(--ink);
+  border-radius: 0;
+  background: var(--ink);
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.prep-toggle:hover,
+.prep-toggle:focus-visible,
+.prep-toggle.open {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+}
+
+.prep-toggle.open > span:first-child {
+  transform: none;
+}
+
+.recipe-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0 10px;
+}
+
+.recipe-meta span {
+  border: 1px solid var(--ink);
+  background: #f7f3e8;
+  padding: 5px 8px;
+  font-size: 0.72rem;
+  font-weight: 900;
+  color: var(--ink);
+}
+
+.prep-steps {
+  border-top: 2px solid var(--ink);
+}
+
+.prep-step {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr);
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line2);
+  background: transparent;
+}
+
+.prep-num {
+  width: 30px;
+  height: 30px;
+  border: 2px solid var(--ink);
+  border-radius: 0;
+  background: var(--accent);
+  color: #fff;
+}
+
+.prep-text {
+  color: var(--ink2);
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.alt-meal-btn {
+  width: 100%;
+  justify-content: center;
+  margin-top: 16px;
+  border: 2px solid var(--ink);
+  border-radius: 0;
+  background: #f7f3e8;
+  color: var(--ink);
+  box-shadow: 4px 4px 0 rgba(16, 17, 14, 0.12);
+}
+
+.alt-meal-btn:hover,
+.alt-meal-btn.active {
+  border-color: var(--ink);
+  background: var(--accent);
+  color: #fff;
+}
+
+.alt-meal-panel {
+  border: 2px solid var(--ink);
+  border-radius: 0;
+  background: #fff2ea;
+}
+
+.alt-meal-panel.open {
+  max-height: 9000px;
+  padding: 18px;
+}
+
+.alt-badge {
+  border-radius: 0;
+  border: 1px solid var(--ink);
+  background: var(--ink);
+  color: #fff;
+}
+
+.alt-meal-name {
+  font-family: "Space Grotesk", "Plus Jakarta Sans", sans-serif;
+  font-size: 1.15rem;
+}
+
+.topbar {
+  background: rgba(13, 15, 12, 0.94);
+  color: #f7f3e8;
+  border-bottom: 0;
+}
+
+.topbar-greeting,
+.topbar-date,
+.topbar-clock {
+  color: #f7f3e8;
+}
+
+.bottom-nav {
+  border-top: 2px solid var(--ink);
+  background: #fffef8;
+}
+
+.bn-fab-inner {
+  border-radius: 0;
+  background: var(--accent);
+}
+
+@media (max-width: 1180px) {
+  .app-layout {
+    grid-template-columns: 278px minmax(0, 1fr);
+  }
+
+  .bento-header {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .bento-gym {
+    grid-column: 1 / -1;
+  }
+
+  .panel.active {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .day-total,
+  .tip-card,
+  .quick-actions,
+  .meal {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .day-total {
+    position: static;
+  }
+}
+
+@media (max-width: 900px) {
+  .main-content {
+    padding: 14px 12px 100px;
+  }
+
+  .topbar {
+    margin: -14px -12px 14px;
+  }
+
+  .bento-header {
+    grid-template-columns: 1fr;
+  }
+
+  .week-tabs {
+    display: flex;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+  }
+
+  .gym-banner-inner {
+    min-height: 190px;
+  }
+
+  .gym-banner-title {
+    font-size: clamp(1.45rem, 8vw, 2.6rem);
+  }
+
+  .bento-next,
+  .bento-water,
+  .week-overview,
+  .plan-block,
+  .supp-section,
+  .weight-section,
+  .review-section,
+  .shopping-list,
+  .meal,
+  .day-header {
+    box-shadow: 4px 4px 0 rgba(16, 17, 14, 0.12);
+  }
+
+  .meal-head {
+    grid-template-columns: 86px minmax(0, 1fr) 44px;
+    grid-template-rows: auto auto;
+    gap: 0;
+    min-height: 0;
+  }
+
+  .meal-time-col {
+    grid-row: 1 / span 2;
+    padding: 14px 10px 14px 16px;
+  }
+
+  .meal-time-label {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.58rem;
+  }
+
+  .meal-info-col {
+    grid-column: 2;
+    grid-row: 1;
+    padding: 14px 12px;
+  }
+
+  .meal-kcal {
+    grid-column: 2;
+    grid-row: 2;
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    justify-self: start;
+    border-left: 0;
+    padding: 0 12px 14px;
+  }
+
+  .meal-kcal-val {
+    font-size: 1.12rem;
+  }
+
+  .meal-kcal-lbl {
+    margin-top: 0;
+  }
+
+  .meal-check {
+    grid-column: 3;
+    grid-row: 1;
+    margin-top: 14px;
+  }
+
+  .meal-detail-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .panel,
+  .week-overview,
+  .supp-section,
+  .weight-section,
+  .review-section,
+  .shopping-list {
+    padding: 12px;
+  }
+
+  .meal-head {
+    grid-template-columns: 92px minmax(0, 1fr) 40px;
+  }
+
+  .meal-time {
+    font-size: 1.04rem;
+  }
+
+  .meal-time-label {
+    max-width: 72px;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    line-height: 1.05;
+  }
+
+  .meal-name {
+    font-size: 1rem;
+  }
+
+  .meal-mini-macros {
+    gap: 4px;
+  }
+
+  .mm {
+    font-size: 0.61rem;
+    padding: 2px 5px;
+  }
+
+  .meal.open .meal-detail {
+    padding: 14px 12px 16px 18px;
+  }
+
+  .recipe-meta span {
+    font-size: 0.66rem;
+  }
+}

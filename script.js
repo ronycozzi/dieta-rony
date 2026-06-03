@@ -2806,6 +2806,339 @@ function macroTotalsForMeal(item) {
   }, { p: 0, c: 0, g: 0 });
 }
 
+function includesAny(text, terms) {
+  return terms.some((term) => text.includes(term));
+}
+
+function prepIngredientLine(item) {
+  const foods = Array.isArray(item?.foods) ? item.foods : [];
+  const coreFoods = foods
+    .filter((f) => !/agua|cafe|mate|infusion/i.test(f.name))
+    .slice(0, 5)
+    .map((f) => f.name);
+  return coreFoods.length ? coreFoods.join(" + ") : "los ingredientes del plan";
+}
+
+function recipeMetaForMeal(item) {
+  const text = mealSearchText(item);
+  const label = plainText(item?.label);
+
+  if (/\bwhey\b|creatina|shake/.test(text)) return { time: "2-3 min", method: "Shaker" };
+  if (/pre-entreno/.test(label)) return { time: "1-4 min", method: "Sin coccion" };
+  if (/pancakes onefit|panqueques/.test(text)) return { time: "8-12 min", method: "Sarten" };
+  if (/tostado|sandwich|rolls/.test(text)) return { time: "5-8 min", method: "Plancha o sandwichera" };
+  if (/pizza/.test(text)) return { time: "12-18 min", method: "Horno fuerte" };
+  if (/hamburguesa/.test(text)) return { time: "20-25 min", method: "Plancha + horno" };
+  if (/pastel de papa|tarta|empanada/.test(text)) return { time: "30-45 min", method: "Horno" };
+  if (/milanesa/.test(text)) return { time: "22-28 min", method: "Horno" };
+  if (/fideo|pasta|noqui|raviol/.test(text)) return { time: "15-25 min", method: "Olla + sarten" };
+  if (/guiso|lenteja|garbanzo|poroto/.test(text)) return { time: "25-35 min", method: "Olla" };
+  if (/salmon|merluza|pescado/.test(text)) return { time: "16-22 min", method: "Horno o sarten" };
+  if (/atun/.test(text)) return { time: "10-18 min", method: "Olla + armado frio" };
+  if (/arroz|risotto/.test(text)) return { time: "22-30 min", method: "Olla + sarten" };
+  if (/bife|carne|lomo|peceto|churrasco/.test(text)) return { time: "18-30 min", method: "Plancha u horno" };
+  if (/pollo|pechuga|muslo/.test(text)) return { time: "20-30 min", method: "Sarten u horno" };
+  if (/omelette|tortilla|revuelto|huevo/.test(text)) return { time: "10-18 min", method: "Sarten" };
+  if (/leche|banana|fruta|queso untable|tostadas/.test(text)) return { time: "3-6 min", method: "Armado simple" };
+  return { time: "15-25 min", method: "Cocina simple" };
+}
+
+function addOriginalPrepTip(item, steps) {
+  const rawPrep = Array.isArray(item?.prep) ? item.prep : [];
+  const usefulTip = rawPrep
+    .map((step) => cleanPlanText(step).trim())
+    .find((step) => step.length >= 42 && !steps.some((existing) => plainText(existing).includes(plainText(step).slice(0, 24))));
+  if (usefulTip && steps.length < 6) steps.push(`Tip del plan: ${usefulTip}`);
+  return steps;
+}
+
+function buildDetailedPrepSteps(item) {
+  const text = mealSearchText(item);
+  const label = plainText(item?.label);
+  const ingredients = prepIngredientLine(item);
+  let steps;
+
+  if (/\bwhey\b|creatina|shake/.test(text)) {
+    steps = [
+      "Pone el whey en el shaker con 250-300 ml de agua. Usa leche solo si el plan lo indica o si necesitas mas calorias ese dia.",
+      "Agrega la creatina, cerra bien y agita 20-30 segundos hasta que no queden grumos.",
+      "Come la fruta, tostada o pancake indicado aparte. No hace falta meter una comida pesada porque despues viene el almuerzo.",
+      "Tomalo apenas termines de entrenar o dentro de la primera hora post-gym."
+    ];
+    return addOriginalPrepTip(item, steps);
+  }
+
+  if (/pre-entreno/.test(label)) {
+    steps = [
+      `Prepara solo lo indicado: ${ingredients}.`,
+      "Comelo 35-50 minutos antes de entrenar para llegar con energia sin pesadez.",
+      "Acompana con agua. Evita sumar grasa extra aca porque enlentece la digestion.",
+      "Si estas con poco apetito, prioriza la fruta y deja el pan/tostada para otro pre."
+    ];
+    return addOriginalPrepTip(item, steps);
+  }
+
+  if (/pancakes onefit/.test(text)) {
+    steps = [
+      "Mezcla la porcion de pancakes OneFit con agua o leche de a poco hasta lograr una mezcla espesa, no liquida.",
+      "Calenta una sarten antiadherente a fuego medio y apenas engrasala si hace falta.",
+      "Cocina pancakes chicos 2-3 minutos por lado. Dalos vuelta cuando veas burbujas y los bordes firmes.",
+      "Servi con la banana, fruta, leche o miel medida que figura en el plan. No dupliques la porcion porque ya cuenta en las calorias."
+    ];
+    return addOriginalPrepTip(item, steps);
+  }
+
+  if (/panqueques de banana/.test(text)) {
+    steps = [
+      "Pisa la banana con tenedor hasta hacer un pure. Mezclala con los huevos y la leche.",
+      "Calenta una sarten antiadherente a fuego medio y cocina panqueques chicos para que no se rompan.",
+      "Dora 2 minutos por lado y retiralos cuando esten firmes.",
+      "Termina con queso untable y miel medida si aparece en ingredientes."
+    ];
+    return addOriginalPrepTip(item, steps);
+  }
+
+  if (/tostado|sandwich|rolls/.test(text)) {
+    steps = [
+      `Arma la base con ${ingredients}.`,
+      "Si es tostado o sandwich caliente, pone pan, jamon y queso en sandwichera o sarten hasta que el queso funda.",
+      "Si es frio, escurri bien tomate o atun para que el pan no se humedezca.",
+      "Come la fruta indicada al lado para completar energia sin hacer una comida enorme."
+    ];
+    return addOriginalPrepTip(item, steps);
+  }
+
+  if (/licuado/.test(text)) {
+    steps = [
+      "Pone primero la leche en la licuadora para que no se pegue la fruta.",
+      "Agrega banana y manteca de mani medida. Licua 20-30 segundos.",
+      "Si queda muy espeso, suma un chorrito de agua o leche. No agregues mas manteca de mani sin registrarlo.",
+      "Tomalo como merienda/refuerzo, no como reemplazo fijo de almuerzo o cena."
+    ];
+    return addOriginalPrepTip(item, steps);
+  }
+
+  if (/pizza/.test(text)) {
+    steps = [
+      "Precalenta el horno fuerte, 220 grados si tu horno lo permite.",
+      "Calenta o cocina el pollo en tiritas con sal, ajo y pimenton. Si ya estaba cocido, solo doralo 2 minutos.",
+      "Pone salsa de tomate sobre la prepizza, suma el pollo y cubri con la mozzarella medida.",
+      "Horneala 8-12 minutos, hasta que la base este firme y el queso fundido.",
+      "Acompana con verdura si tenes hambre: suma volumen sin romper el objetivo."
+    ];
+    return addOriginalPrepTip(item, steps);
+  }
+
+  if (/hamburguesa/.test(text)) {
+    steps = [
+      "Forma las hamburguesas con carne magra, sal, pimienta y ajo. Aplastalas parejo para que cocinen igual.",
+      "Cocina en plancha caliente 4-5 minutos por lado. Agrega la feta de queso al final para que funda.",
+      "Hace las papas al horno en bastones con sal y apenas aceite, 25-30 minutos a 200 grados.",
+      "Arma con pan, lechuga y tomate. Mantene la cantidad de pan y papas del plan para no pasarte de calorias."
+    ];
+    return addOriginalPrepTip(item, steps);
+  }
+
+  if (/pastel de papa/.test(text)) {
+    steps = [
+      "Hervi la papa hasta que este blanda y pisala con sal. Si queres mas cremosidad, usa un chorrito de leche.",
+      "Saltea cebolla, morron y tomate. Suma la carne magra y cocinala hasta que cambie completamente de color.",
+      "Agrega huevo duro picado al relleno y pasalo a una fuente chica.",
+      "Cubre con el pure, suma la mozzarella medida y lleva al horno hasta dorar.",
+      "Dejalo reposar 5 minutos antes de servir para que no se desarme."
+    ];
+    return addOriginalPrepTip(item, steps);
+  }
+
+  if (/tarta/.test(text)) {
+    steps = [
+      "Precalenta el horno a 180-200 grados.",
+      "Mezcla el pollo cocido con jamon, queso y las verduras que indique el plan. Si usas huevo, batilo y sumalo al relleno.",
+      "Pone la mezcla sobre la tapa de tarta en una fuente. Cerra o deja abierta segun la tarta que tengas.",
+      "Horneala 25-35 minutos, hasta que la masa este firme y dorada.",
+      "Servi con ensalada grande para sumar saciedad sin hacerla pesada."
+    ];
+    return addOriginalPrepTip(item, steps);
+  }
+
+  if (/empanada/.test(text)) {
+    steps = [
+      "Saltea cebolla y morron. Suma la carne magra y cocinala hasta que no queden partes rosadas.",
+      "Agrega huevo duro picado, condimenta y deja enfriar el relleno unos minutos.",
+      "Rellena las tapas, cerra con repulgue y acomoda en placa apenas aceitada.",
+      "Hornealas a 200 grados durante 18-25 minutos, hasta que esten doradas.",
+      "Acompana con ensalada para que el plato llene mas sin depender de mas tapas."
+    ];
+    return addOriginalPrepTip(item, steps);
+  }
+
+  if (/milanesa/.test(text)) {
+    steps = [
+      "Precalenta el horno a 200 grados y prepara una placa apenas aceitada.",
+      "Si la milanesa no esta lista, pasa la carne o pechuga por huevo condimentado y pan rallado.",
+      "Horneala 18-24 minutos, dandola vuelta a mitad de coccion para que dore de ambos lados.",
+      "Mientras tanto, hervi papa para pure o cocina las papas al horno segun indique el plan.",
+      "Servi con ensalada. Si queres mas sabor, usa limon, ajo, perejil o mostaza, no mas aceite."
+    ];
+    return addOriginalPrepTip(item, steps);
+  }
+
+  if (/taco|wrap|burrito/.test(text)) {
+    steps = [
+      "Dora la carne o pollo en sarten caliente con sal, pimenton, ajo y un poco de limon.",
+      "Calenta las tortillas vuelta y vuelta para que no se quiebren.",
+      "Pica tomate, lechuga o la verdura indicada. Tene todo listo antes de armar.",
+      "Rellena con la proteina, suma queso medido y cerra firme.",
+      "Servi con ensalada al lado si necesitas mas volumen."
+    ];
+    return addOriginalPrepTip(item, steps);
+  }
+
+  if (/fideos frios|pasta fria|atun.*fideo|fideo.*atun/.test(text)) {
+    steps = [
+      "Hervi los fideos en agua con sal hasta que esten al dente.",
+      "Colalos y enfrialos apenas bajo agua para cortar la coccion.",
+      "Escurri bien el atun y mezclalo con tomate, huevo duro, limon y el aceite medido.",
+      "Integra los fideos y ajusta sal. Dejalo 5 minutos en heladera si lo queres mas fresco."
+    ];
+    return addOriginalPrepTip(item, steps);
+  }
+
+  if (/fideo|pasta|noqui|raviol/.test(text)) {
+    steps = [
+      "Pone agua con sal a hervir. Cocina la pasta, noquis o ravioles hasta punto al dente.",
+      "En una sarten aparte, cocina la carne, pollo o salsa indicada hasta que quede bien caliente.",
+      "Suma tomate, queso untable o condimentos segun el plato. Mantene fuego medio para que no se seque.",
+      "Integra la pasta con la salsa 1 minuto en sarten. Si hace falta, usa un chorrito del agua de coccion.",
+      "Termina con el queso rallado medido cuando el plato ya esta servido."
+    ];
+    return addOriginalPrepTip(item, steps);
+  }
+
+  if (/salmon|merluza|pescado/.test(text)) {
+    steps = [
+      "Seca el pescado con papel, salpimenta y suma limon, ajo o perejil.",
+      "Cocinalo al horno a 190-200 grados: salmon 12-16 minutos, merluza 14-18 minutos segun grosor.",
+      "Prepara papa, pure o ensalada en paralelo para que todo salga junto.",
+      "El pescado esta listo cuando se separa facil con tenedor. No lo pases de coccion para que no quede seco.",
+      "Servi con limon fresco y la porcion de carbo indicada."
+    ];
+    return addOriginalPrepTip(item, steps);
+  }
+
+  if (/atun/.test(text)) {
+    steps = [
+      "Hervi la papa y el huevo hasta que queden listos. Enfria apenas para poder cortarlos.",
+      "Escurri bien el atun para que el plato no quede aguado.",
+      "Mezcla atun, papa, huevo, tomate o ensalada. Condimenta con limon, sal y el aceite medido.",
+      "Si queres mas sabor, suma pimienta, perejil o un toque de mostaza.",
+      "Es un plato frio/templado: practico, alto en proteina y sin complicarlo."
+    ];
+    return addOriginalPrepTip(item, steps);
+  }
+
+  if (/guiso|lenteja|garbanzo|poroto/.test(text)) {
+    steps = [
+      "Saltea cebolla, morron, zanahoria o las verduras del plan con una cdita de aceite.",
+      "Agrega la carne o pollo y doralo para que el guiso tenga sabor.",
+      "Suma lentejas, garbanzos o porotos ya cocidos. Cubre apenas con caldo o agua.",
+      "Cocina 15-25 minutos hasta que espese. Revolve cada tanto para que no se pegue.",
+      "Servi con el pan o carbo indicado, sin sumar una segunda porcion si ya llegaste bien."
+    ];
+    return addOriginalPrepTip(item, steps);
+  }
+
+  if (/arroz|risotto/.test(text) && !/pollo al curry|tikka|curry/.test(text)) {
+    steps = [
+      "Cocina el arroz medido. Como base: 1 parte de arroz por 2 partes de agua, fuego bajo hasta que absorba.",
+      "En sarten aparte, dora la proteina con sal, ajo y pimenton o los condimentos del plato.",
+      "Suma verduras y cocina hasta que esten tiernas pero no deshechas.",
+      "Integra arroz y proteina al final. Si es risotto, agrega caldo de a poco y revolve hasta cremoso.",
+      "Servi la porcion indicada y guarda el resto para no repetir arroz fuera del plan."
+    ];
+    return addOriginalPrepTip(item, steps);
+  }
+
+  if (/pollo al curry|tikka|curry/.test(text)) {
+    steps = [
+      "Corta el pollo en cubos y condimenta con sal, curry suave, ajo y limon.",
+      "Dora el pollo en sarten caliente hasta que selle por fuera.",
+      "Suma tomate, queso untable o la salsa indicada y baja el fuego.",
+      "Cocina 8-12 minutos hasta que el pollo este hecho por dentro y la salsa cremosa.",
+      "Servi con papa, arroz o el carbo que figure en el plan, sin repetir otro carbo extra."
+    ];
+    return addOriginalPrepTip(item, steps);
+  }
+
+  if (/bife|carne|lomo|peceto|churrasco/.test(text)) {
+    steps = [
+      "Saca la carne de la heladera 10 minutos antes y salpimenta.",
+      "Cocina bife o churrasco en plancha bien caliente 3-5 minutos por lado. Si es carne al horno, usa 190 grados hasta punto jugoso.",
+      "Prepara papa, batata, pure o pan medido en paralelo segun el plato.",
+      "Deja reposar la carne 3 minutos antes de cortar para que no pierda jugo.",
+      "Servi con ensalada o verduras. Usa chimichurri, limon o especias para sabor sin pasarte de grasa."
+    ];
+    return addOriginalPrepTip(item, steps);
+  }
+
+  if (/pollo|pechuga|muslo/.test(text)) {
+    steps = [
+      "Condimenta el pollo con sal, ajo, pimenton, limon o la especia del plato.",
+      "Cocinalo en sarten a fuego medio-alto o al horno a 200 grados hasta que este dorado y bien hecho.",
+      "Prepara papa, batata, pasta, pan o ensalada segun indique el plan.",
+      "Si lleva queso, jamon o salsa, sumalo al final para que no se seque.",
+      "Servi la porcion completa: la proteina es la base para recuperar del entrenamiento."
+    ];
+    return addOriginalPrepTip(item, steps);
+  }
+
+  if (/omelette|tortilla|revuelto|huevo/.test(text)) {
+    steps = [
+      "Si lleva papa, hervila o cocinala en cubos antes de mezclarla con el huevo.",
+      "Bati los huevos con sal y pimienta. Suma jamon, queso o verduras segun el plato.",
+      "Cocina en sarten antiadherente a fuego medio para que no se queme por fuera.",
+      "Cuando cuaje, dobla el omelette o da vuelta la tortilla con plato.",
+      "Servi con pan, fruta o ensalada si figura en el plan."
+    ];
+    return addOriginalPrepTip(item, steps);
+  }
+
+  if (/leche|banana|fruta|queso untable|tostadas|medialuna/.test(text)) {
+    steps = [
+      `Prepara la porcion indicada: ${ingredients}.`,
+      "Arma el plato simple, sin agregar extras que no esten contados.",
+      "Si lleva tostada, calentala al final para que quede crocante.",
+      "Comelo tranquilo. Es una comida de apoyo para llegar a energia y proteina sin cocinar de mas."
+    ];
+    return addOriginalPrepTip(item, steps);
+  }
+
+  steps = [
+    `Separa y pesa rapido los ingredientes principales: ${ingredients}.`,
+    "Cocina primero el carbo que tarde mas: papa, pasta, arroz, pan o legumbre segun el plato.",
+    "Despues cocina la proteina con sal, ajo, limon, pimenton o los condimentos que tengas.",
+    "Suma verduras o ensalada para volumen y micronutrientes.",
+    "Servi la porcion del plan. Si quedo comida extra, guardala para otro dia en vez de repetir sin medir."
+  ];
+  return addOriginalPrepTip(item, steps);
+}
+
+function renderPrepContent(item) {
+  const meta = recipeMetaForMeal(item);
+  const steps = buildDetailedPrepSteps(item);
+  return `
+    <div class="recipe-meta">
+      <span>Tiempo: ${meta.time}</span>
+      <span>Metodo: ${meta.method}</span>
+    </div>
+    <div class="prep-steps">
+      ${steps.map((step, index) => `
+        <div class="prep-step"><div class="prep-num">${index + 1}</div><div class="prep-text">${step}</div></div>
+      `).join("")}
+    </div>
+  `;
+}
+
 const WHEY = { p: 24, c: 3, g: 2 };
 const WAKE_TIME = "09:30";
 const TRAINING_TIME = "12:00";
@@ -5455,6 +5788,129 @@ function renderMeal(item) {
     </article>
   `;
 }
+
+
+toggleAltMeal = window.toggleAltMeal = function toggleAltMealClean(mealId) {
+  const panel = document.querySelector(`[data-alt-for="${mealId}"]`);
+  const btn = document.querySelector(`[data-alt-btn="${mealId}"]`);
+  if (!panel) return;
+  const isOpen = panel.classList.toggle("open");
+  panel.setAttribute("aria-hidden", String(!isOpen));
+  if (btn) {
+    btn.setAttribute("aria-expanded", String(isOpen));
+    btn.innerHTML = isOpen
+      ? '<span class="alt-btn-icon">A</span> Volver a opcion principal'
+      : '<span class="alt-btn-icon">B</span> No me convence - Ver opcion B';
+    btn.classList.toggle("active", isOpen);
+  }
+};
+
+togglePrep = window.togglePrep = function togglePrepClean(button) {
+  const body = button.nextElementSibling;
+  if (!body) return;
+  const isOpen = body.classList.toggle("open");
+  button.classList.toggle("open", isOpen);
+  button.setAttribute("aria-expanded", String(isOpen));
+  body.setAttribute("aria-hidden", String(!isOpen));
+  const label = button.querySelector(".prep-label");
+  const icon = button.querySelector("span:first-child");
+  if (icon) icon.textContent = isOpen ? "STOP" : "PLAY";
+  if (label) label.textContent = isOpen ? "Ocultar preparacion" : "Ver preparacion";
+};
+
+renderMeal = function renderMealKitchenTicket(item) {
+  const done = isDone(item.id);
+  const day = days.find((d) => d.id === activeDay);
+  const isUpcoming = day ? isUpcomingMeal(item, day) : false;
+  const todayObj = getTodayDayObject();
+  const isToday = day && day.id === todayObj.id;
+  const detailId = `meal-detail-${item.id}`;
+  const prepId = `meal-prep-${item.id}`;
+  const altId = `meal-alt-${item.id}`;
+  const altPrepId = `meal-alt-prep-${item.id}`;
+  const note = item.note ? `<div class="meal-note">Nota: ${item.note}</div>` : "";
+  const totalP = item.foods.reduce((s, f) => s + f.p, 0);
+  const totalC = item.foods.reduce((s, f) => s + f.c, 0);
+  const totalG = item.foods.reduce((s, f) => s + f.g, 0);
+  const hasAlt = Boolean(item.alt);
+
+  const renderDetailGrid = (mealItem, bodyId, isAlt = false) => `
+    <div class="meal-detail-grid ${isAlt ? "alt-detail-grid" : ""}">
+      <div class="ingredient-sheet">
+        <div class="detail-kicker">Ingredientes medidos</div>
+        <div class="food-list">${mealItem.foods.map(renderFood).join("")}</div>
+      </div>
+      <div class="recipe-sheet">
+        <div class="detail-kicker">Cocina paso a paso</div>
+        <button class="prep-toggle ${isAlt ? "alt-prep-toggle" : ""}" type="button" onclick="togglePrep(this)" aria-expanded="false" aria-controls="${bodyId}">
+          <span>PLAY</span> <span class="prep-label">Ver preparacion</span>
+        </button>
+        <div class="prep-body" id="${bodyId}" aria-hidden="true">
+          ${renderPrepContent(mealItem)}
+        </div>
+      </div>
+    </div>
+  `;
+
+  const altPanel = hasAlt ? `
+    <div class="alt-meal-panel" id="${altId}" data-alt-for="${item.id}" aria-hidden="true">
+      <div class="alt-meal-header">
+        <span class="alt-badge">Opcion B</span>
+        <span class="alt-kcal">${item.alt.kcal} kcal</span>
+      </div>
+      <div class="alt-meal-name">${item.alt.name}</div>
+      <div class="alt-meal-desc">${item.alt.desc}</div>
+      <div class="alt-macro-row">
+        <span class="mm p">${item.alt.foods.reduce((s, f) => s + f.p, 0)}g P</span>
+        <span class="mm c">${item.alt.foods.reduce((s, f) => s + f.c, 0)}g C</span>
+        <span class="mm g">${item.alt.foods.reduce((s, f) => s + f.g, 0)}g G</span>
+      </div>
+      ${renderDetailGrid(item.alt, altPrepId, true)}
+    </div>
+  ` : "";
+
+  const altBtn = hasAlt ? `
+    <button class="alt-meal-btn" type="button" data-alt-btn="${item.id}" onclick="event.stopPropagation(); toggleAltMeal('${item.id}')" aria-expanded="false" aria-controls="${altId}">
+      <span class="alt-btn-icon">B</span> No me convence - Ver opcion B
+    </button>
+  ` : "";
+
+  const typeSlug = slug(item.label);
+  return `
+    <article class="meal ${done ? "done" : ""} ${isUpcoming ? "is-upcoming" : ""}" data-type="${typeSlug}">
+      <div class="meal-type-stripe"></div>
+      ${isUpcoming ? '<div class="upcoming-tag">Toca ahora</div>' : ""}
+      <div class="meal-head" role="button" tabindex="0" aria-expanded="false" aria-controls="${detailId}" onclick="toggleMeal(this)" onkeydown="handleMealHeadKeydown(event, this)">
+        <div class="meal-time-col">
+          <div class="meal-time">${item.time}</div>
+          <div class="meal-time-label">${item.label}</div>
+        </div>
+        <div class="meal-info-col">
+          <div class="meal-name">${item.name}</div>
+          <div class="meal-desc">${item.desc}</div>
+          <div class="meal-mini-macros">
+            <span class="mm p">${totalP}g P</span>
+            <span class="mm c">${totalC}g C</span>
+            <span class="mm g">${totalG}g G</span>
+          </div>
+        </div>
+        <div class="meal-kcal">
+          <div class="meal-kcal-val">${item.kcal}</div>
+          <div class="meal-kcal-lbl">kcal</div>
+        </div>
+        <button class="meal-check ${done ? "checked" : ""} ${isToday ? "" : "disabled-day"}" type="button" ${isToday ? `onclick="event.stopPropagation(); toggleMealCheck(this, '${item.id}')"` : 'disabled title="Solo podes marcar el dia de hoy"'} aria-label="${done ? "Desmarcar comida" : "Marcar comida"}">
+          <span class="mc-dot"></span>
+        </button>
+      </div>
+      <div class="meal-detail" id="${detailId}" aria-hidden="true">
+        ${note}
+        ${renderDetailGrid(item, prepId)}
+        ${altBtn}
+        ${altPanel}
+      </div>
+    </article>
+  `;
+};
 
 
 function renderFood(item) {
