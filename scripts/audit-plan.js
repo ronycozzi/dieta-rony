@@ -52,6 +52,10 @@ function buildAuditPrelude(prelude) {
   mealSearchText,
   cleanPlanText,
   getPlanDayIndex,
+  WAKE_TIME,
+  TRAINING_TIME,
+  TRAINING_DAY_TIMES,
+  REST_DAY_TIMES,
   BANNED_INGREDIENTS_RE,
   PLAIN_MENU_BLOCKLIST
 };
@@ -173,6 +177,8 @@ function audit(A) {
   const missingPrimaryCreatine = [];
   const duplicateMainNameHits = [];
   const sameDayMainAltHits = [];
+  const scheduleHits = [];
+  const morningLoadHits = [];
   const mainSlots = [];
   const daySlots = [];
 
@@ -251,6 +257,70 @@ function audit(A) {
       const totals = A.calculateDayTotals(day);
       const kcal = totals.kcal;
       const isRest = Boolean(day.isRestDay);
+      const findMeal = (pattern) => day.meals.find((meal) => pattern.test(normalizeText(meal.label)));
+      const breakfast = findMeal(/desayuno/);
+      const pre = findMeal(/pre-entreno/);
+      const post = findMeal(/post-entreno/);
+      const lunch = findMeal(/almuerzo/);
+      const snack = findMeal(/merienda/);
+      const dinner = findMeal(/cena/);
+
+      if (!isRest) {
+        const expected = A.TRAINING_DAY_TIMES || {
+          breakfast: "09:45",
+          pre: "11:15",
+          post: "13:10",
+          lunch: "14:15",
+          snack: "18:00",
+          dinner: "21:30",
+          night: "23:30"
+        };
+        if (day.trainingTime !== (A.TRAINING_TIME || "12:00")) {
+          scheduleHits.push({ weekNumber, dayNumber, id: day.id, issue: "trainingTime", got: day.trainingTime });
+        }
+        [
+          ["breakfast", breakfast, expected.breakfast],
+          ["pre", pre, expected.pre],
+          ["post", post, expected.post],
+          ["lunch", lunch, expected.lunch],
+          ["snack", snack, expected.snack],
+          ["dinner", dinner, expected.dinner]
+        ].forEach(([slot, meal, time]) => {
+          if (!meal || meal.time !== time) {
+            scheduleHits.push({ weekNumber, dayNumber, id: day.id, slot, expected: time, got: meal ? meal.time : null });
+          }
+        });
+        const preMorningMeals = day.meals.filter((meal) => meal.time < expected.pre);
+        if (preMorningMeals.length !== 1 || !breakfast || breakfast.kcal > 520 || (pre && pre.kcal > 260)) {
+          morningLoadHits.push({
+            weekNumber,
+            dayNumber,
+            id: day.id,
+            breakfastKcal: breakfast ? breakfast.kcal : null,
+            preKcal: pre ? pre.kcal : null,
+            preMorningMeals: preMorningMeals.map((meal) => `${meal.time} ${meal.label}`)
+          });
+        }
+      } else {
+        const expected = A.REST_DAY_TIMES || {
+          breakfast: "10:00",
+          lunch: "13:30",
+          snack: "17:30",
+          dinner: "21:30",
+          night: "23:30"
+        };
+        if (day.trainingTime) scheduleHits.push({ weekNumber, dayNumber, id: day.id, issue: "rest-trainingTime", got: day.trainingTime });
+        [
+          ["breakfast", breakfast, expected.breakfast],
+          ["lunch", lunch, expected.lunch],
+          ["snack", snack, expected.snack],
+          ["dinner", dinner, expected.dinner]
+        ].forEach(([slot, meal, time]) => {
+          if (!meal || meal.time !== time) {
+            scheduleHits.push({ weekNumber, dayNumber, id: day.id, slot, expected: time, got: meal ? meal.time : null });
+          }
+        });
+      }
       const target = isRest ? 2600 : 2850;
       const maxComfort = target + (isRest ? 160 : 180);
       const minComfort = isRest ? 2450 : 2650;
@@ -309,6 +379,8 @@ function audit(A) {
   summarize("missingPrimaryCreatine", missingPrimaryCreatine);
   summarize("duplicateMainNameHits", duplicateMainNameHits);
   summarize("sameDayMainAltHits", sameDayMainAltHits);
+  summarize("scheduleHits", scheduleHits);
+  summarize("morningLoadHits", morningLoadHits);
 
   assert(mealsMissingAlt.length === 0, `Audit: faltan opciones B (alt) en ${mealsMissingAlt.length} comidas.`);
   assert(dayTipHits.length === 0, `Audit: hay tips con ingredientes bloqueados (${dayTipHits.length}).`);
@@ -324,9 +396,11 @@ function audit(A) {
   assert(missingPrimaryCreatine.length === 0, `Audit: faltan creatinas diarias principales (${missingPrimaryCreatine.length}).`);
   assert(duplicateMainNameHits.length === 0, `Audit: hay platos principales repetidos en la misma semana (${duplicateMainNameHits.length}).`);
   assert(sameDayMainAltHits.length === 0, `Audit: hay opciones B iguales a otro plato principal del mismo dia (${sameDayMainAltHits.length}).`);
+  assert(scheduleHits.length === 0, `Audit: horarios nuevos de entreno 12:00 fallaron (${scheduleHits.length}).`);
+  assert(morningLoadHits.length === 0, `Audit: la manana de gym quedo muy cargada (${morningLoadHits.length}).`);
   assert(kcalOutliers.length === 0, `Audit: hay días fuera del rango kcal confort (${kcalOutliers.length}).`);
 
-  return { kcalOutliers, mealsMissingAlt, bannedHits, specialHits, dayTipHits, wheyMisuseHits, riceAltHits, sameCarbAltHits, riceSequenceHits, sameTurnRiceHits, nextDayRiceHits, missingPrimaryWhey, missingPrimaryCreatine, duplicateMainNameHits, sameDayMainAltHits };
+  return { kcalOutliers, mealsMissingAlt, bannedHits, specialHits, dayTipHits, wheyMisuseHits, riceAltHits, sameCarbAltHits, riceSequenceHits, sameTurnRiceHits, nextDayRiceHits, missingPrimaryWhey, missingPrimaryCreatine, duplicateMainNameHits, sameDayMainAltHits, scheduleHits, morningLoadHits };
 }
 
 function main() {
