@@ -4175,3 +4175,111 @@ body {
     grid-template-columns: 70px minmax(0, 1fr);
   }
 }
+
+/* Mobile overflow repair: final overrides win over older redesign blocks. */
+@media (max-width: 600px) {
+  .main-content {
+    overflow-x: hidden;
+  }
+
+  .topbar {
+    width: 100%;
+    margin: -14px 0 14px;
+  }
+
+  .topbar-left {
+    flex: 1 1 auto;
+  }
+
+  .topbar-right {
+    flex: 0 0 auto;
+    max-width: 92px;
+  }
+
+  .topbar-clock {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .gym-banner-inner {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    min-height: auto;
+    padding: 16px 14px;
+    gap: 16px;
+  }
+
+  .gym-banner-inner::after {
+    right: 4px;
+    bottom: -12px;
+    font-size: 4.1rem;
+  }
+
+  .gym-banner-left {
+    width: 100%;
+    align-items: flex-start;
+  }
+
+  .gym-banner-title {
+    font-size: clamp(1.9rem, 9vw, 2.35rem);
+  }
+
+  .gym-banner-sub {
+    font-size: 0.78rem;
+    line-height: 1.35;
+  }
+
+  .gym-banner-stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    width: 100%;
+    flex: 1 1 100%;
+    grid-column: 1;
+  }
+
+  .gym-stat {
+    min-width: 0;
+    align-items: flex-start;
+    padding-left: 0;
+    border-left: 0;
+  }
+
+  .gym-stat-val {
+    font-size: 0.94rem;
+  }
+
+  .gym-stat-lbl {
+    font-size: 0.5rem;
+  }
+
+  .water-dots {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 7px;
+  }
+
+  .water-dot {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .week-overview {
+    overflow: hidden;
+  }
+
+  .week-overview-grid {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 4px;
+    overflow: visible;
+  }
+
+  .wo-day {
+    padding: 8px 2px;
+  }
+
+  .wo-ring {
+    width: 36px;
+    height: 36px;
+  }
+}

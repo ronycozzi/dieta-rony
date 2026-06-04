@@ -163,6 +163,9 @@ function auditSourceQuality(src) {
   const rawHits = rawBlockedTerms.filter((term) => rawMenuSource.includes(term));
   assert(rawHits.length === 0, `Audit: el menu crudo conserva ingredientes bloqueados: ${rawHits.join(", ")}.`);
 
+  const brokenEncodingHits = src.match(/[A-Za-zÁÉÍÓÚáéíóúÑñ]\?[A-Za-zÁÉÍÓÚáéíóúÑñ]|Ã.|Â.|�/g) || [];
+  assert(brokenEncodingHits.length === 0, `Audit: hay textos con encoding roto: ${brokenEncodingHits.slice(0, 10).join(", ")}.`);
+
   ["togglePrep", "toggleAltMeal", "renderMeal"].forEach((name) => {
     const functionDefs = countMatches(src, new RegExp(`\\bfunction\\s+${name}\\s*\\(`, "g"));
     const functionAssignments = countMatches(src, new RegExp(`\\b${name}\\s*=\\s*function\\b`, "g"));
@@ -170,6 +173,7 @@ function auditSourceQuality(src) {
   });
 
   assert(!/<div class="meal-head"[^>]*role="button"/.test(src), "Audit: meal-head no debe volver a ser un role=button con controles adentro.");
+  assert(!/onkeydown="handleMealHeadKeydown/.test(src), "Audit: meal-open-btn es un button nativo; no debe duplicar toggle con onkeydown.");
 }
 
 function auditDayIndexMapping(A) {

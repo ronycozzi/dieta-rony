@@ -2777,6 +2777,63 @@ function plainText(value) {
     .toLowerCase();
 }
 
+function displayText(value) {
+  return String(value || "")
+    .replace(/\bAtun\b/g, "Atún")
+    .replace(/\batun\b/g, "atún")
+    .replace(/\blimon\b/g, "limón")
+    .replace(/\bLimon\b/g, "Limón")
+    .replace(/\bproteina\b/g, "proteína")
+    .replace(/\bProteina\b/g, "Proteína")
+    .replace(/\benergia\b/g, "energía")
+    .replace(/\bEnergia\b/g, "Energía")
+    .replace(/\bcalorias\b/g, "calorías")
+    .replace(/\bCalorias\b/g, "Calorías")
+    .replace(/\bdia\b/g, "día")
+    .replace(/\bDia\b/g, "Día")
+    .replace(/\bdias\b/g, "días")
+    .replace(/\bDias\b/g, "Días")
+    .replace(/\bporcion\b/g, "porción")
+    .replace(/\bPorcion\b/g, "Porción")
+    .replace(/\bmas\b/g, "más")
+    .replace(/\bMas\b/g, "Más")
+    .replace(/\bdespues\b/g, "después")
+    .replace(/\bDespues\b/g, "Después")
+    .replace(/\bcoccion\b/g, "cocción")
+    .replace(/\bCoccion\b/g, "Cocción")
+    .replace(/\bsarten\b/g, "sartén")
+    .replace(/\bSarten\b/g, "Sartén")
+    .replace(/\bpimenton\b/g, "pimentón")
+    .replace(/\bPimenton\b/g, "Pimentón")
+    .replace(/\bmorron\b/g, "morrón")
+    .replace(/\bMorron\b/g, "Morrón")
+    .replace(/\bjamon\b/g, "jamón")
+    .replace(/\bJamon\b/g, "Jamón")
+    .replace(/\bpure\b/g, "puré")
+    .replace(/\bPure\b/g, "Puré")
+    .replace(/\bfrio\b/g, "frío")
+    .replace(/\bFrio\b/g, "Frío")
+    .replace(/\bliquida\b/g, "líquida")
+    .replace(/\besten\b/g, "estén")
+    .replace(/\bPone\b/g, "Poné")
+    .replace(/\bPrepara\b/g, "Prepará")
+    .replace(/\bAgrega\b/g, "Agregá")
+    .replace(/\bAcompana\b/g, "Acompañá")
+    .replace(/\bSuma\b/g, "Sumá")
+    .replace(/\bEvita\b/g, "Evitá")
+    .replace(/\bArma\b/g, "Armá")
+    .replace(/\bCerra\b/g, "Cerrá")
+    .replace(/\bServi\b/g, "Serví")
+    .replace(/\bHervi\b/g, "Herví")
+    .replace(/\bCocina\b/g, "Cociná")
+    .replace(/\bCalenta\b/g, "Calentá")
+    .replace(/\bDora\b/g, "Dorá")
+    .replace(/\bTermina\b/g, "Terminá")
+    .replace(/\bIntegra\b/g, "Integrá")
+    .replace(/\bMantene\b/g, "Mantené")
+    .replace(/\bMetodo\b/g, "Método");
+}
+
 function mealSearchText(item) {
   if (!item) return "";
   return plainText([
@@ -3132,11 +3189,11 @@ function renderPrepContent(item) {
   return `
     <div class="recipe-meta">
       <span>Tiempo: ${meta.time}</span>
-      <span>Metodo: ${meta.method}</span>
+      <span>Método: ${displayText(meta.method)}</span>
     </div>
     <div class="prep-steps">
       ${steps.map((step, index) => `
-        <div class="prep-step"><div class="prep-num">${index + 1}</div><div class="prep-text">${step}</div></div>
+        <div class="prep-step"><div class="prep-num">${index + 1}</div><div class="prep-text">${displayText(step)}</div></div>
       `).join("")}
     </div>
   `;
@@ -5283,7 +5340,7 @@ const shopping = {
   "Suplementos": [
     "Creatina monohidrato · 3-5g diario",
     "Whey protein OneFit · 1 scoop diario",
-    "NAC Swanson 600mg · opcional, 1 capsula con comida",
+    "NAC Swanson 600mg · opcional, 1 cápsula con comida",
     "Omega 3 (opcional pero recomendado)",
     "Vitamina D3 (opcional)",
     "Magnesio o ZMA (opcional)"
@@ -5410,7 +5467,7 @@ function quickCheckCurrentMeal() {
 
   const state = getDayState();
   if (state[closest.id]) {
-    showToast(`Ya tenías marcado: ${closest.label}`);
+    showToast(`Ya tenías marcado: ${displayText(closest.label)}`);
     return;
   }
 
@@ -5431,7 +5488,7 @@ function quickCheckCurrentMeal() {
   if (justHitGoal) {
     celebrateGoal();
   }
-  showToast(`✓ ${closest.label} marcado: ${closest.name}`);
+  showToast(`✓ ${displayText(closest.label)} marcado: ${displayText(closest.name)}`);
 }
 
 // =====================================================
@@ -5450,6 +5507,12 @@ function showToast(text) {
     toast.className = "toast";
     document.body.appendChild(toast);
   }
+  toast.onclick = null;
+  toast.onkeydown = null;
+  toast.removeAttribute("tabindex");
+  toast.removeAttribute("aria-label");
+  toast.classList.remove("action");
+  toast.setAttribute("role", "status");
   ensureToastA11y(toast);
   toast.textContent = text;
   toast.classList.add("show");
@@ -5475,6 +5538,7 @@ function showActionToast(text, onClick, durationMs = 9000) {
     toast.onclick = null;
     toast.onkeydown = null;
     toast.removeAttribute("tabindex");
+    toast.removeAttribute("aria-label");
     toast.setAttribute("role", "status");
     toast.classList.remove("show", "action");
   };
@@ -5573,20 +5637,20 @@ function renderActiveDay() {
         <div class="day-context-strip ${isViewingToday ? "is-today" : "is-planning"}" role="status" aria-live="polite">
           <div>
             <span class="day-context-kicker">${isViewingToday ? "Hoy real" : "Planificación"}</span>
-            <strong>${isViewingToday ? "Estás viendo el día operativo de hoy." : `Estás viendo ${day.title}. Hoy real es ${todayObj.title}.`}</strong>
+            <strong>${isViewingToday ? "Estás viendo el día operativo de hoy." : `Estás viendo ${displayText(day.title)}. Hoy real es ${displayText(todayObj.title)}.`}</strong>
           </div>
           ${isViewingToday ? "" : `<button class="day-context-action" type="button" onclick="scrollToTodayPanel()">Volver a hoy</button>`}
         </div>
         <div class="day-header-top">
           <div class="day-icon ${day.isRestDay ? "rest" : ""}">${day.workout.icon}</div>
           <div>
-            <div class="day-label">${day.title}</div>
-            <div class="day-type">${day.type} · <span>~${adjustedKcal} kcal</span></div>
+            <div class="day-label">${displayText(day.title)}</div>
+            <div class="day-type">${displayText(day.type)} · <span>~${adjustedKcal} kcal</span></div>
           </div>
         </div>
         ${day.workout.duration !== "—" ? `
           <div class="workout-info">
-            <strong>🏋️ ${day.workout.name}</strong> · ${day.workout.duration}
+            <strong>🏋️ ${displayText(day.workout.name)}</strong> · ${displayText(day.workout.duration)}
             ${day.trainingTime ? ` · Entreno ${day.trainingTime}` : ""}
             ${day.workout.optional ? '<span class="opt-label">opcional</span>' : ""}
           </div>` : ""}
@@ -5600,7 +5664,7 @@ function renderActiveDay() {
               </select>
             </label>
           </div>` : ""}
-        <div class="workout-tags">${day.tags.map((tag) => `<span class="workout-tag">${tag}</span>`).join("")}</div>
+        <div class="workout-tags">${day.tags.map((tag) => `<span class="workout-tag">${displayText(tag)}</span>`).join("")}</div>
       </div>
 
       <div class="day-total">
@@ -5611,7 +5675,7 @@ function renderActiveDay() {
         ${renderProgressBar("grasas", consumed.g + "g", day.fats + "g", "linear-gradient(90deg, #61a8ff, #8fc6ff)")}
       </div>
 
-      <div class="tip-card"><div class="tip-icon">💡</div><div class="tip-text">${day.tip}</div></div>
+      <div class="tip-card"><div class="tip-icon">💡</div><div class="tip-text">${displayText(day.tip)}</div></div>
 
       <div class="quick-actions">
         <button class="quick-btn" type="button" onclick="quickCheckCurrentMeal()">⚡ Marcar comida actual</button>
@@ -5692,8 +5756,8 @@ function toggleAltMeal(mealId) {
   if (btn) {
     btn.setAttribute("aria-expanded", String(isOpen));
     btn.innerHTML = isOpen
-      ? '<span class="alt-btn-icon">A</span> Volver a opci?n principal'
-      : '<span class="alt-btn-icon">B</span> No me convence - Ver opci?n B';
+      ? '<span class="alt-btn-icon">A</span> Volver a opción principal'
+      : '<span class="alt-btn-icon">B</span> No me convence - Ver opción B';
     btn.classList.toggle("active", isOpen);
   }
 }
@@ -5707,7 +5771,7 @@ function togglePrep(button) {
   button.setAttribute("aria-expanded", String(isOpen));
   body.setAttribute("aria-hidden", String(!isOpen));
   const label = button.querySelector(".prep-label");
-  if (label) label.textContent = isOpen ? "Ocultar preparaci?n" : "Ver preparaci?n";
+  if (label) label.textContent = isOpen ? "Ocultar preparación" : "Ver preparación";
 }
 function renderMeal(item) {
   const done = isDone(item.id);
@@ -5719,7 +5783,7 @@ function renderMeal(item) {
   const prepId = `meal-prep-${item.id}`;
   const altId = `meal-alt-${item.id}`;
   const altPrepId = `meal-alt-prep-${item.id}`;
-  const note = item.note ? `<div class="meal-note">Nota: ${item.note}</div>` : "";
+  const note = item.note ? `<div class="meal-note">Nota: ${displayText(item.note)}</div>` : "";
   const totalP = item.foods.reduce((s, f) => s + f.p, 0);
   const totalC = item.foods.reduce((s, f) => s + f.c, 0);
   const totalG = item.foods.reduce((s, f) => s + f.g, 0);
@@ -5734,7 +5798,7 @@ function renderMeal(item) {
       <div class="recipe-sheet">
         <div class="detail-kicker">Cocina paso a paso</div>
         <button class="prep-toggle ${isAlt ? "alt-prep-toggle" : ""}" type="button" onclick="togglePrep(this)" aria-expanded="false" aria-controls="${bodyId}">
-          <span class="prep-label">Ver preparaci?n</span>
+          <span class="prep-label">Ver preparación</span>
         </button>
         <div class="prep-body" id="${bodyId}" aria-hidden="true">
           ${renderPrepContent(mealItem)}
@@ -5746,11 +5810,11 @@ function renderMeal(item) {
   const altPanel = hasAlt ? `
     <div class="alt-meal-panel" id="${altId}" data-alt-for="${item.id}" aria-hidden="true">
       <div class="alt-meal-header">
-        <span class="alt-badge">Opci?n B</span>
+        <span class="alt-badge">Opción B</span>
         <span class="alt-kcal">${item.alt.kcal} kcal</span>
       </div>
-      <div class="alt-meal-name">${item.alt.name}</div>
-      <div class="alt-meal-desc">${item.alt.desc}</div>
+      <div class="alt-meal-name">${displayText(item.alt.name)}</div>
+      <div class="alt-meal-desc">${displayText(item.alt.desc)}</div>
       <div class="alt-macro-row">
         <span class="mm p">${item.alt.foods.reduce((s, f) => s + f.p, 0)}g P</span>
         <span class="mm c">${item.alt.foods.reduce((s, f) => s + f.c, 0)}g C</span>
@@ -5762,7 +5826,7 @@ function renderMeal(item) {
 
   const altBtn = hasAlt ? `
     <button class="alt-meal-btn" type="button" data-alt-btn="${item.id}" onclick="event.stopPropagation(); toggleAltMeal('${item.id}')" aria-expanded="false" aria-controls="${altId}">
-      <span class="alt-btn-icon">B</span> No me convence - Ver opci?n B
+      <span class="alt-btn-icon">B</span> No me convence - Ver opción B
     </button>
   ` : "";
 
@@ -5772,14 +5836,14 @@ function renderMeal(item) {
       <div class="meal-type-stripe"></div>
       ${isUpcoming ? '<div class="upcoming-tag">Toca ahora</div>' : ""}
       <div class="meal-head">
-        <button class="meal-open-btn" type="button" aria-expanded="false" aria-controls="${detailId}" onclick="toggleMeal(this)" onkeydown="handleMealHeadKeydown(event, this)" aria-label="Abrir detalle de ${item.label}: ${item.name}">
+        <button class="meal-open-btn" type="button" aria-expanded="false" aria-controls="${detailId}" onclick="toggleMeal(this)" aria-label="Abrir detalle de ${displayText(item.label)}: ${displayText(item.name)}">
           <div class="meal-time-col">
             <div class="meal-time">${item.time}</div>
           </div>
           <div class="meal-info-col">
-            <div class="meal-label-chip">${item.label}</div>
-            <div class="meal-name">${item.name}</div>
-            <div class="meal-desc">${item.desc}</div>
+            <div class="meal-label-chip">${displayText(item.label)}</div>
+            <div class="meal-name">${displayText(item.name)}</div>
+            <div class="meal-desc">${displayText(item.desc)}</div>
             <div class="meal-mini-macros">
               <span class="mm p">${totalP}g P</span>
               <span class="mm c">${totalC}g C</span>
@@ -5791,7 +5855,7 @@ function renderMeal(item) {
             <div class="meal-kcal-lbl">kcal</div>
           </div>
         </button>
-        <button class="meal-check ${done ? "checked" : ""} ${isToday ? "" : "disabled-day"}" type="button" ${isToday ? `onclick="event.stopPropagation(); toggleMealCheck(this, '${item.id}')"` : 'disabled title="Solo pod?s marcar el d?a de hoy"'} aria-label="${done ? "Desmarcar comida" : "Marcar comida"}">
+        <button class="meal-check ${done ? "checked" : ""} ${isToday ? "" : "disabled-day"}" type="button" ${isToday ? `onclick="event.stopPropagation(); toggleMealCheck(this, '${item.id}')"` : 'disabled title="Solo podés marcar el día de hoy"'} aria-label="${done ? "Desmarcar comida" : "Marcar comida"}">
           <span class="mc-dot"></span>
         </button>
       </div>
@@ -5808,7 +5872,7 @@ function renderMeal(item) {
 function renderFood(item) {
   return `
     <div class="food-item">
-      <span class="food-name">${item.name}</span>
+      <span class="food-name">${displayText(item.name)}</span>
       <div class="food-macros">
         <span class="fm p">${item.p}g P</span>
         <span class="fm c">${item.c}g C</span>
@@ -5837,9 +5901,9 @@ function renderSupplements() {
       <article class="supp-card">
         <div class="supp-icon">${SUPP_ICONS[s.name] || "💊"}</div>
         <div class="supp-body">
-          <div class="supp-name">${s.name}</div>
-          <div class="supp-detail">${s.detail}</div>
-          <div class="supp-when"><span class="supp-when-icon">⏰</span>${s.when}</div>
+          <div class="supp-name">${displayText(s.name)}</div>
+          <div class="supp-detail">${displayText(s.detail)}</div>
+          <div class="supp-when"><span class="supp-when-icon">⏰</span>${displayText(s.when)}</div>
         </div>
       </article>
     `).join("");
@@ -5849,9 +5913,9 @@ function renderSupplements() {
       <article class="supp-card supp-card-optional">
         <div class="supp-icon">${SUPP_ICONS[s.name] || "💊"}</div>
         <div class="supp-body">
-          <div class="supp-name">${s.name}</div>
-          <div class="supp-detail">${s.detail}</div>
-          <div class="supp-when"><span class="supp-when-icon">⏰</span>${s.when}</div>
+          <div class="supp-name">${displayText(s.name)}</div>
+          <div class="supp-detail">${displayText(s.detail)}</div>
+          <div class="supp-when"><span class="supp-when-icon">⏰</span>${displayText(s.when)}</div>
         </div>
       </article>
     `).join("");
@@ -5878,7 +5942,7 @@ function renderShopping() {
     <div class="sl-category">
       <div class="sl-cat-title">
         <span class="sl-cat-icon">${SHOP_CAT_ICONS[category] || "🛒"}</span>
-        ${category}
+        ${displayText(category)}
         <span class="sl-cat-count">${items.length}</span>
       </div>
       <div class="sl-items-grid">
@@ -5888,8 +5952,8 @@ function renderShopping() {
           return `<div class="sl-item" onclick="toggleShop(this)">
             <div class="sl-check"><span class="sl-check-icon">✓</span></div>
             <div class="sl-info">
-              <span class="sl-name">${name}</span>
-              ${qty ? `<span class="sl-qty">${qty}</span>` : ""}
+              <span class="sl-name">${displayText(name)}</span>
+              ${qty ? `<span class="sl-qty">${displayText(qty)}</span>` : ""}
             </div>
           </div>`;
         }).join("")}
@@ -5942,8 +6006,8 @@ function updateShoppingProgress() {
 function exportShopping() {
   const lines = ["🛒 LISTA DE COMPRAS · DIETA RONY (78-80kg)", ""];
   Object.entries(shopping).forEach(([category, items]) => {
-    lines.push(`*${category}*`);
-    items.forEach((item) => lines.push(`• ${item}`));
+    lines.push(`*${displayText(category)}*`);
+    items.forEach((item) => lines.push(`• ${displayText(item)}`));
     lines.push("");
   });
   const text = lines.join("\n");
@@ -5955,18 +6019,18 @@ function exportShopping() {
   }
 }
 
-function copyToClipboard(text) {
+function copyToClipboard(text, successMessage = "Lista copiada — pegala en WhatsApp") {
   // FIX: navigator.clipboard requiere HTTPS. En HTTP usamos execCommand como fallback.
   if (navigator.clipboard && window.isSecureContext) {
     navigator.clipboard.writeText(text).then(() => {
-      showToast("Lista copiada — pegala en WhatsApp");
-    }).catch(() => copyToClipboardFallback(text));
+      showToast(successMessage);
+    }).catch(() => copyToClipboardFallback(text, successMessage));
   } else {
-    copyToClipboardFallback(text);
+    copyToClipboardFallback(text, successMessage);
   }
 }
 
-function copyToClipboardFallback(text) {
+function copyToClipboardFallback(text, successMessage = "Lista copiada — pegala en WhatsApp") {
   const ta = document.createElement("textarea");
   ta.value = text;
   ta.style.cssText = "position:fixed;top:-9999px;left:-9999px;opacity:0";
@@ -5975,7 +6039,7 @@ function copyToClipboardFallback(text) {
   ta.select();
   try {
     document.execCommand("copy");
-    showToast("Lista copiada — pegala en WhatsApp");
+    showToast(successMessage);
   } catch {
     showToast("No se pudo copiar. Copiá manualmente.");
   }
@@ -6025,7 +6089,7 @@ function updateGymBanner() {
         <div class="gym-banner-left">
           <div class="gym-banner-icon">😴</div>
           <div>
-            <div class="gym-banner-title">Día de descanso · ${day.title}</div>
+            <div class="gym-banner-title">Día de descanso · ${displayText(day.title)}</div>
             <div class="gym-banner-sub">Caminata 20 min recomendada · Recargá energía</div>
           </div>
         </div>
@@ -6042,8 +6106,8 @@ function updateGymBanner() {
       <div class="gym-banner-left">
         <div class="gym-banner-icon">${day.workout.icon}</div>
         <div>
-          <div class="gym-banner-title">${day.workout.name}</div>
-          <div class="gym-banner-sub">Entreno ${trainingTime}${preMeal ? " · Pre-entreno " + preMeal.time : ""} · ${day.title}</div>
+          <div class="gym-banner-title">${displayText(day.workout.name)}</div>
+          <div class="gym-banner-sub">Entreno ${trainingTime}${preMeal ? " · Pre-entreno " + preMeal.time : ""} · ${displayText(day.title)}</div>
         </div>
       </div>
       <div class="gym-banner-stats">
@@ -6070,7 +6134,7 @@ function updateNextMeal() {
   if (labelEl) {
     labelEl.textContent = viewedDay.id === scheduleDay.id
       ? "⏰ Hoy · próxima comida"
-      : `⏰ Hoy real · viendo ${viewedDay.title}`;
+      : `⏰ Hoy real · viendo ${displayText(viewedDay.title)}`;
   }
   if (el) {
     if (next) {
@@ -6084,11 +6148,11 @@ function updateNextMeal() {
       const context = viewedDay.id === scheduleDay.id
         ? ""
         : `<span class="next-meal-context">La tarjeta sigue anclada a hoy para no mezclar horarios ficticios.</span>`;
-      el.innerHTML = `Próxima: <strong>${next.time}</strong> · ${next.name} <span class="next-meal-time">${timeLeft}</span>${context}`;
+      el.innerHTML = `Próxima: <strong>${next.time}</strong> · ${displayText(next.name)} <span class="next-meal-time">${timeLeft}</span>${context}`;
     } else {
       const suffix = viewedDay.id === scheduleDay.id
         ? "Ya no quedan comidas para hoy. Descansá bien."
-        : `Hoy ya cerró. Seguís viendo ${viewedDay.title}.`;
+        : `Hoy ya cerró. Seguís viendo ${displayText(viewedDay.title)}.`;
       el.textContent = suffix;
     }
   }
@@ -6455,8 +6519,8 @@ function scheduleMealNotifs() {
     const diff = target - now;
     if (diff <= 0) return;
     const id = setTimeout(() => {
-      new Notification(`${m.label} · ${m.time}`, {
-        body: `${m.name} · ${m.kcal} kcal`,
+      new Notification(`${displayText(m.label)} · ${m.time}`, {
+        body: `${displayText(m.name)} · ${m.kcal} kcal`,
         tag: `meal-${m.id}`
       });
       updateNextMeal();
@@ -6723,6 +6787,15 @@ function nextOccurrenceOfDay(targetDayIndex) {
   return next;
 }
 
+function getCurrentPlanWeekStart() {
+  const today = new Date();
+  const dayNumber = today.getDay() === 0 ? 7 : today.getDay();
+  const monday = new Date(today);
+  monday.setDate(today.getDate() - (dayNumber - 1));
+  monday.setHours(0, 0, 0, 0);
+  return monday;
+}
+
 function escapeICS(text) {
   return String(text)
     .replace(/\\/g, "\\\\")
@@ -6745,14 +6818,15 @@ function generateICS() {
 
   // Eventos de comidas (semanales recurrentes) — las 4 semanas del menú rotativo
   // RRULE exporta solo la semana correspondiente usando BYDAY. Para menus rotativos
-  // usamos la primera ocurrencia real de cada semana para la fecha de arranque.
+  // usamos el lunes de la semana actual como ancla para no mezclar semanas al importar a mitad de semana.
+  const currentPlanWeekStart = getCurrentPlanWeekStart();
   allWeeks.forEach((weekDays, wi) => {
     weekDays.forEach((day) => {
       day.meals.forEach((m) => {
         const [h, mn] = m.time.split(":").map(Number);
-        // FIX: cada semana del menú rotativo debe empezar wi semanas después de la semana actual
-        const startDate = nextOccurrenceOfDay(day.dayIndex);
-        startDate.setDate(startDate.getDate() + wi * 7);
+        // FIX: cada semana del menú rotativo queda como bloque lunes-domingo.
+        const startDate = new Date(currentPlanWeekStart);
+        startDate.setDate(currentPlanWeekStart.getDate() + wi * 7 + (day.dayIndex - 1));
         startDate.setHours(h, mn, 0, 0);
         const endDate = new Date(startDate.getTime() + 30 * 60 * 1000);
         // UID único por semana para evitar colisiones entre semanas del menú
@@ -6761,15 +6835,15 @@ function generateICS() {
         lines.push(
           "BEGIN:VEVENT",
           `UID:${uid}`,
-          `SUMMARY:🍽️ [S${wi+1}] ${escapeICS(m.label)}: ${escapeICS(m.name)}`,
-          `DESCRIPTION:${escapeICS("Semana " + (wi+1) + " · " + m.kcal + " kcal · " + m.desc)}`,
+          `SUMMARY:🍽️ [S${wi+1}] ${escapeICS(displayText(m.label))}: ${escapeICS(displayText(m.name))}`,
+          `DESCRIPTION:${escapeICS("Semana " + (wi+1) + " · " + m.kcal + " kcal · " + displayText(m.desc))}`,
           `DTSTART;TZID=${TZ}:${formatICSLocal(startDate)}`,
           `DTEND;TZID=${TZ}:${formatICSLocal(endDate)}`,
           `RRULE:FREQ=WEEKLY;INTERVAL=4;BYDAY=${ICS_RRULE_DAY[day.dayIndex]}`,
           "BEGIN:VALARM",
           "TRIGGER:-PT5M",
           "ACTION:DISPLAY",
-          `DESCRIPTION:${escapeICS(m.label + ": " + m.name)}`,
+          `DESCRIPTION:${escapeICS(displayText(m.label) + ": " + displayText(m.name))}`,
           "END:VALARM",
           "END:VEVENT"
         );
@@ -6875,25 +6949,25 @@ function shareDay() {
   if (!day) return;
 
   const lines = [];
-  lines.push(`🍽️ DIETA · ${day.title.toUpperCase()}`);
-  lines.push(`${day.workout.icon} ${day.type}`);
+  lines.push(`🍽️ DIETA · ${displayText(day.title).toUpperCase()}`);
+  lines.push(`${day.workout.icon} ${displayText(day.type)}`);
   lines.push(`📊 ${day.kcal} kcal · ${day.protein}g P · ${day.carbs}g C · ${day.fats}g G`);
   lines.push("");
 
   day.meals.forEach((m) => {
-    lines.push(`*${m.time}* — ${m.label}`);
-    lines.push(`▸ ${m.name} (${m.kcal} kcal)`);
-    lines.push(`  ${m.desc}`);
+    lines.push(`*${m.time}* — ${displayText(m.label)}`);
+    lines.push(`▸ ${displayText(m.name)} (${m.kcal} kcal)`);
+    lines.push(`  ${displayText(m.desc)}`);
     lines.push("");
   });
 
-  lines.push(`💡 ${day.tip}`);
+  lines.push(`💡 ${displayText(day.tip)}`);
 
   const text = lines.join("\n");
 
   if (navigator.share) {
     navigator.share({
-      title: `Dieta · ${day.title}`,
+      title: `Dieta · ${displayText(day.title)}`,
       text
     }).catch(() => copyToClipboard(text));
   } else {
@@ -6942,7 +7016,7 @@ applyRiceRotationRules();
 applyFreshMainVarietyRules();
 applyRiceRotationRules();
 applyCalorieBalanceRules();
-// Segundo pase: algunos dÃ­as quedan por arriba del maxComfort reciÃ©n despuÃ©s de ajustes del primer pase.
+// Segundo pase: algunos días quedan por arriba del maxComfort recién después de ajustes del primer pase.
 applyCalorieBalanceRules();
 applyRiceRotationRules();
 applyFreshMainVarietyRules();
@@ -7191,7 +7265,7 @@ function installShortcut(action) {
   const siriPhrase = siriPhrases[action] || name;
 
   // 1. Copiar URL al portapapeles automáticamente
-  copyToClipboard(url);
+  copyToClipboard(url, "URL del atajo copiada");
 
   // 2. Mostrar mini-panel dentro del modal (no confirm feo)
   // Eliminar panel previo si existe
@@ -7223,7 +7297,7 @@ function installShortcut(action) {
       <button class="sip-btn-primary" onclick="window.location.href='shortcuts://'">
         ⚡ Abrir app Atajos ahora
       </button>
-      <button class="sip-btn-secondary" onclick="copyToClipboard(url); showToast('URL copiada')">
+      <button class="sip-btn-secondary" onclick="copyToClipboard('${url}', 'URL copiada')">
         Copiar URL de nuevo
       </button>
     </div>
