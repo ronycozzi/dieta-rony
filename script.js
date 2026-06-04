@@ -5156,19 +5156,24 @@ const supplementsBase = [
     name: "Creatina monohidrato",
     detail: "3-5g por día, todos los días. No se cicla y no depende de entrenar ese día; funciona por saturación y constancia.",
     when: "Con cualquier comida (o con el post-entreno). La clave es cumplirla todos los días."
+  },
+  {
+    name: "Whey protein",
+    detail: "1 scoop por día. Te ayuda a cerrar proteína sin forzar platos enormes; no reemplaza almuerzo, cena ni comida real.",
+    when: "Post-entreno o en la comida que te quede más cómoda. Con agua si la leche cae pesada."
   }
 ];
 
 const supplementsOptional = [
   {
-    name: "Whey protein",
-    detail: "Comodin de 1 scoop cuando ese dia no llegas a la proteina con comida real. Prioridad: huevos, pollo, carne magra, atun, salmon, leche y quesos.",
-    when: "Opcional. Mejor post-entreno o al cierre del dia si quedaste corto."
-  },
-  {
     name: "Omega 3 (EPA + DHA)",
     detail: "1-2g por día con almuerzo o cena. Reduce inflamación, mejora la recuperación post-gym y la salud cardiovascular. Más útil si comés poco pescado.",
     when: "Con comida que contenga grasa (mejor absorción)"
+  },
+  {
+    name: "NAC (N-Acetyl Cysteine)",
+    detail: "600mg. Opcional: apoyo antioxidante y respiratorio por su rol como precursor de glutatión. Para ganar músculo o rendimiento la evidencia es limitada, así que no reemplaza comida, whey ni creatina.",
+    when: "1 cápsula con almuerzo o cena. Evitalo si usás nitroglicerina; consultá antes si tenés asma sensible, úlceras/reflujo fuerte, tratamientos médicos o cirugía próxima."
   },
   {
     name: "Vitamina D3",
@@ -5278,6 +5283,7 @@ const shopping = {
   "Suplementos": [
     "Creatina monohidrato · 3-5g diario",
     "Whey protein OneFit · 1 scoop diario",
+    "NAC Swanson 600mg · opcional, 1 capsula con comida",
     "Omega 3 (opcional pero recomendado)",
     "Vitamina D3 (opcional)",
     "Magnesio o ZMA (opcional)"
@@ -5817,6 +5823,7 @@ const SUPP_ICONS = {
   "Whey protein diario": "🥛",
   "Creatina monohidrato": "⚡",
   "Omega 3 (EPA + DHA)": "🐟",
+  "NAC (N-Acetyl Cysteine)": "🛡️",
   "Vitamina D3": "☀️",
   "Magnesio o ZMA": "🌙",
   "Multivitamínico (opcional)": "💊"

@@ -260,7 +260,7 @@ function audit(A) {
         if (/whey/i.test(mainVisible) && !/(desayuno|media|merienda|post-entreno|antes de dormir|refuerzo)/i.test(meal.label)) {
           wheyMisuseHits.push({ weekNumber, dayNumber, mealNumber, label: meal.label, name: meal.name });
         }
-        if (/whey/i.test(mainVisible) && /\b(opcional|solo si falta|si falta proteina)\b/i.test(mainVisible)) {
+        if (/whey/i.test(mainVisible) && /\b(opcional|solo si falta|si falta proteina|comodin)\b/i.test(mainVisible)) {
           optionalWheyHits.push({ weekNumber, dayNumber, mealNumber, label: meal.label, name: meal.name });
         }
 

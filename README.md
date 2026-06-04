@@ -40,7 +40,7 @@ Jueves piernas · Viernes full body · Sábado/Domingo descanso.
 - "Resetear día"
 
 ### Nutrición
-- Suplementos base (creatina + whey diarios) y opcionales (omega 3, vit D, magnesio)
+- Suplementos base (creatina + whey diarios) y opcionales (omega 3, NAC, vit D, magnesio)
 - 10 reglas de mantenimiento + recomposición
 - Notificaciones programadas para cada comida y agua cada 90 min
 
