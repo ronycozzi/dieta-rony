@@ -1,16 +1,21 @@
 // Service Worker · Dieta Rony Cozzi
 // Network-first para HTML/JS/CSS; cache-first para assets estáticos.
 
-const VERSION = "v48-2026-06-17-operational-brief";
+const VERSION = "v49-2026-06-17-offline-fonts";
 const CACHE_NAME = `dieta-rony-${VERSION}`;
 const ASSETS = [
   "./",
   "./index.html",
+  "./assets/fonts/fonts.css",
   "./styles.css",
   "./script.js",
   "./favicon.svg",
   "./manifest.json",
   "./assets/rony-cozzi.jpg",
+  "./assets/fonts/plus-jakarta-sans-latin-ext.woff2",
+  "./assets/fonts/plus-jakarta-sans-latin.woff2",
+  "./assets/fonts/space-grotesk-latin-ext.woff2",
+  "./assets/fonts/space-grotesk-latin.woff2",
   "./assets/icon-192.png",
   "./assets/icon-512.png",
   "./assets/apple-touch-icon.png"

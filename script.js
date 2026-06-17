@@ -6469,7 +6469,7 @@ function renderWeightTracker() {
   if (currentKg > 80) {
     suggestion = `<div class="weight-alert">⚠️ Pasaste tu límite (80kg). <strong>Achicá 1 porción de carbo</strong> en el almuerzo o cena (½ papa, ½ taza arroz, sacá 1 tostada) hasta volver al rango 78-80kg.</div>`;
   } else if (currentKg < 77) {
-    suggestion = `<div class="weight-alert">⚠️ Bajaste del rango (78-80kg). <strong>Sumá 200 kcal/día</strong>: 1 cda extra de manteca de maní + 1 banana + ½ taza arroz extra al almuerzo.</div>`;
+    suggestion = `<div class="weight-alert">⚠️ Bajaste del rango (78-80kg). <strong>Sumá 200 kcal/día</strong>: agregá una merienda real o reforzá una comida base con 2 tostadas con jamón y queso, 1 porción chica de tortilla/tarta casera o ½ taza extra de arroz/papa en el almuerzo.</div>`;
   } else if (currentKg >= 78 && currentKg <= 80) {
     suggestion = `<div class="weight-good">✓ Mantenimiento perfecto. Estás en ${currentKg}kg, dentro del rango 78-80kg.</div>`;
   } else if (currentKg >= 77 && currentKg < 78) {
