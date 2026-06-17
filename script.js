@@ -4103,16 +4103,16 @@ function freshFishOptions() {
 }
 
 function freshFridayFishAltTemplate() {
-  return altMeal("Fideos frios con atun, huevo y tomate", "Fideos - atun - huevo - tomate", [
+  return altMeal("Merluza con fideos, huevo y tomate", "Merluza - fideos - huevo - tomate", [
     food("85g fideos secos", 11, 62, 2),
-    food("1 lata grande de atun", 32, 0, 2),
+    food("230g merluza", 46, 0, 4),
     food("1 huevo duro", 6, 1, 5),
     food("Tomate + limon", 1, 6, 0),
     food("1 cdita aceite de oliva", 0, 0, 5)
   ], [
-    "Hervi los fideos y enfrialos apenas.",
-    "Mezcla con atun escurrido, huevo duro, tomate, limon y oliva.",
-    "Opcion B de pescado si no queres salmon, sin repetir papa ni arroz."
+    "Hervi los fideos al dente.",
+    "Cocina la merluza al horno o sarten con limon, sal y ajo.",
+    "Servi con huevo duro, tomate y oliva. Opcion B de pescado con carbo distinto y preparacion simple."
   ]);
 }
 
@@ -4168,7 +4168,7 @@ function freshMainTemplate(seed, usedNames = new Set(), { noRice = false, noFish
   return pickFreshTemplate(options.length ? options : freshMainOptions(), seed);
 }
 
-function pickFreshMainAltAvoiding(primary, seed, forbiddenNames = new Set()) {
+function pickFreshMainAltAvoiding(primary, seed, forbiddenNames = new Set(), rejectOption = () => false) {
   const options = freshMainOptions();
   const primaryCarb = mealCarbGroup(primary);
   const primaryProtein = mealProteinGroup(primary);
@@ -4183,21 +4183,25 @@ function pickFreshMainAltAvoiding(primary, seed, forbiddenNames = new Set()) {
 
   return tryPick((option) => option.name !== primary.name
     && !forbiddenNames.has(option.name)
+    && !rejectOption(option)
     && !mealHasRice(option)
     && (primaryCarb === "otro" || mealCarbGroup(option) !== primaryCarb)
     && mealProteinGroup(option) !== primaryProtein)
     || tryPick((option) => option.name !== primary.name
       && !forbiddenNames.has(option.name)
+      && !rejectOption(option)
       && !mealHasRice(option)
       && (primaryCarb === "otro" || mealCarbGroup(option) !== primaryCarb))
     || tryPick((option) => option.name !== primary.name
+      && !rejectOption(option)
       && !mealHasRice(option)
       && (primaryCarb === "otro" || mealCarbGroup(option) !== primaryCarb)
       && mealProteinGroup(option) !== primaryProtein)
     || tryPick((option) => option.name !== primary.name
+      && !rejectOption(option)
       && !mealHasRice(option)
       && (primaryCarb === "otro" || mealCarbGroup(option) !== primaryCarb))
-    || tryPick((option) => option.name !== primary.name && !forbiddenNames.has(option.name) && !mealHasRice(option))
+    || tryPick((option) => option.name !== primary.name && !forbiddenNames.has(option.name) && !rejectOption(option) && !mealHasRice(option))
     || pickFreshAlt(primary, options, seed, { main: true });
 }
 
@@ -4246,7 +4250,15 @@ function applyRonyFreshWeeklyMenuRules() {
       } else {
         lunch = freshMainTemplate(seed + 10, usedMainNames, { noRice: dayNumber > 0 && dayNumber % 2 === 1 });
         if (day.id === "mie" && mealHasRice(lunch)) {
-          lunch = pickRiceFreeMainTemplate({ id: `fresh-${weekNumber}-${day.id}-lunch` }, weekNumber, dayNumber, seed + 21);
+          const postCarbGroup = mealCarbGroup(post);
+          lunch = pickRiceFreeMainTemplate(
+            { id: `fresh-${weekNumber}-${day.id}-lunch` },
+            weekNumber,
+            dayNumber,
+            seed + 21,
+            [postCarbGroup],
+            (option) => /tortilla/i.test(mealCoreSearchText(option))
+          );
         }
       }
       usedMainNames.add(lunch.name);
@@ -4454,10 +4466,11 @@ function isMainMeal(item) {
   return label.includes("almuerzo") || label.includes("cena");
 }
 
-function pickRiceFreeMainTemplate(item, weekNumber, dayNumber, offset = 0, avoidGroups = []) {
+function pickRiceFreeMainTemplate(item, weekNumber, dayNumber, offset = 0, avoidGroups = [], rejectOption = () => false) {
   const avoid = new Set(avoidGroups.filter(Boolean));
-  const options = riceFreeMainOptions().filter((option) => !mealHasRice(option) && !avoid.has(mealCarbGroup(option)));
-  const pool = options.length ? options : riceFreeMainOptions().filter((option) => !mealHasRice(option));
+  const options = riceFreeMainOptions().filter((option) => !mealHasRice(option) && !avoid.has(mealCarbGroup(option)) && !rejectOption(option));
+  const fallback = riceFreeMainOptions().filter((option) => !mealHasRice(option) && !rejectOption(option));
+  const pool = options.length ? options : fallback.length ? fallback : riceFreeMainOptions().filter((option) => !mealHasRice(option));
   return pool[hashString(`${item.id}-${weekNumber}-${dayNumber}-${offset}`) % pool.length];
 }
 
@@ -4584,9 +4597,18 @@ function applyFreshMainVarietyRules() {
         const currentDayPrimaryNames = new Set(day.meals.filter(isMainMeal).map((mainMeal) => mainMeal.name));
         const forbiddenAltNames = new Set(currentDayPrimaryNames);
         forbiddenAltNames.delete(mealItem.name);
+        const supportMealText = day.meals
+          .filter((candidate) => !isMainMeal(candidate))
+          .map((candidate) => `${mealCoreSearchText(candidate)} ${candidate.alt ? mealCoreSearchText(candidate.alt) : ""}`)
+          .join(" ");
+        const rejectSupportRepeat = (option) => {
+          const optionText = mealCoreSearchText(option);
+          return (/tortilla/.test(optionText) && /tortilla/.test(supportMealText))
+            || (/atun/.test(optionText) && /atun/.test(supportMealText));
+        };
         mealItem.alt = isFridayFish && /salmon/i.test(mealCoreSearchText(mealItem))
           ? cloneMealTemplate(freshFridayFishAltTemplate())
-          : cloneMealTemplate(pickFreshMainAltAvoiding(mealItem, freshMenuSeed() + weekNumber * 149 + dayNumber * 19 + mealNumber, forbiddenAltNames));
+          : cloneMealTemplate(pickFreshMainAltAvoiding(mealItem, freshMenuSeed() + weekNumber * 149 + dayNumber * 19 + mealNumber, forbiddenAltNames, rejectSupportRepeat));
         usedNames.add(mealItem.name);
       });
     });

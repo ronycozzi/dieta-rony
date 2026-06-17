@@ -306,6 +306,7 @@ function createAppHarness(initialIso) {
   function snapshot(label) {
     return evalInApp(`(() => {
       const day = getTodayDayObject();
+      const post = day.meals.find((meal) => /post-entreno/i.test(displayText(meal.label))) || {};
       const lunch = day.meals.find((meal) => /almuerzo/i.test(displayText(meal.label))) || {};
       const dinner = day.meals.find((meal) => /cena/i.test(displayText(meal.label))) || {};
       return {
@@ -315,6 +316,8 @@ function createAppHarness(initialIso) {
         currentWeekName: displayText(currentWeekName),
         activeDay,
         dayId: day.id,
+        post: displayText(post.name || ""),
+        postAlt: displayText((post.alt && post.alt.name) || ""),
         lunch: displayText(lunch.name || ""),
         lunchAlt: displayText((lunch.alt && lunch.alt.name) || ""),
         dinner: displayText(dinner.name || ""),
@@ -359,6 +362,14 @@ function assertNoRiceLunch(actual) {
   assert(!/\barroz\b/.test(text), `${actual.label}: el almuerzo visible no debe mostrar arroz. Recibido: ${actual.lunch} / ${actual.lunchAlt}.`);
 }
 
+function assertNoPostLunchVisibleDuplicate(actual) {
+  const postText = normalize(`${actual.post} ${actual.postAlt}`);
+  const lunchText = normalize(`${actual.lunch} ${actual.lunchAlt}`);
+  ["tortilla", "atun"].forEach((token) => {
+    assert(!(postText.includes(token) && lunchText.includes(token)), `${actual.label}: post-entreno y almuerzo no deben repetir ${token}. Recibido: ${actual.post} / ${actual.postAlt} / ${actual.lunch} / ${actual.lunchAlt}.`);
+  });
+}
+
 function main() {
   const app = createAppHarness("2026-06-10T12:00:00-03:00");
 
@@ -380,9 +391,10 @@ function main() {
     weekIndex: 0,
     weekName: "Semana 1",
     planWeek: "0:2026-06-15",
-    lunchNeedle: "tortilla de papa"
+    lunchNeedle: "fideos con tuco"
   });
   assertNoRiceLunch(june17Clean);
+  assertNoPostLunchVisibleDuplicate(june17Clean);
 
   app.setNow("2026-06-17T12:00:00-03:00");
   app.fireWindow("focus");
@@ -428,7 +440,7 @@ function main() {
 
   console.log("WEEKLY ROTATION OK");
   [june10, june17Clean, june17Focus, june24Pageshow, july01Visible].forEach((item) => {
-    console.log(`${item.label}: ${item.currentWeekName} | ${item.planWeek} | almuerzo: ${item.lunch} | opcion B: ${item.lunchAlt}`);
+    console.log(`${item.label}: ${item.currentWeekName} | ${item.planWeek} | post: ${item.post} | almuerzo: ${item.lunch} | opcion B: ${item.lunchAlt}`);
   });
 }
 
