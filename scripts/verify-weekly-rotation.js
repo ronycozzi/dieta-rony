@@ -354,6 +354,11 @@ function assertSnapshot(actual, expected) {
   assert(normalize(actual.lunch).includes(normalize(expected.lunchNeedle)), `${actual.label}: almuerzo inesperado: ${actual.lunch}.`);
 }
 
+function assertNoRiceLunch(actual) {
+  const text = normalize(`${actual.lunch} ${actual.lunchAlt}`);
+  assert(!/\barroz\b/.test(text), `${actual.label}: el almuerzo visible no debe mostrar arroz. Recibido: ${actual.lunch} / ${actual.lunchAlt}.`);
+}
+
 function main() {
   const app = createAppHarness("2026-06-10T12:00:00-03:00");
 
@@ -368,6 +373,16 @@ function main() {
     planWeek: "3:2026-06-08",
     lunchNeedle: "salpicon de pollo"
   });
+
+  const june17CleanApp = createAppHarness("2026-06-17T12:00:00-03:00");
+  const june17Clean = june17CleanApp.snapshot("2026-06-17 clean-load");
+  assertSnapshot(june17Clean, {
+    weekIndex: 0,
+    weekName: "Semana 1",
+    planWeek: "0:2026-06-15",
+    lunchNeedle: "tortilla de papa"
+  });
+  assertNoRiceLunch(june17Clean);
 
   app.setNow("2026-06-17T12:00:00-03:00");
   app.fireWindow("focus");
@@ -412,8 +427,8 @@ function main() {
   assert(/syncCurrentPlanDate\("pageshow"\)/.test(source), "Falta sincronizacion al restaurar pagina.");
 
   console.log("WEEKLY ROTATION OK");
-  [june10, june17Focus, june24Pageshow, july01Visible].forEach((item) => {
-    console.log(`${item.label}: ${item.currentWeekName} | ${item.planWeek} | almuerzo: ${item.lunch}`);
+  [june10, june17Clean, june17Focus, june24Pageshow, july01Visible].forEach((item) => {
+    console.log(`${item.label}: ${item.currentWeekName} | ${item.planWeek} | almuerzo: ${item.lunch} | opcion B: ${item.lunchAlt}`);
   });
 }
 

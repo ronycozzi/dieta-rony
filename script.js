@@ -4245,6 +4245,9 @@ function applyRonyFreshWeeklyMenuRules() {
         lunch = freshFishOptions()[0];
       } else {
         lunch = freshMainTemplate(seed + 10, usedMainNames, { noRice: dayNumber > 0 && dayNumber % 2 === 1 });
+        if (day.id === "mie" && mealHasRice(lunch)) {
+          lunch = pickRiceFreeMainTemplate({ id: `fresh-${weekNumber}-${day.id}-lunch` }, weekNumber, dayNumber, seed + 21);
+        }
       }
       usedMainNames.add(lunch.name);
       usedWeekMainNames.add(lunch.name);
