@@ -7,9 +7,15 @@ const vm = require("node:vm");
 
 const repoRoot = path.resolve(__dirname, "..");
 const appScriptPath = path.join(repoRoot, "script.js");
+const indexHtmlPath = path.join(repoRoot, "index.html");
+const readmePath = path.join(repoRoot, "README.md");
 
 function readAppScript() {
   return fs.readFileSync(appScriptPath, "utf8");
+}
+
+function readTextFile(filePath) {
+  return fs.readFileSync(filePath, "utf8");
 }
 
 function sliceForAudit(src) {
@@ -148,6 +154,10 @@ function auditSourceQuality(src) {
   const menuCut = src.indexOf("// CALIDAD DEL PLAN");
   assert(menuCut !== -1, "Audit: no se encontro el corte de calidad del plan.");
   const rawMenuSource = src.slice(0, menuCut).toLowerCase();
+  const freshMenuCut = src.indexOf("// MENU NUEVO RONY");
+  const stateCut = src.indexOf("// ESTADO Y STORAGE");
+  assert(freshMenuCut !== -1 && stateCut !== -1 && stateCut > freshMenuCut, "Audit: no se encontro el bloque del menu fresco.");
+  const freshMenuSource = src.slice(freshMenuCut, stateCut).toLowerCase();
   const rawBlockedTerms = [
     "arroz inflado",
     "harina de arroz",
@@ -163,6 +173,16 @@ function auditSourceQuality(src) {
   const rawHits = rawBlockedTerms.filter((term) => rawMenuSource.includes(term));
   assert(rawHits.length === 0, `Audit: el menu crudo conserva ingredientes bloqueados: ${rawHits.join(", ")}.`);
 
+  const freshLayerForbidden = [
+    "licuado de leche, banana y manteca de mani",
+    "restsnackaltfornoonschedule = wheywithbananaandcreatinetemplate",
+    "pancakes onefit",
+    "leche, banana chica y queso en fetas",
+    "queso untable con tostadas y fruta"
+  ];
+  const freshLayerHits = freshLayerForbidden.filter((term) => freshMenuSource.includes(term));
+  assert(freshLayerHits.length === 0, `Audit: el menu fresco activo recayo en comodines o mezclas flojas: ${freshLayerHits.join(", ")}.`);
+
   const brokenEncodingHits = src.match(/[A-Za-zÁÉÍÓÚáéíóúÑñ]\?[A-Za-zÁÉÍÓÚáéíóúÑñ]|Ã.|Â.|�/g) || [];
   assert(brokenEncodingHits.length === 0, `Audit: hay textos con encoding roto: ${brokenEncodingHits.slice(0, 10).join(", ")}.`);
 
@@ -174,6 +194,48 @@ function auditSourceQuality(src) {
 
   assert(!/<div class="meal-head"[^>]*role="button"/.test(src), "Audit: meal-head no debe volver a ser un role=button con controles adentro.");
   assert(!/onkeydown="handleMealHeadKeydown/.test(src), "Audit: meal-open-btn es un button nativo; no debe duplicar toggle con onkeydown.");
+  assert(/function\s+syncCurrentPlanDate\s*\(/.test(src), "Audit: falta syncCurrentPlanDate para actualizar menú semanal sin recargar.");
+  assert(/syncCurrentPlanDate\("visible"\)/.test(src), "Audit: la app debe sincronizar el menú al volver de background.");
+  assert(/syncCurrentPlanDate\("focus"\)/.test(src), "Audit: la app debe sincronizar el menú al recuperar foco.");
+  assert(/syncCurrentPlanDate\("pageshow"\)/.test(src), "Audit: la app debe sincronizar el menú al restaurarse desde cache del navegador.");
+  assert(/const\s+applyWaitingUpdate\s*=/.test(src), "Audit: el Service Worker debe auto-aplicar versiones nuevas.");
+  assert(!/promptUpdate/.test(src), "Audit: el update de Service Worker no debe depender de prompt manual para no dejar menús viejos.");
+
+  const mandatoryWheyPatterns = [
+    /whey diario/i,
+    /whey diarios/i,
+    /scoop diario/i,
+    /whey[^.\n]{0,32}todos los d[ií]as/i,
+    /todos los d[ií]as[^.\n]{0,32}whey/i
+  ];
+  const staleScheduleCopyPatterns = [
+    /pre simple 11:15/i,
+    /desayuno liviano 09:45, pre simple 11:15, post 13:10 y almuerzo fuerte 14:15/i
+  ];
+  const collateralFiles = [
+    { label: "script.js", text: src },
+    { label: "index.html", text: readTextFile(indexHtmlPath) },
+    { label: "README.md", text: readTextFile(readmePath) }
+  ];
+  const mandatoryHits = [];
+  collateralFiles.forEach(({ label, text }) => {
+    mandatoryWheyPatterns.forEach((pattern) => {
+      if (pattern.test(text)) mandatoryHits.push(`${label}:${pattern}`);
+    });
+  });
+  assert(mandatoryHits.length === 0, `Audit: reapareció copy de whey obligatorio: ${mandatoryHits.join(", ")}.`);
+
+  const staleScheduleHits = [];
+  collateralFiles.forEach(({ label, text }) => {
+    staleScheduleCopyPatterns.forEach((pattern) => {
+      if (pattern.test(text)) staleScheduleHits.push(`${label}:${pattern}`);
+    });
+  });
+  assert(staleScheduleHits.length === 0, `Audit: reapareció copy visible con horarios viejos: ${staleScheduleHits.join(", ")}.`);
+
+  const readmeText = readTextFile(readmePath);
+  assert(!/brewco-web\//i.test(readmeText), "Audit: README quedó con nombre de carpeta viejo (brewco-web/).");
+  assert(!/09:45|11:15|13:10|14:15/.test(readmeText), "Audit: README conserva horarios viejos que ya no coinciden con la app actual.");
 }
 
 function auditDayIndexMapping(A) {
@@ -203,15 +265,15 @@ function audit(A) {
   const bannedHits = [];
   const specialHits = [];
   const dayTipHits = [];
-  const wheyMisuseHits = [];
+  const primaryWheyHits = [];
+  const onefitPancakeHits = [];
+  const weakFallbackHits = [];
   const riceAltHits = [];
   const sameCarbAltHits = [];
   const riceSequenceHits = [];
   const sameTurnRiceHits = [];
   const nextDayRiceHits = [];
-  const missingPrimaryWhey = [];
   const missingPrimaryCreatine = [];
-  const optionalWheyHits = [];
   const duplicateMainNameHits = [];
   const sameDayMainAltHits = [];
   const scheduleHits = [];
@@ -229,8 +291,10 @@ function audit(A) {
           break;
         }
       }
+      if (/09:45|11:15|13:10|14:15/.test(day.tip || "")) {
+        scheduleHits.push({ weekNumber, dayNumber, id: day.id, issue: "stale-day-tip", tip: day.tip });
+      }
 
-      let hasPrimaryWhey = false;
       let hasPrimaryCreatine = false;
       let hasRiceDay = false;
 
@@ -241,7 +305,6 @@ function audit(A) {
 
         const visible = visibleMealText(meal);
         const mainVisible = visibleMealText({ ...meal, alt: null });
-        if (typeof A.hasWhey === "function" && A.hasWhey(meal)) hasPrimaryWhey = true;
         if (typeof A.hasCreatine === "function" && A.hasCreatine(meal)) hasPrimaryCreatine = true;
 
         for (const re of bannedRenderTerms) {
@@ -261,11 +324,15 @@ function audit(A) {
           }
         }
 
-        if (/whey/i.test(mainVisible) && !/(desayuno|media|merienda|post-entreno|antes de dormir|refuerzo)/i.test(meal.label)) {
-          wheyMisuseHits.push({ weekNumber, dayNumber, mealNumber, label: meal.label, name: meal.name });
+        if (/whey/i.test(mainVisible)) {
+          primaryWheyHits.push({ weekNumber, dayNumber, mealNumber, label: meal.label, name: meal.name });
         }
-        if (/whey/i.test(mainVisible) && /\b(opcional|solo si falta|si falta proteina|comodin)\b/i.test(mainVisible)) {
-          optionalWheyHits.push({ weekNumber, dayNumber, mealNumber, label: meal.label, name: meal.name });
+
+        if (/leche, banana chica y queso en fetas|queso untable con tostadas y fruta/i.test(visible)) {
+          weakFallbackHits.push({ weekNumber, dayNumber, mealNumber, label: meal.label, name: meal.name });
+        }
+        if (/pancakes onefit|pancakes proteicos onefit/i.test(visible)) {
+          onefitPancakeHits.push({ weekNumber, dayNumber, mealNumber, label: meal.label, name: meal.name });
         }
 
         if (typeof A.isMainMeal === "function" && A.isMainMeal(meal)) {
@@ -291,7 +358,6 @@ function audit(A) {
         }
       });
 
-      if (!hasPrimaryWhey) missingPrimaryWhey.push({ weekNumber, dayNumber, id: day.id, title: day.title });
       if (!hasPrimaryCreatine) missingPrimaryCreatine.push({ weekNumber, dayNumber, id: day.id, title: day.title });
       if (day.id === "vie") {
         const fridayLunch = day.meals.find((meal) => /almuerzo/i.test(normalizeText(meal.label)));
@@ -424,15 +490,14 @@ function audit(A) {
   summarize("dayTipHits", dayTipHits);
   summarize("bannedHits", bannedHits);
   summarize("specialHits", specialHits);
-  summarize("wheyMisuseHits", wheyMisuseHits);
+  summarize("primaryWheyHits", primaryWheyHits);
+  summarize("onefitPancakeHits", onefitPancakeHits);
   summarize("riceAltHits", riceAltHits);
   summarize("sameCarbAltHits", sameCarbAltHits);
   summarize("riceSequenceHits", riceSequenceHits);
   summarize("sameTurnRiceHits", sameTurnRiceHits);
   summarize("nextDayRiceHits", nextDayRiceHits);
-  summarize("missingPrimaryWhey", missingPrimaryWhey);
   summarize("missingPrimaryCreatine", missingPrimaryCreatine);
-  summarize("optionalWheyHits", optionalWheyHits);
   summarize("duplicateMainNameHits", duplicateMainNameHits);
   summarize("sameDayMainAltHits", sameDayMainAltHits);
   summarize("scheduleHits", scheduleHits);
@@ -443,15 +508,15 @@ function audit(A) {
   assert(dayTipHits.length === 0, `Audit: hay tips con ingredientes bloqueados (${dayTipHits.length}).`);
   assert(bannedHits.length === 0, `Audit: aparecen ingredientes bloqueados en el menú (${bannedHits.length}).`);
   assert(specialHits.length === 0, `Audit: quedaron comidas "muy especiales" (${specialHits.length}).`);
-  assert(wheyMisuseHits.length === 0, `Audit: whey quedó como comida principal fuera de los slots permitidos (${wheyMisuseHits.length}).`);
+  assert(primaryWheyHits.length === 0, `Audit: el whey quedó como comida principal en el menú renderizado (${primaryWheyHits.length}).`);
+  assert(onefitPancakeHits.length === 0, `Audit: el menú renderizado recayó en pancakes OneFit en vez de panqueques caseros (${onefitPancakeHits.length}).`);
+  assert(weakFallbackHits.length === 0, `Audit: el menú renderizado dejó fallback flojo en desayuno/merienda (${weakFallbackHits.length}).`);
   assert(riceAltHits.length === 0, `Audit: hay opciones B de almuerzo/cena con arroz (${riceAltHits.length}).`);
   assert(sameCarbAltHits.length === 0, `Audit: hay opciones B con el mismo carbo principal (${sameCarbAltHits.length}).`);
   assert(riceSequenceHits.length === 0, `Audit: hay arroz consecutivo entre almuerzo/cena (${riceSequenceHits.length}).`);
   assert(sameTurnRiceHits.length === 0, `Audit: hay arroz en el mismo turno de días seguidos (${sameTurnRiceHits.length}).`);
   assert(nextDayRiceHits.length === 0, `Audit: hay arroz en almuerzo/cena en días seguidos (${nextDayRiceHits.length}).`);
-  assert(missingPrimaryWhey.length === 0, `Audit: faltan whey diarios principales (${missingPrimaryWhey.length}).`);
   assert(missingPrimaryCreatine.length === 0, `Audit: faltan creatinas diarias principales (${missingPrimaryCreatine.length}).`);
-  assert(optionalWheyHits.length === 0, `Audit: el whey diario no puede quedar como opcional (${optionalWheyHits.length}).`);
   assert(duplicateMainNameHits.length === 0, `Audit: hay platos principales repetidos en la misma semana (${duplicateMainNameHits.length}).`);
   assert(sameDayMainAltHits.length === 0, `Audit: hay opciones B iguales a otro plato principal del mismo dia (${sameDayMainAltHits.length}).`);
   assert(scheduleHits.length === 0, `Audit: horarios nuevos de entreno 12:00 fallaron (${scheduleHits.length}).`);
@@ -459,7 +524,7 @@ function audit(A) {
   assert(fridayFishHits.length === 0, `Audit: el viernes debe tener salmon principal y opcion B de pescado (${fridayFishHits.length}).`);
   assert(kcalOutliers.length === 0, `Audit: hay días fuera del rango kcal confort (${kcalOutliers.length}).`);
 
-  return { kcalOutliers, mealsMissingAlt, bannedHits, specialHits, dayTipHits, wheyMisuseHits, riceAltHits, sameCarbAltHits, riceSequenceHits, sameTurnRiceHits, nextDayRiceHits, missingPrimaryWhey, missingPrimaryCreatine, optionalWheyHits, duplicateMainNameHits, sameDayMainAltHits, scheduleHits, morningLoadHits, fridayFishHits };
+  return { kcalOutliers, mealsMissingAlt, bannedHits, specialHits, dayTipHits, primaryWheyHits, onefitPancakeHits, riceAltHits, sameCarbAltHits, riceSequenceHits, sameTurnRiceHits, nextDayRiceHits, missingPrimaryCreatine, duplicateMainNameHits, sameDayMainAltHits, scheduleHits, morningLoadHits, fridayFishHits };
 }
 
 function main() {

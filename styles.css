@@ -1126,6 +1126,46 @@ body::before {
   background: var(--surface2); border: 1px solid var(--line2);
   border-radius: var(--r-lg);
 }
+.day-brief {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 14px 0;
+}
+.day-brief-card {
+  min-width: 0;
+  padding: 14px 15px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--line2);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02)),
+    var(--surface2);
+}
+.day-brief-card-cadence {
+  background:
+    linear-gradient(135deg, rgba(79,139,255,0.12), rgba(6,198,255,0.06)),
+    var(--surface2);
+}
+.day-brief-kicker {
+  margin-bottom: 8px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.day-brief-value,
+.day-brief-copy {
+  color: var(--ink);
+  line-height: 1.5;
+}
+.day-brief-value {
+  font-size: 0.93rem;
+  font-weight: 700;
+}
+.day-brief-copy {
+  font-size: 0.82rem;
+}
 .dt-title {
   font-size: 0.72rem; font-weight: 700; color: var(--muted);
   text-transform: uppercase; letter-spacing: 0.1em;
@@ -2714,6 +2754,7 @@ textarea {
 .workout-info,
 .friday-toggle,
 .workout-tag,
+.day-brief-card,
 .tip-card,
 .day-total {
   border-radius: 6px;
@@ -2736,6 +2777,8 @@ textarea {
 }
 
 .tip-card,
+.day-brief-copy,
+.day-brief-value,
 .meal-note {
   color: var(--ink);
 }
@@ -3586,6 +3629,7 @@ body {
 .workout-info,
 .friday-toggle,
 .workout-tag,
+.day-brief-card,
 .tip-card,
 .day-total {
   border-radius: 0;
@@ -3602,14 +3646,42 @@ body {
   box-shadow: 6px 6px 0 rgba(16, 17, 14, 0.12);
 }
 
-.tip-card {
+.day-brief {
   grid-column: 2;
   grid-row: 3;
+  grid-template-columns: 1fr;
+}
+
+.day-brief-card {
+  box-shadow: 6px 6px 0 rgba(16, 17, 14, 0.12);
+  background: #fffdf7;
+}
+
+.day-brief-card-cadence {
+  background: linear-gradient(135deg, #fff2df, #fffdf7);
+}
+
+.dt-title,
+.day-brief-kicker {
+  color: #9d5a41;
+}
+
+.prog-bar-label,
+.prog-bar-value,
+.prog-bar-target,
+.day-brief-value,
+.day-brief-copy {
+  color: #1f241b;
+}
+
+.tip-card {
+  grid-column: 2;
+  grid-row: 4;
 }
 
 .quick-actions {
   grid-column: 2;
-  grid-row: 4;
+  grid-row: 5;
   justify-content: stretch;
 }
 
@@ -3948,6 +4020,7 @@ body {
   }
 
   .day-total,
+  .day-brief,
   .tip-card,
   .quick-actions,
   .meal {
@@ -3957,6 +4030,10 @@ body {
 
   .day-total {
     position: static;
+  }
+
+  .day-brief {
+    grid-template-columns: 1fr;
   }
 }
 

@@ -16,6 +16,7 @@ const STORAGE = {
   streak:          "rony-dieta-streak",
   weight:          "rony-dieta-weight",
   fridayMode:      "rony-dieta-friday-mode",
+  planWeek:        "rony-dieta-plan-week",
   weightSeeded:    "weight-seeded"
 };
 
@@ -2938,17 +2939,7 @@ function buildDetailedPrepSteps(item) {
     return addOriginalPrepTip(item, steps);
   }
 
-  if (/pancakes onefit/.test(text)) {
-    steps = [
-      "Mezcla la porcion de pancakes OneFit con agua o leche de a poco hasta lograr una mezcla espesa, no liquida.",
-      "Calenta una sarten antiadherente a fuego medio y apenas engrasala si hace falta.",
-      "Cocina pancakes chicos 2-3 minutos por lado. Dalos vuelta cuando veas burbujas y los bordes firmes.",
-      "Servi con la banana, fruta, leche o miel medida que figura en el plan. No dupliques la porcion porque ya cuenta en las calorias."
-    ];
-    return addOriginalPrepTip(item, steps);
-  }
-
-  if (/panqueques de banana/.test(text)) {
+  if (/panqueques?( caseros)?( chicos)? de banana/.test(text)) {
     steps = [
       "Pisa la banana con tenedor hasta hacer un pure. Mezclala con los huevos y la leche.",
       "Calenta una sarten antiadherente a fuego medio y cocina panqueques chicos para que no se rompan.",
@@ -3203,12 +3194,12 @@ const WHEY = { p: 24, c: 3, g: 2 };
 const WAKE_TIME = "09:30";
 const TRAINING_TIME = "12:00";
 const TRAINING_DAY_TIMES = {
-  breakfast: "09:45",
-  pre: "11:15",
-  post: "13:10",
-  lunch: "14:15",
-  snack: "18:00",
-  dinner: "21:30",
+  breakfast: "10:00",
+  pre: "12:30",
+  post: "14:30",
+  lunch: "16:00",
+  snack: "19:30",
+  dinner: "22:00",
   night: "23:30"
 };
 const REST_DAY_TIMES = {
@@ -3223,14 +3214,25 @@ function wheyFood(label = "1 scoop whey con agua") {
   return food(label, WHEY.p, WHEY.c, WHEY.g);
 }
 
-function wheyWithBananaAndCreatineTemplate(name = "Whey diario + banana + creatina") {
-  return altMeal(name, "Whey - banana - agua - creatina", [
+function wheyWithBananaAndCreatineTemplate(name = "Whey opcional + banana + creatina") {
+  return altMeal(name, "Whey opcional - banana - agua - creatina", [
     wheyFood(),
     food("1 banana", 1, 27, 0),
     food("Creatina 5g", 0, 0, 0)
   ], [
-    "Usá este shake para cumplir tu scoop diario cuando no quieras meter otra comida sólida.",
+    "Usá este shake solo si te faltó proteína o no entró una comida real.",
     "La creatina va todos los dias; el horario no es magico, lo importante es cumplirla."
+  ]);
+}
+
+function solidProteinFallbackTemplate(name = "Huevos, tostada y fruta") {
+  return altMeal(name, "Huevos - tostada - fruta", [
+    food("2 huevos", 12, 1, 10),
+    food("1 tostada integral", 4, 17, 2),
+    food("1 fruta", 1, 24, 0)
+  ], [
+    "Comodin de comida real cuando no queres caer en otro batido.",
+    "Simple, rapido y facil de sostener en dias de descanso o meriendas apuradas."
   ]);
 }
 
@@ -3260,13 +3262,14 @@ function metabolismBoosterTemplate(name = "Refuerzo de leche, banana y nueces") 
 }
 
 function energyFloorTemplate(name = "Refuerzo chico de energia") {
-  return altMeal(name, "Leche - banana chica - tostada", [
+  return altMeal(name, "Leche - banana chica - tostada - queso untable", [
     food("200ml leche entera", 6, 10, 7),
     food("1 banana chica", 1, 20, 0),
-    food("1 tostada integral", 4, 17, 2)
+    food("1 tostada integral", 4, 17, 2),
+    food("1 cda queso untable", 2, 2, 4)
   ], [
     "Refuerzo simple para no quedar bajo de calorias.",
-    "Usalo para levantar energia sin complicarte."
+    "Usalo para levantar energia sin complicarte ni caer en un batido."
   ]);
 }
 
@@ -3410,14 +3413,15 @@ function commonSnackAltOptions() {
       food("1 fruta", 1, 24, 0),
       food("Mate o cafe", 0, 0, 0)
     ], ["Deja huevos hervidos listos en la heladera."]),
-    altMeal("Panqueques de banana y huevo con miel", "Banana - huevos - miel - mate o cafe", [
+    altMeal("Panqueques de banana y huevo con miel", "Banana - huevos - leche - miel", [
       food("1 banana", 1, 27, 0),
       food("2 huevos", 12, 1, 10),
+      food("150ml leche entera", 5, 8, 5),
       food("1 cdita miel", 0, 8, 0),
       food("Mate o cafe", 0, 0, 0)
     ], [
       "Pisa banana con huevos y cocina panqueques chicos en sarten antiadherente.",
-      "Un toque de miel arriba y listo. Sin harinas raras."
+      "Tomalos con leche al lado y un toque de miel. Sin harinas raras."
     ]),
     altMeal("Huevos revueltos con tostada y fruta", "Huevos - tostada - queso untable - fruta", [
       food("2 huevos revueltos", 12, 1, 10),
@@ -3647,14 +3651,13 @@ function mealProteinGroup(item) {
 
 function freshBreakfastOptions() {
   return [
-    altMeal("Pancakes OneFit con banana y leche", "Pancakes proteicos - banana - leche", [
-      food("1 porcion pancakes proteicos OneFit", 17, 32, 5),
+    altMeal("Panqueques caseros de banana y huevo", "Banana - huevos - leche", [
       food("1 banana", 1, 27, 0),
-      food("200ml leche entera", 6, 10, 7),
-      food("1 cdita miel", 0, 8, 0)
+      food("2 huevos", 12, 1, 10),
+      food("100ml leche entera", 3, 4, 3)
     ], [
-      "Prepara los pancakes OneFit segun el paquete.",
-      "Servilos con banana y un toque de miel. Leche al lado."
+      "Pisa banana, mezclala con huevos y un chorrito de leche, y hace panqueques chicos en sarten antiadherente.",
+      "Desayuno real y facil de repetir sin depender de mezclas especiales."
     ]),
     altMeal("Tostado de jamon y mozzarella con banana", "Pan - jamon - mozzarella - banana", [
       food("2 rebanadas pan integral", 7, 34, 3),
@@ -3757,13 +3760,13 @@ function freshLightBreakfastOptions() {
       "Desayuno corto para levantarte 9:30 y no caer pesado al gym.",
       "Si te quedas con hambre, guarda la fruta para el pre-entreno."
     ]),
-    altMeal("Pancakes OneFit chicos con banana", "Pancakes proteicos - banana - agua", [
-      food("1 porcion chica pancakes proteicos OneFit", 17, 28, 4),
+    altMeal("Panqueques chicos de banana y huevo", "Banana - huevo - leche", [
       food("1 banana chica", 1, 20, 0),
-      food("Cafe o agua", 0, 0, 0)
+      food("2 huevos", 12, 1, 10),
+      food("120ml leche entera", 4, 5, 4)
     ], [
-      "Hace una porcion chica, no el paquete entero.",
-      "Va bien cuando queres algo dulce sin harinas raras ni avena."
+      "Hace dos o tres panqueques chicos con banana y huevo, sin harinas raras.",
+      "Va bien cuando queres algo dulce pero normal antes del gym."
     ]),
     altMeal("Tostada con queso untable y banana chica", "Tostada - queso untable - banana - cafe", [
       food("1 tostada integral grande", 4, 24, 2),
@@ -3782,13 +3785,15 @@ function freshLightBreakfastOptions() {
       "Huevos revueltos sin hacerlo pesado.",
       "Si estas apurado, deja huevos duros hechos desde la noche anterior."
     ]),
-    altMeal("Leche, banana chica y queso en fetas", "Leche - banana - queso", [
-      food("250ml leche entera", 8, 12, 8),
-      food("1 banana chica", 1, 20, 0),
-      food("35g queso en fetas", 8, 1, 6)
+    altMeal("Tostada con huevo, palta y queso", "Tostada - huevo - palta - queso - cafe", [
+      food("1 tostada integral grande", 4, 24, 2),
+      food("1 huevo", 6, 1, 5),
+      food("1/4 palta", 1, 3, 6),
+      food("30g queso en fetas o mozzarella", 7, 1, 5),
+      food("Cafe con un chorrito de leche", 3, 5, 3)
     ], [
-      "Opcion sin cocinar para dias con poco apetito.",
-      "El queso suma proteina sin meter un plato grande."
+      "Desayuno corto pero mas solido que solo leche y banana.",
+      "Palta, huevo y queso dan saciedad real sin llegar pesado al entreno."
     ]),
     altMeal("Sandwich chico de huevo, jamon y queso", "Pan - huevo - jamon - queso", [
       food("1 rebanada grande de pan integral", 5, 24, 2),
@@ -3828,21 +3833,26 @@ function freshSnackOptions() {
       food("1 rebanada pan integral", 4, 17, 2),
       food("1 fruta", 1, 24, 0)
     ], ["Rolls frios y una rebanada de pan. Cero cocina."]),
-    altMeal("Pancakes OneFit chicos con leche", "Pancakes proteicos - leche - fruta", [
-      food("1 porcion chica pancakes OneFit", 17, 28, 4),
-      food("150ml leche entera", 5, 8, 5),
+    altMeal("Panqueques caseros chicos con leche", "Banana - huevo - leche - fruta", [
+      food("1 banana chica", 1, 20, 0),
+      food("2 huevos", 12, 1, 10),
+      food("120ml leche entera", 4, 5, 4),
       food("1 fruta", 1, 24, 0)
     ], ["Usalo cuando tengas ganas de algo dulce sin inventos raros."]),
-    altMeal("Licuado de leche, banana y manteca de mani", "Leche - banana - manteca de mani", [
-      food("250ml leche entera", 8, 12, 8),
-      food("1 banana", 1, 27, 0),
-      food("1 cda manteca de mani", 4, 3, 8)
-    ], ["Licuado normal para subir energia en metabolismo rapido."]),
-    altMeal("Queso untable con tostadas y fruta", "Queso untable - tostadas - fruta", [
+    altMeal("Porcion de tarta casera con fruta", "Tarta - jamon - queso - fruta", [
+      food("1 porcion mediana de tarta casera", 16, 28, 12),
+      food("1 fruta", 1, 24, 0),
+      food("Mate o cafe", 0, 0, 0)
+    ], ["Tarta hecha de antes y fruta al lado. Merienda real y sostenible."]),
+    altMeal("Tostadas con queso untable, jamon y fruta", "Tostadas - queso untable - jamon - fruta", [
       food("2 tostadas integrales", 7, 34, 3),
       food("2 cdas queso untable", 4, 3, 7),
+      food("60g jamon cocido natural", 12, 1, 4),
       food("1 fruta", 1, 24, 0)
-    ], ["Opcion simple si no queres cocinar."])
+    ], [
+      "Merienda fria, normal y con mas proteina real.",
+      "Si quedaste corto de energia, suma una banana o una tercera tostada."
+    ])
   ];
 }
 
@@ -3893,11 +3903,12 @@ function freshPostWorkoutOptions() {
       food("2 tostadas con mermelada", 4, 38, 2),
       food("Creatina 5g", 0, 0, 0)
     ], ["Recuperacion rapida con proteina y carbo facil."]),
-    altMeal("Whey con pancakes OneFit y creatina", "Whey - pancakes - creatina", [
+    altMeal("Whey con panqueque de banana y creatina", "Whey - banana - huevo - creatina", [
       wheyFood("1 scoop whey OneFit con agua"),
-      food("1 porcion chica pancakes OneFit", 17, 28, 4),
+      food("1 banana chica", 1, 20, 0),
+      food("1 huevo", 6, 1, 5),
       food("Creatina 5g", 0, 0, 0)
-    ], ["Post mas dulce, util si no queres otra banana."])
+    ], ["Post mas dulce si queres variar, pero con base casera y simple."])
   ];
 }
 
@@ -4212,8 +4223,8 @@ function applyRonyFreshWeeklyMenuRules() {
         day.tags = ["Full body", "Quinto dia", "Entreno 12:00", "Metabolismo rapido"];
       }
       day.tip = isGymDay
-        ? "Entreno fijo 12:00: desayuno liviano al levantarte, pre simple 11:15, post real con creatina y whey diario, y almuerzo fuerte despues."
-        : "Descanso activo: desayuno liviano, creatina y whey diarios, comida simple y calorias sin forzar.";
+        ? "Entreno fijo 12:00: desayuno liviano 10:00, pre simple 12:30, post real 14:30 con creatina y almuerzo fuerte 16:00. El whey queda solo si te falta proteína después."
+        : "Descanso activo: desayuno liviano, creatina diaria, comida simple y whey solo como comodín si el día quedó corto de proteína.";
       if (isGymDay && !day.tags.includes("Entreno 12:00")) day.tags = [...day.tags, "Entreno 12:00"];
       if (!day.tags.includes("Comida real base")) day.tags = [...day.tags, "Comida real base"];
 
@@ -4246,7 +4257,7 @@ function applyRonyFreshWeeklyMenuRules() {
       const night = pickFreshTemplate(freshNightOptions(), seed + 14);
       const nightAlt = pickFreshAlt(night, freshNightOptions(), seed + 15);
       const restSnack = pickFreshTemplate(freshSnackOptions(), seed + 16, (item) => item.name !== snackB.name);
-      const restSnackAltForNoonSchedule = wheyWithBananaAndCreatineTemplate("Whey diario + banana + creatina");
+      const restSnackAltForNoonSchedule = solidProteinFallbackTemplate("Huevos revueltos con tostada y fruta");
 
       day.meals = isGymDay
         ? [
@@ -4618,9 +4629,9 @@ function addCreatineToMeal(mealItem) {
 function addWheyToMeal(mealItem) {
   if (hasWhey(mealItem)) return;
   mealItem.foods.push(wheyFood("1 scoop whey OneFit con agua"));
-  if (!/\bwhey\b/i.test(mealItem.name)) mealItem.name = `${mealItem.name} + whey diario`;
-  if (!/\bwhey\b/i.test(mealItem.desc)) mealItem.desc = `${mealItem.desc} - whey diario`;
-  mealItem.prep.push("Tomá 1 scoop de whey OneFit. Va todos los días para cerrar proteína sin forzar comida extra.");
+  if (!/\bwhey\b/i.test(mealItem.name)) mealItem.name = `${mealItem.name} + whey opcional`;
+  if (!/\bwhey\b/i.test(mealItem.desc)) mealItem.desc = `${mealItem.desc} - whey opcional`;
+  mealItem.prep.push("Tomá 1 scoop de whey OneFit solo si te faltó proteína o no llegás con comida real.");
 }
 
 function ensureDailySupplementRules() {
@@ -4633,7 +4644,6 @@ function ensureDailySupplementRules() {
         || day.meals[0];
       if (!supplementSlot) return;
 
-      if (!day.meals.some(hasWhey)) addWheyToMeal(supplementSlot);
       if (!day.meals.some(hasCreatine)) addCreatineToMeal(supplementSlot);
     });
   });
@@ -4689,9 +4699,9 @@ function applyWholeFoodPriorityRules() {
             "Si ya llegaste a la proteina del dia, no comas de mas antes de dormir.",
             "Si te cuesta cerrar proteina, usa la opcion B con agua o leche."
           ]));
-          m.alt = altMeal("Whey diario con agua", "Whey - agua", [
+          m.alt = altMeal("Whey opcional con agua", "Whey opcional - agua", [
             wheyFood()
-          ], ["Usalo para cumplir tu scoop diario sin sumar otra comida pesada."]);
+          ], ["Usalo solo si ese día te faltó proteína y no querés sumar otra comida pesada."]);
         }
       });
     });
@@ -4732,7 +4742,7 @@ function applyPostWorkoutWholeFoodRules() {
         if (!/post-entreno/i.test(m.label)) return;
         const template = pickBreakfastTemplate(m, day, weekNumber, dayNumber, options, 9);
         applyMealTemplate(m, template);
-        m.alt = wheyWithBananaAndCreatineTemplate("Whey diario + banana + creatina");
+        m.alt = wheyWithBananaAndCreatineTemplate("Whey opcional + banana + creatina");
       });
     });
   });
@@ -4758,7 +4768,7 @@ function applyFiveDayTrainingRules() {
         postSlot.label = "Post-entreno";
         postSlot.time = postSlot.time < "15:00" ? "17:00" : postSlot.time;
         applyMealTemplate(postSlot, solidPostWorkoutTemplate());
-        postSlot.alt = wheyWithBananaAndCreatineTemplate("Whey diario + banana + creatina");
+        postSlot.alt = wheyWithBananaAndCreatineTemplate("Whey opcional + banana + creatina");
       }
     }
   });
@@ -4870,7 +4880,28 @@ function trimHighCalorieDaysAfterSupplements() {
   allWeeks.forEach((weekDays, weekNumber) => {
     weekDays.forEach((day, dayNumber) => {
       const target = day.isRestDay ? 2600 : 2850;
+      const minComfort = day.isRestDay ? 2450 : 2650;
       const maxComfort = target + (day.isRestDay ? 160 : 180);
+      const savoryNightAlt = altMeal("Tostado chico de jamon y queso", "Pan - jamon - queso", [
+        food("1 rebanada pan integral", 4, 17, 2),
+        food("50g jamon cocido natural", 10, 1, 3),
+        food("30g queso en fetas o mozzarella", 7, 1, 5)
+      ], ["Refuerzo salado y simple si no queres algo dulce."]);
+      const night = day.meals.find((m) => /dormir/i.test(m.label));
+      if (night) {
+        const primaryNightText = `${night.name} ${night.desc} ${(night.foods || []).map((f) => f.name).join(" ")} ${(night.prep || []).join(" ")}`;
+        if (/whey/i.test(primaryNightText)) {
+          if (calculateDayTotals(day).kcal < minComfort) {
+            applyMealTemplate(night, metabolismBoosterTemplate(day.isRestDay ? "Refuerzo de leche, banana y nueces" : "Refuerzo post-dia de gym"));
+            night.alt = savoryNightAlt;
+          } else {
+            const nightOptions = freshNightOptions();
+            applyMealTemplate(night, nightOptions[(weekNumber + dayNumber) % nightOptions.length]);
+            night.alt = cloneMealTemplate(nightOptions[(weekNumber + dayNumber + 1) % nightOptions.length]);
+          }
+        }
+      }
+
       if (calculateDayTotals(day).kcal <= maxComfort + 25) return;
 
       const preWorkout = day.meals.find((m) => /pre-entreno/i.test(m.label) && m.kcal > 180);
@@ -4887,10 +4918,10 @@ function trimHighCalorieDaysAfterSupplements() {
 
       if (calculateDayTotals(day).kcal <= maxComfort + 25) return;
 
-      const night = day.meals.find((m) => /dormir/i.test(m.label) && m.kcal > 0);
-      if (night) {
-        applyMealTemplate(night, freshNightOptions()[0]);
-        night.alt = cloneMealTemplate(freshNightOptions()[2]);
+      const heavyNight = day.meals.find((m) => /dormir/i.test(m.label) && m.kcal > 0);
+      if (heavyNight) {
+        applyMealTemplate(heavyNight, freshNightOptions()[0]);
+        heavyNight.alt = cloneMealTemplate(freshNightOptions()[2]);
       }
 
       if (calculateDayTotals(day).kcal <= maxComfort + 25) return;
@@ -5213,15 +5244,15 @@ const supplementsBase = [
     name: "Creatina monohidrato",
     detail: "3-5g por día, todos los días. No se cicla y no depende de entrenar ese día; funciona por saturación y constancia.",
     when: "Con cualquier comida (o con el post-entreno). La clave es cumplirla todos los días."
-  },
-  {
-    name: "Whey protein",
-    detail: "1 scoop por día. Te ayuda a cerrar proteína sin forzar platos enormes; no reemplaza almuerzo, cena ni comida real.",
-    when: "Post-entreno o en la comida que te quede más cómoda. Con agua si la leche cae pesada."
   }
 ];
 
 const supplementsOptional = [
+  {
+    name: "Whey protein",
+    detail: "Comodín de proteína: usalo solo cuando ese día no llegues con huevos, pollo, carne magra, atún/pescado, queso o leche. No hace falta meterlo por obligación.",
+    when: "Post-entreno o entre comidas si quedaste corto de proteína. Con agua si la leche cae pesada."
+  },
   {
     name: "Omega 3 (EPA + DHA)",
     detail: "1-2g por día con almuerzo o cena. Reduce inflamación, mejora la recuperación post-gym y la salud cardiovascular. Más útil si comés poco pescado.",
@@ -5254,12 +5285,12 @@ const supplementsOptional = [
 // =====================================================
 const rules = [
   ["⚖️", "Mantenimiento 78-80kg", "Pesate cada lunes en ayunas. Si pasás de 80kg, achicá 1 porción de carbo en almuerzo/cena. Si bajás de 77kg, sumá 200 kcal/día. El objetivo es recomposición, no subir."],
-  ["🥩", "Proteína primero", "Prioridad: comida real (huevos, pollo, carne magra, atún, pescado, queso y leche). El whey va diario para cerrar proteína sin forzar platos enormes."],
-  ["🥛", "Leche entera si la tolerás", "Densa en calorías y útil. Si te cae pesada, tomá el whey con agua. Para 78-80kg, no hace falta forzar más calorías."],
+  ["🥩", "Proteína primero", "Prioridad: comida real (huevos, pollo, carne magra, atún, pescado, queso y leche). El whey queda como comodín si ese día faltó proteína."],
+  ["🥛", "Leche entera si la tolerás", "Densa en calorías y útil. Si te cae pesada, tomá el whey con agua solo cuando realmente lo necesites. Para 78-80kg, no hace falta forzar más calorías."],
   ["💧", "Hidratación 3L+", "Mínimo 2.5L. En días de gym (especialmente piernas) o calor: 3-3.5L. La sed es señal tardía. La app te recuerda cada 90 min."],
   ["💊", "Creatina TODOS los días", "3-5g, incluso días de descanso. Lo que importa es que esté siempre presente en el músculo. Saltearla 1 día no rompe nada, pero la constancia es la clave."],
   ["🛌", "Dormir 8-9 horas", "El músculo crece cuando dormís. Con menos de 7h, perdés progreso aunque comas perfecto. Establecé una hora fija."],
-  ["🦵", "5 entrenos por semana", "Lunes a viernes quedan como base de gym a las 12:00. Desayuno liviano 09:45, pre simple 11:15, post 13:10 y almuerzo fuerte 14:15."],
+  ["🦵", "5 entrenos por semana", "Lunes a viernes quedan como base de gym a las 12:00. Desayuno liviano 10:00, pre simple 12:30, post 14:30 y almuerzo fuerte 16:00."],
   ["🔥", "Metabolismo rápido", "No conviene recortar de más. Los días de gym se mueven cerca de 2800-3000 kcal y los descansos cerca de 2450-2650 kcal, ajustando con el peso semanal."],
   ["📸", "Medí más allá de la balanza", "Balanza + cintura + foto sin remera cada 4 semanas. En recomposición la balanza no se mueve mucho pero el cuerpo cambia: más músculo, menos grasa."],
   ["🥦", "Fibra todos los días", "Frutas y verduras en cada comida principal. Mejora digestión, energía y absorción de proteína. Importante en mantenimiento para sentirte saciado."]
@@ -5339,7 +5370,7 @@ const shopping = {
   ],
   "Suplementos": [
     "Creatina monohidrato · 3-5g diario",
-    "Whey protein OneFit · 1 scoop diario",
+    "Whey protein OneFit · opcional, 1 scoop si faltó proteína",
     "NAC Swanson 600mg · opcional, 1 cápsula con comida",
     "Omega 3 (opcional pero recomendado)",
     "Vitamina D3 (opcional)",
@@ -5613,6 +5644,53 @@ function renderProgressBar(label, current, target, color) {
   `;
 }
 
+function renderOperationalBrief(day, consumed, adjustedKcal, proteinTarget) {
+  const proteinGap = Math.max(0, proteinTarget - consumed.p);
+  const kcalGap = Math.max(0, adjustedKcal - consumed.kcal);
+  const cadence = day.isRestDay
+    ? [
+      `${REST_DAY_TIMES.breakfast} desayuno`,
+      `${REST_DAY_TIMES.lunch} almuerzo`,
+      `${REST_DAY_TIMES.snack} merienda`,
+      `${REST_DAY_TIMES.dinner} cena`
+    ]
+    : [
+      `${TRAINING_DAY_TIMES.breakfast} desayuno`,
+      `${TRAINING_DAY_TIMES.pre} pre`,
+      `${TRAINING_DAY_TIMES.post} post`,
+      `${TRAINING_DAY_TIMES.lunch} almuerzo`
+    ];
+  const cadenceLabel = day.isRestDay ? "Ritmo descanso" : "Cadencia gym 12:00";
+  const focusText = day.isRestDay
+    ? "Proteína real repartida y carbo medido. Día para sostener, no para picotear."
+    : "Llegá liviano al mediodía, meté carbo simple en el pre y dejá el plato fuerte para después del gym.";
+  let closeoutText;
+  if (proteinGap <= 0 && kcalGap <= 120) {
+    closeoutText = "Vas en rango. Mantené comida real y dejá el whey guardado salvo cierre excepcional.";
+  } else if (proteinGap > 0) {
+    closeoutText = `Todavía faltan ${proteinGap}g de proteína. Priorizá huevos, pollo, carne, atún o queso; whey solo si al final seguís corto.`;
+  } else {
+    closeoutText = `Todavía faltan ~${kcalGap} kcal. Sumá una porción simple de arroz, papa, pan o fruta sin recargar grasas al pedo.`;
+  }
+
+  return `
+    <section class="day-brief" aria-label="Brief operativo del día">
+      <article class="day-brief-card day-brief-card-cadence">
+        <div class="day-brief-kicker">${cadenceLabel}</div>
+        <div class="day-brief-value">${cadence.join(" · ")}</div>
+      </article>
+      <article class="day-brief-card">
+        <div class="day-brief-kicker">Foco del día</div>
+        <div class="day-brief-copy">${focusText}</div>
+      </article>
+      <article class="day-brief-card">
+        <div class="day-brief-kicker">Cierre inteligente</div>
+        <div class="day-brief-copy">${closeoutText}</div>
+      </article>
+    </section>
+  `;
+}
+
 function renderActiveDay() {
   // FIX: preservar estado abierto/cerrado de comidas y preparaciones antes de re-renderizar
   const openMealIds = Array.from(document.querySelectorAll(".meal.open"))
@@ -5630,6 +5708,7 @@ function renderActiveDay() {
 
   const isFridayWithoutGym = day.id === "vie" && localStorage.getItem(STORAGE.fridayMode) === "rest";
   const adjustedKcal = isFridayWithoutGym ? day.kcal - 200 : day.kcal;
+  const proteinTarget = isFridayWithoutGym ? Math.round(day.protein * 0.92) : day.protein;
 
   document.querySelector("#day-container").innerHTML = `
     <section class="panel active">
@@ -5670,10 +5749,12 @@ function renderActiveDay() {
       <div class="day-total">
         <div class="dt-title">Progreso del día</div>
         ${renderProgressBar("kcal", consumed.kcal, adjustedKcal, "linear-gradient(90deg, #f4b84a, #ffe08a)")}
-        ${renderProgressBar("proteína", consumed.p + "g", (isFridayWithoutGym ? Math.round(day.protein * 0.92) : day.protein) + "g", "linear-gradient(90deg, #ff6b5f, #ff9588)")}
+        ${renderProgressBar("proteína", consumed.p + "g", proteinTarget + "g", "linear-gradient(90deg, #ff6b5f, #ff9588)")}
         ${renderProgressBar("carbos", consumed.c + "g", (isFridayWithoutGym ? Math.round(day.carbs * 0.93) : day.carbs) + "g", "linear-gradient(90deg, #f4b84a, #ffe08a)")}
         ${renderProgressBar("grasas", consumed.g + "g", day.fats + "g", "linear-gradient(90deg, #61a8ff, #8fc6ff)")}
       </div>
+
+      ${renderOperationalBrief(day, consumed, adjustedKcal, proteinTarget)}
 
       <div class="tip-card"><div class="tip-icon">💡</div><div class="tip-text">${displayText(day.tip)}</div></div>
 
@@ -6978,11 +7059,14 @@ function shareDay() {
 // =====================================================
 // INIT
 // =====================================================
-document.querySelector("#notif-btn").addEventListener("click", activarNotificaciones);
-document.querySelector("#reset-btn").addEventListener("click", resetDay);
+const notifBtn = document.querySelector("#notif-btn");
+if (notifBtn) notifBtn.addEventListener("click", activarNotificaciones);
+const resetBtn = document.querySelector("#reset-btn");
+if (resetBtn) resetBtn.addEventListener("click", resetDay);
 const shareDayBtn = document.querySelector("#share-day-btn");
 if (shareDayBtn) shareDayBtn.addEventListener("click", shareDay);
-document.querySelector("#shopping-btn").addEventListener("click", () => {
+const shoppingBtn = document.querySelector("#shopping-btn");
+if (shoppingBtn) shoppingBtn.addEventListener("click", () => {
   const list = document.querySelector("#shopping-list");
   list.classList.toggle("active");
   list.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -7087,7 +7171,47 @@ let greetingInterval = null;
 let dayChangeInterval = null;
 let lastCheckedDayKey = getTodayKey();
 
+function syncCurrentPlanDate(reason = "timer") {
+  // La PWA puede quedar suspendida varios dias; al volver sincronizamos dia y semana real.
+  const currentKey = getTodayKey();
+  const newWeekIndex = getWeekIndex();
+  const newWeekKey = `${newWeekIndex}:${formatLocalDateKey(getCurrentPlanWeekStart())}`;
+  const storedWeek = localStorage.getItem(STORAGE.planWeek);
+  const dayChanged = currentKey !== lastCheckedDayKey;
+  const weekChanged = newWeekIndex !== weekIndex || storedWeek !== newWeekKey;
+
+  if (!dayChanged && !weekChanged) return false;
+
+  lastCheckedDayKey = currentKey;
+  if (weekChanged) {
+    weekIndex = newWeekIndex;
+    days = allWeeks[weekIndex];
+    localStorage.setItem(STORAGE.planWeek, newWeekKey);
+  }
+
+  currentWeekName = getCurrentWeekName();
+  const todayObj = getTodayDayObject();
+  activeDay = todayObj.id;
+
+  renderTabs();
+  renderActiveDay();
+  renderWeekOverview();
+  updateNextMeal();
+  updateGymBanner();
+  updateFabBadge();
+
+  if ("Notification" in window && Notification.permission === "granted") {
+    scheduleMealNotifs();
+  }
+
+  if (weekChanged && reason !== "initial") {
+    showToast(`Menú actualizado: ${displayText(weekNames[weekIndex])}`);
+  }
+  return true;
+}
+
 function checkDayChange() {
+  if (syncCurrentPlanDate("timer")) return;
   // FIX: si la app queda abierta de un día al siguiente (pasó medianoche),
   // actualizamos todo: día activo, banner, notifs, weekly overview.
   const currentKey = getTodayKey();
@@ -7113,6 +7237,8 @@ function checkDayChange() {
   }
 }
 
+syncCurrentPlanDate("initial");
+
 function startIntervals() {
   if (!clockInterval) clockInterval = setInterval(updateClock, 1000);
   if (!nextMealInterval) nextMealInterval = setInterval(updateNextMeal, 60000);
@@ -7134,10 +7260,19 @@ document.addEventListener("visibilitychange", () => {
   if (document.hidden) {
     stopIntervals();
   } else {
+    syncCurrentPlanDate("visible");
     updateClock();
     updateNextMeal();
     startIntervals();
   }
+});
+
+window.addEventListener("focus", () => {
+  syncCurrentPlanDate("focus");
+});
+
+window.addEventListener("pageshow", () => {
+  syncCurrentPlanDate("pageshow");
 });
 
 // =====================================================
@@ -7353,29 +7488,35 @@ window.requestNotifications = requestNotifications;
   window.addEventListener("load", () => {
     navigator.serviceWorker.register("./sw.js", { scope: "./" })
       .then((registration) => {
-        let prompted = false;
-        const promptUpdate = () => {
-          if (prompted) return;
+        let updateApplied = false;
+        const applyWaitingUpdate = () => {
+          if (updateApplied) return;
           if (!registration.waiting) return;
           if (!navigator.serviceWorker.controller) return;
-          prompted = true;
-          showActionToast("🔄 Nueva versión disponible · Actualizar", () => {
-            registration.waiting?.postMessage("SKIP_WAITING");
-          });
+          updateApplied = true;
+          showToast("Actualizando app y menú semanal...");
+          registration.waiting.postMessage("SKIP_WAITING");
         };
 
         // Update check on launch
         registration.update?.();
 
-        if (registration.waiting) promptUpdate();
+        if (registration.waiting) applyWaitingUpdate();
 
         registration.addEventListener("updatefound", () => {
           const newWorker = registration.installing;
           if (!newWorker) return;
           newWorker.addEventListener("statechange", () => {
-            if (newWorker.state === "installed") promptUpdate();
+            if (newWorker.state === "installed") applyWaitingUpdate();
           });
         });
+
+        const checkForAppUpdate = () => registration.update?.();
+        document.addEventListener("visibilitychange", () => {
+          if (!document.hidden) checkForAppUpdate();
+        });
+        window.addEventListener("focus", checkForAppUpdate);
+        setInterval(checkForAppUpdate, 60 * 60 * 1000);
 
         let refreshing = false;
         navigator.serviceWorker.addEventListener("controllerchange", () => {
