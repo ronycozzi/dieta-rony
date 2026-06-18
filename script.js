@@ -3649,6 +3649,18 @@ function mealProteinGroup(item) {
   return "mixto";
 }
 
+function breakfastStyleGroup(item) {
+  const text = mealCoreSearchText(item);
+  if (/\btarta\b/.test(text)) return "tarta";
+  if (/\bmedialuna\b/.test(text)) return "medialuna";
+  if (/\bpanqueque|pancake\b/.test(text)) return "panqueque";
+  if (/\btortilla|papa\b/.test(text)) return "papa-huevo";
+  if (/\bomelette\b/.test(text)) return "omelette";
+  if (/\bsandwich|tostado\b/.test(text)) return "sandwich";
+  if (/\btostada|tostadas\b/.test(text)) return "tostada";
+  return "otro";
+}
+
 function freshBreakfastOptions() {
   return [
     altMeal("Panqueques caseros de banana y huevo", "Banana - huevos - leche", [
@@ -3768,14 +3780,14 @@ function freshLightBreakfastOptions() {
       "Hace dos o tres panqueques chicos con banana y huevo, sin harinas raras.",
       "Va bien cuando queres algo dulce pero normal antes del gym."
     ]),
-    altMeal("Tostada con queso untable y banana chica", "Tostada - queso untable - banana - cafe", [
-      food("1 tostada integral grande", 4, 24, 2),
-      food("1 cda grande queso untable", 3, 2, 5),
-      food("1 banana chica", 1, 20, 0),
+    altMeal("Tortilla chica de papa y huevo", "Papa - huevos - queso - cafe", [
+      food("130g papa hervida", 3, 26, 0),
+      food("2 huevos", 12, 1, 10),
+      food("20g mozzarella o queso en fetas", 5, 1, 4),
       food("Cafe con un chorrito de leche", 3, 5, 3)
     ], [
-      "Simple y liviano: una tostada, queso untable y banana chica.",
-      "La idea es llegar con energia al pre, no desayunar gigante."
+      "Dora la papa ya hervida, suma huevo batido y termina con un poco de queso.",
+      "Se siente comida real, pero sigue siendo un desayuno liviano para entrenar al mediodia."
     ]),
     altMeal("Huevos revueltos simples con tostada", "Huevos - tostada - fruta chica", [
       food("2 huevos", 12, 1, 10),
@@ -3785,15 +3797,13 @@ function freshLightBreakfastOptions() {
       "Huevos revueltos sin hacerlo pesado.",
       "Si estas apurado, deja huevos duros hechos desde la noche anterior."
     ]),
-    altMeal("Tostada con huevo, palta y queso", "Tostada - huevo - palta - queso - cafe", [
-      food("1 tostada integral grande", 4, 24, 2),
-      food("1 huevo", 6, 1, 5),
-      food("1/4 palta", 1, 3, 6),
-      food("30g queso en fetas o mozzarella", 7, 1, 5),
-      food("Cafe con un chorrito de leche", 3, 5, 3)
+    altMeal("Porcion de tarta casera con cafe con leche", "Tarta - jamon - queso - huevo - cafe", [
+      food("1 porcion mediana de tarta casera", 16, 28, 12),
+      food("Cafe con leche", 4, 6, 4),
+      food("1 fruta chica", 1, 18, 0)
     ], [
-      "Desayuno corto pero mas solido que solo leche y banana.",
-      "Palta, huevo y queso dan saciedad real sin llegar pesado al entreno."
+      "Deja media tarta hecha de antes y recalenta una porcion.",
+      "Te saca de la rutina de tostadas sin meter inventos ni un desayuno gigante."
     ]),
     altMeal("Sandwich chico de huevo, jamon y queso", "Pan - huevo - jamon - queso", [
       food("1 rebanada grande de pan integral", 5, 24, 2),
@@ -4210,6 +4220,7 @@ function applyRonyFreshWeeklyMenuRules() {
   allWeeks.forEach((weekDays, weekNumber) => {
     const weekSeed = seedBase + weekNumber * 101;
     const usedWeekMainNames = new Set();
+    let lastBreakfastGroup = null;
     weekDays.forEach((day, dayNumber) => {
       const seed = weekSeed + dayNumber * 17;
       const isFriday = day.id === "vie";
@@ -4234,8 +4245,13 @@ function applyRonyFreshWeeklyMenuRules() {
 
       const breakfastOptions = freshLightBreakfastOptions();
       const postOptions = freshNoonPostWorkoutOptions();
-      const breakfast = pickFreshTemplate(breakfastOptions, seed);
+      const breakfast = pickFreshTemplate(
+        breakfastOptions,
+        seed,
+        (item) => breakfastStyleGroup(item) !== lastBreakfastGroup
+      );
       const breakfastAlt = pickFreshAlt(breakfast, breakfastOptions, seed + 1);
+      lastBreakfastGroup = breakfastStyleGroup(breakfast);
       const snackA = pickFreshTemplate(freshSnackOptions(), seed + 2);
       const snackB = pickFreshTemplate(freshSnackOptions(), seed + 4, (item) => item.name !== snackA.name);
       const snackBAlt = pickFreshAlt(snackB, freshSnackOptions(), seed + 5);
@@ -6339,7 +6355,8 @@ function renderWater() {
     dotsEl.innerHTML = Array.from({ length: WATER_GOAL }, (_, index) => {
       const filled = index < count;
       const onClick = filled && index === count - 1 ? `setWater(${index})` : `setWater(${index + 1})`;
-      return `<button class="water-dot ${filled ? "active" : ""}" type="button" onclick="${onClick}">${index + 1}</button>`;
+      const action = filled && index === count - 1 ? "quitar" : "marcar";
+      return `<button class="water-dot ${filled ? "active" : ""}" type="button" onclick="${onClick}" aria-pressed="${filled}" aria-label="${action} vaso ${index + 1} de ${WATER_GOAL}">${index + 1}</button>`;
     }).join("");
   }
 }
