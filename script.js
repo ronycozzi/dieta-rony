@@ -77,7 +77,7 @@ function cleanupOldData() {
       }
     }
     keysToRemove.forEach((k) => localStorage.removeItem(k));
-    const meals = JSON.parse(localStorage.getItem(STORAGE.meals) || "{}");
+    const meals = readJsonStorage(STORAGE.meals, {});
     let mealsChanged = false;
     Object.keys(meals).forEach((date) => {
       if (date < cutoffKey) { delete meals[date]; mealsChanged = true; }
@@ -738,7 +738,7 @@ const allWeeks = [
 
   // ===== DOMINGO · DESCANSO =====
   {
-    id: "dom", tab: "Dom", dayIndex: 0, title: "Domingo",
+    id: "dom", tab: "Dom", dayIndex: 7, title: "Domingo",
     type: "Día de descanso completo",
     workout: { name: "Descanso total", duration: "—", icon: "🛌", primary: [] },
     isRestDay: true, kcal: 2500, protein: 145, carbs: 275, fats: 78,
@@ -1375,7 +1375,7 @@ const allWeeks = [
 
   // ===== DOMINGO · DESCANSO =====
   {
-    id: "dom", tab: "Dom", dayIndex: 0, title: "Domingo",
+    id: "dom", tab: "Dom", dayIndex: 7, title: "Domingo",
     type: "Día de descanso completo",
     workout: { name: "Descanso total", duration: "—", icon: "🛌", primary: [] },
     isRestDay: true, kcal: 2500, protein: 145, carbs: 275, fats: 78,
@@ -2019,7 +2019,7 @@ const allWeeks = [
 
   // ===== DOMINGO · DESCANSO =====
   {
-    id: "dom", tab: "Dom", dayIndex: 0, title: "Domingo",
+    id: "dom", tab: "Dom", dayIndex: 7, title: "Domingo",
     type: "Día de descanso completo",
     workout: { name: "Descanso total", duration: "—", icon: "🛌", primary: [] },
     isRestDay: true, kcal: 2500, protein: 145, carbs: 275, fats: 78,
@@ -2650,7 +2650,7 @@ const allWeeks = [
 
   // ===== DOMINGO · DESCANSO =====
   {
-    id: "dom", tab: "Dom", dayIndex: 0, title: "Domingo",
+    id: "dom", tab: "Dom", dayIndex: 7, title: "Domingo",
     type: "Día de descanso completo",
     workout: { name: "Descanso total", duration: "—", icon: "🛌", primary: [] },
     isRestDay: true, kcal: 2500, protein: 150, carbs: 270, fats: 76,
@@ -2855,6 +2855,10 @@ function mealCoreSearchText(item) {
   ].join(" "));
 }
 
+function mealNameKey(value) {
+  return plainText(typeof value === "string" ? value : value?.name || "");
+}
+
 function isTooSpecialForRony(item) {
   const text = mealSearchText(item);
   return PLAIN_MENU_BLOCKLIST.some((term) => text.includes(term));
@@ -2918,6 +2922,16 @@ function buildDetailedPrepSteps(item) {
   const label = plainText(item?.label);
   const ingredients = prepIngredientLine(item);
   let steps;
+
+  if (/agua|infusion|mate|cafe/.test(text) && !/(pollo|carne|atun|huevo|papa|arroz|fideo|pasta|tarta|milanesa)/.test(text)) {
+    steps = [
+      "No requiere coccion.",
+      `Prepara solamente lo indicado: ${ingredients}.`,
+      "Usalo como cierre liviano si ya cumpliste calorias, proteina y agua del dia.",
+      "Si quedaste corto de proteina, elegi la otra opcion nocturna del plan."
+    ];
+    return addOriginalPrepTip(item, steps);
+  }
 
   if (/\bwhey\b|creatina|shake/.test(text)) {
     steps = [
@@ -3619,12 +3633,26 @@ function commonBreakfastOptions() {
   ];
 }
 
+const allWeeksBase = JSON.parse(JSON.stringify(allWeeks));
+let planGenerationDate = new Date();
+
+function resetPlanWeeksToBase() {
+  const copy = JSON.parse(JSON.stringify(allWeeksBase));
+  allWeeks.splice(0, allWeeks.length, ...copy);
+}
+
+function getPlanGenerationDate() {
+  return planGenerationDate instanceof Date && !Number.isNaN(planGenerationDate.getTime())
+    ? planGenerationDate
+    : new Date();
+}
+
 // =====================================================
 // MENU NUEVO RONY
 // - Se regenera con seed semanal.
 // - Comidas normales, sostenibles y con opcion B real.
 // =====================================================
-function freshMenuSeed(date = new Date()) {
+function freshMenuSeed(date = getPlanGenerationDate()) {
   return date.getFullYear() * 100 + getISOWeekNumber(date);
 }
 
@@ -3944,15 +3972,15 @@ function freshNoonPostWorkoutOptions() {
       "Sandwich normal con carbo rapido y proteina real.",
       "Banana y creatina completan el corte del entrenamiento sin hacer un plato raro."
     ]),
-    altMeal("Arroz con huevo, queso y tomate", "Arroz - huevo - queso - tomate - creatina", [
-      food("3/4 taza arroz cocido", 3, 38, 0),
-      food("2 huevos", 12, 1, 10),
-      food("30g queso en fetas", 7, 1, 5),
-      food("Tomate", 1, 5, 0),
+    altMeal("Sandwich de pollo, queso y mandarina", "Pan - pollo - queso - mandarina - creatina", [
+      food("2 rebanadas pan integral", 7, 34, 3),
+      food("90g pollo cocido", 26, 0, 3),
+      food("25g queso en fetas", 6, 1, 4),
+      food("1 mandarina", 1, 12, 0),
       food("Creatina 5g", 0, 0, 0)
     ], [
-      "Bowl corto con arroz, huevo y queso: simple, real y rendidor.",
-      "Tomate y creatina para cerrar el post sin caer en otro batido fijo."
+      "Sandwich simple de pollo y queso, con fruta facil de digerir.",
+      "Deja el carbo fuerte para almuerzo o cena y evita repetir bases en el mismo bloque."
     ]),
     altMeal("Tortilla de papa chica con fruta", "Papa - huevo - fruta - creatina", [
       food("180g papa hervida", 4, 36, 0),
@@ -4182,6 +4210,8 @@ function pickFreshMainAltAvoiding(primary, seed, forbiddenNames = new Set(), rej
   const options = freshMainOptions();
   const primaryCarb = mealCarbGroup(primary);
   const primaryProtein = mealProteinGroup(primary);
+  const forbiddenKeys = new Set(Array.from(forbiddenNames || []).map(mealNameKey));
+  const isForbidden = (option) => forbiddenKeys.has(mealNameKey(option));
   const tryPick = (predicate) => {
     const start = Math.abs(seed) % options.length;
     for (let i = 0; i < options.length; i++) {
@@ -4192,13 +4222,13 @@ function pickFreshMainAltAvoiding(primary, seed, forbiddenNames = new Set(), rej
   };
 
   return tryPick((option) => option.name !== primary.name
-    && !forbiddenNames.has(option.name)
+    && !isForbidden(option)
     && !rejectOption(option)
     && !mealHasRice(option)
     && (primaryCarb === "otro" || mealCarbGroup(option) !== primaryCarb)
     && mealProteinGroup(option) !== primaryProtein)
     || tryPick((option) => option.name !== primary.name
-      && !forbiddenNames.has(option.name)
+      && !isForbidden(option)
       && !rejectOption(option)
       && !mealHasRice(option)
       && (primaryCarb === "otro" || mealCarbGroup(option) !== primaryCarb))
@@ -4211,7 +4241,7 @@ function pickFreshMainAltAvoiding(primary, seed, forbiddenNames = new Set(), rej
       && !rejectOption(option)
       && !mealHasRice(option)
       && (primaryCarb === "otro" || mealCarbGroup(option) !== primaryCarb))
-    || tryPick((option) => option.name !== primary.name && !forbiddenNames.has(option.name) && !rejectOption(option) && !mealHasRice(option))
+    || tryPick((option) => option.name !== primary.name && !isForbidden(option) && !rejectOption(option) && !mealHasRice(option))
     || pickFreshAlt(primary, options, seed, { main: true });
 }
 
@@ -4324,6 +4354,7 @@ function cloneMealTemplate(template) {
 
 function applyMealTemplate(target, template) {
   const copy = cloneMealTemplate(template);
+  if (target.time) target.id = slug(`${target.time}-${copy.name}`);
   target.name = copy.name;
   target.desc = copy.desc;
   target.kcal = copy.kcal;
@@ -4592,40 +4623,165 @@ function applyFreshMainVarietyRules() {
   allWeeks.forEach((weekDays, weekNumber) => {
     const usedNames = new Set();
     weekDays.forEach((day, dayNumber) => {
+      const daySupportMealText = day.meals
+        .filter((candidate) => !isMainMeal(candidate))
+        .map((candidate) => `${mealCoreSearchText(candidate)} ${candidate.alt ? mealCoreSearchText(candidate.alt) : ""}`)
+        .join(" ");
+      const repeatsSupportToken = (option) => {
+        const optionText = mealCoreSearchText(option);
+        return (/tortilla/.test(optionText) && /tortilla/.test(daySupportMealText))
+          || (/atun/.test(optionText) && /atun/.test(daySupportMealText))
+          || (/arroz/.test(optionText) && /arroz/.test(daySupportMealText));
+      };
+      const usedVisibleNames = new Set();
+      day.meals.forEach((candidate) => {
+        usedVisibleNames.add(mealNameKey(candidate));
+        if (!isMainMeal(candidate) && candidate.alt) usedVisibleNames.add(mealNameKey(candidate.alt));
+      });
+
       day.meals.forEach((mealItem, mealNumber) => {
         if (!isMainMeal(mealItem)) return;
 
         const isFridayFish = day.id === "vie" && mealItem.label === "Almuerzo" && mealProteinGroup(mealItem) === "pescado";
         const shouldReplace = usedNames.has(mealItem.name)
-          || (!isFridayFish && mealProteinGroup(mealItem) === "pescado");
+          || (!isFridayFish && mealProteinGroup(mealItem) === "pescado")
+          || (!isFridayFish && repeatsSupportToken(mealItem));
 
         if (shouldReplace) {
+          usedVisibleNames.delete(mealNameKey(mealItem));
           const seed = freshMenuSeed() + weekNumber * 131 + dayNumber * 17 + mealNumber;
           const template = pickFreshTemplate(freshMainOptions(), seed, (option) => {
             if (usedNames.has(option.name)) return false;
             if (mealHasRice(option)) return false;
             if (mealProteinGroup(option) === "pescado") return false;
+            if (repeatsSupportToken(option)) return false;
             return true;
           });
           applyMealTemplate(mealItem, template);
+          usedVisibleNames.add(mealNameKey(mealItem));
         }
 
-        const currentDayPrimaryNames = new Set(day.meals.filter(isMainMeal).map((mainMeal) => mainMeal.name));
-        const forbiddenAltNames = new Set(currentDayPrimaryNames);
-        forbiddenAltNames.delete(mealItem.name);
-        const supportMealText = day.meals
-          .filter((candidate) => !isMainMeal(candidate))
-          .map((candidate) => `${mealCoreSearchText(candidate)} ${candidate.alt ? mealCoreSearchText(candidate.alt) : ""}`)
-          .join(" ");
-        const rejectSupportRepeat = (option) => {
-          const optionText = mealCoreSearchText(option);
-          return (/tortilla/.test(optionText) && /tortilla/.test(supportMealText))
-            || (/atun/.test(optionText) && /atun/.test(supportMealText));
-        };
+        const forbiddenAltNames = new Set(usedVisibleNames);
+        forbiddenAltNames.delete(mealNameKey(mealItem));
         mealItem.alt = isFridayFish && /salmon/i.test(mealCoreSearchText(mealItem))
           ? cloneMealTemplate(freshFridayFishAltTemplate())
-          : cloneMealTemplate(pickFreshMainAltAvoiding(mealItem, freshMenuSeed() + weekNumber * 149 + dayNumber * 19 + mealNumber, forbiddenAltNames, rejectSupportRepeat));
+          : cloneMealTemplate(pickFreshMainAltAvoiding(mealItem, freshMenuSeed() + weekNumber * 149 + dayNumber * 19 + mealNumber, forbiddenAltNames, repeatsSupportToken));
+        usedVisibleNames.add(mealNameKey(mealItem.alt));
         usedNames.add(mealItem.name);
+      });
+    });
+  });
+}
+
+function freshOptionsForMealLabel(label) {
+  const text = plainText(label);
+  if (text.includes("desayuno")) return freshLightBreakfastOptions();
+  if (text.includes("pre-entreno")) return freshPreWorkoutOptions();
+  if (text.includes("post-entreno")) return freshNoonPostWorkoutOptions();
+  if (text.includes("merienda") || text.includes("media manana")) return freshSnackOptions();
+  if (text.includes("antes de dormir")) return freshNightOptions();
+  return freshSnackOptions();
+}
+
+function pickAltAvoidingVisibleNames(primary, options, seed, forbiddenNames = new Set()) {
+  const forbiddenKeys = new Set(Array.from(forbiddenNames || []).map(mealNameKey));
+  const primaryKey = mealNameKey(primary);
+  const primaryCarb = mealCarbGroup(primary);
+  const primaryProtein = mealProteinGroup(primary);
+  const tryPick = (predicate) => {
+    const start = Math.abs(seed) % options.length;
+    for (let i = 0; i < options.length; i++) {
+      const option = options[(start + i) % options.length];
+      if (predicate(option)) return option;
+    }
+    return null;
+  };
+  return tryPick((option) => mealNameKey(option) !== primaryKey
+    && !forbiddenKeys.has(mealNameKey(option))
+    && (primaryCarb === "otro" || mealCarbGroup(option) !== primaryCarb)
+    && mealProteinGroup(option) !== primaryProtein)
+    || tryPick((option) => mealNameKey(option) !== primaryKey && !forbiddenKeys.has(mealNameKey(option)))
+    || pickFreshAlt(primary, options, seed);
+}
+
+function applyVisibleDayAltVarietyRules() {
+  allWeeks.forEach((weekDays, weekNumber) => {
+    weekDays.forEach((day, dayNumber) => {
+      const usedVisibleNames = new Set();
+      const dayPrimaryNames = new Set(day.meals.map(mealNameKey));
+      day.meals.forEach((mealItem, mealNumber) => {
+        if (usedVisibleNames.has(mealNameKey(mealItem)) && !isMainMeal(mealItem)) {
+          const previousPrimaryKey = mealNameKey(mealItem);
+          const seed = freshMenuSeed() + weekNumber * 191 + dayNumber * 29 + mealNumber;
+          const options = freshOptionsForMealLabel(mealItem.label);
+          const replacement = pickFreshTemplate(options, seed, (option) => !usedVisibleNames.has(mealNameKey(option)));
+          applyMealTemplate(mealItem, replacement);
+          dayPrimaryNames.delete(previousPrimaryKey);
+          dayPrimaryNames.add(mealNameKey(mealItem));
+        }
+        usedVisibleNames.add(mealNameKey(mealItem));
+        if (!mealItem.alt) return;
+
+        const forbiddenForAlt = new Set([...usedVisibleNames, ...dayPrimaryNames]);
+        forbiddenForAlt.delete(mealNameKey(mealItem));
+        if (forbiddenForAlt.has(mealNameKey(mealItem.alt))) {
+          const seed = freshMenuSeed() + weekNumber * 181 + dayNumber * 23 + mealNumber;
+          const replacement = isMainMeal(mealItem)
+            ? pickFreshMainAltAvoiding(mealItem, seed, forbiddenForAlt)
+            : pickAltAvoidingVisibleNames(mealItem, freshOptionsForMealLabel(mealItem.label), seed, forbiddenForAlt);
+          mealItem.alt = cloneMealTemplate(replacement);
+        }
+        usedVisibleNames.add(mealNameKey(mealItem.alt));
+      });
+    });
+  });
+}
+
+function applyCrossWeekTurnVarietyRules() {
+  const seenByTurn = new Map();
+  allWeeks.forEach((weekDays, weekNumber) => {
+    weekDays.forEach((day, dayNumber) => {
+      const supportText = day.meals
+        .filter((candidate) => !isMainMeal(candidate))
+        .map((candidate) => `${mealCoreSearchText(candidate)} ${candidate.alt ? mealCoreSearchText(candidate.alt) : ""}`)
+        .join(" ");
+      const repeatsSupportToken = (option) => {
+        const optionText = mealCoreSearchText(option);
+        return (/tortilla/.test(optionText) && /tortilla/.test(supportText))
+          || (/atun/.test(optionText) && /atun/.test(supportText))
+          || (/arroz/.test(optionText) && /arroz/.test(supportText));
+      };
+
+      day.meals.forEach((mealItem, mealNumber) => {
+        if (!isMainMeal(mealItem)) return;
+        const isFridayFish = day.id === "vie" && mealItem.label === "Almuerzo" && mealProteinGroup(mealItem) === "pescado";
+        if (isFridayFish) return;
+
+        const turnKey = `${dayNumber}:${plainText(mealItem.label)}`;
+        const seenNames = seenByTurn.get(turnKey) || new Set();
+        if (seenNames.has(mealNameKey(mealItem))) {
+          const seed = freshMenuSeed() + weekNumber * 211 + dayNumber * 31 + mealNumber;
+          const currentWeekUsedNames = new Set();
+          weekDays.forEach((candidateDay) => {
+            candidateDay.meals.forEach((candidateMeal) => {
+              if (candidateMeal !== mealItem && isMainMeal(candidateMeal)) {
+                currentWeekUsedNames.add(mealNameKey(candidateMeal));
+              }
+            });
+          });
+          const template = pickFreshTemplate(freshMainOptions(), seed, (option) => {
+            if (seenNames.has(mealNameKey(option))) return false;
+            if (currentWeekUsedNames.has(mealNameKey(option))) return false;
+            if (mealHasRice(option)) return false;
+            if (mealProteinGroup(option) === "pescado") return false;
+            if (repeatsSupportToken(option)) return false;
+            return true;
+          });
+          applyMealTemplate(mealItem, template);
+          mealItem.alt = cloneMealTemplate(pickFreshMainAltAvoiding(mealItem, seed + 7, seenNames, repeatsSupportToken));
+        }
+        seenNames.add(mealNameKey(mealItem));
+        seenByTurn.set(turnKey, seenNames);
       });
     });
   });
@@ -4634,6 +4790,8 @@ function applyFreshMainVarietyRules() {
 function mealFromTemplate(time, label, template, altTemplate) {
   const item = meal(time, label, template.name, template.desc, 0, template.foods.map((f) => ({ ...f })), template.prep.slice(), template.note || null);
   item.alt = cloneMealTemplate(altTemplate);
+  item.alt.time = time;
+  item.alt.label = label;
   return item;
 }
 
@@ -5258,6 +5416,66 @@ function auditPlanCompliance() {
 // =====================================================
 // SEMANA ACTUAL · Selección automática por semana ISO
 // =====================================================
+function syncPlanTargetsAndIds() {
+  allWeeks.forEach((weekDays, wi) => {
+    weekDays.forEach((day) => {
+      day.meals.forEach((m) => {
+        m.id = `w${wi}-${slug(`${m.time}-${m.name}`)}`;
+        if (m.alt) {
+          m.alt.time = m.time;
+          m.alt.label = m.label;
+          m.alt.id = `w${wi}-alt-${slug(m.alt.name)}`;
+        }
+      });
+      const totals = day.meals.reduce((acc, m) => {
+        acc.kcal += m.kcal;
+        m.foods.forEach((f) => { acc.p += f.p; acc.c += f.c; acc.g += f.g; });
+        return acc;
+      }, { kcal: 0, p: 0, c: 0, g: 0 });
+      day.kcal = totals.kcal;
+      day.protein = totals.p;
+      day.carbs = totals.c;
+      day.fats = totals.g;
+    });
+  });
+}
+
+function rebuildPlanForDate(date = new Date(), { audit = false } = {}) {
+  planGenerationDate = new Date(date);
+  resetPlanWeeksToBase();
+  applyProfessionalMenuRules();
+  applyFiveDayTrainingRules();
+  applyPlainMenuRules();
+  applyWholeFoodPriorityRules();
+  applyPostWorkoutWholeFoodRules();
+  applyRonyFreshWeeklyMenuRules();
+  applyPlanQualityRules();
+  applyRiceRotationRules();
+  applyFreshMainVarietyRules();
+  applyRiceRotationRules();
+  applyCalorieBalanceRules();
+  applyCalorieBalanceRules();
+  applyRiceRotationRules();
+  applyFreshMainVarietyRules();
+  applyRiceRotationRules();
+  applyMinimumEnergyFloorRules();
+  applyRiceRotationRules();
+  applyFreshMainVarietyRules();
+  applyRiceRotationRules();
+  ensureDailySupplementRules();
+  trimHighCalorieDaysAfterSupplements();
+  applyMinimumEnergyFloorRules();
+  applyRiceRotationRules();
+  applyFreshMainVarietyRules();
+  applyCrossWeekTurnVarietyRules();
+  applyVisibleDayAltVarietyRules();
+  syncPlanTargetsAndIds();
+  weekIndex = getWeekIndex(date);
+  days = allWeeks[weekIndex];
+  currentWeekName = getCurrentWeekName();
+  if (audit) auditPlanCompliance();
+}
+
 function getWeekIndex(date = new Date()) { return (getISOWeekNumber(date) - 1) % allWeeks.length; }
 function getNextMenuRefreshDate(from = new Date()) {
   const d = new Date(from);
@@ -5425,13 +5643,55 @@ const shopping = {
 let activeDay = days[0].id;
 let scheduledNotifs = [];
 
+function readJsonStorage(key, fallback) {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return fallback;
+    return JSON.parse(raw);
+  } catch (e) {
+    localStorage.removeItem(key);
+    return fallback;
+  }
+}
+
+function normalizeMealStateEntry(entry) {
+  if (entry && typeof entry === "object") {
+    return {
+      done: Boolean(entry.done),
+      variant: entry.variant === "alt" ? "alt" : "primary"
+    };
+  }
+  return { done: Boolean(entry), variant: "primary" };
+}
+
+function countDoneMealsFromState(state) {
+  return Object.values(state || {}).filter((entry) => normalizeMealStateEntry(entry).done).length;
+}
+
+function setMealDoneInState(state, mealId, done) {
+  const current = normalizeMealStateEntry(state[mealId]);
+  if (!done) {
+    delete state[mealId];
+    return;
+  }
+  state[mealId] = { done: true, variant: current.variant };
+}
+
+function getMealVariant(mealId) {
+  return normalizeMealStateEntry(getDayState()[mealId]).variant;
+}
+
+function getSelectedMeal(item) {
+  return item.alt && getMealVariant(item.id) === "alt" ? item.alt : item;
+}
+
 function getDayStateForKey(key) {
-  const all = JSON.parse(localStorage.getItem(STORAGE.meals) || "{}");
+  const all = readJsonStorage(STORAGE.meals, {});
   return all[key] || {};
 }
 
 function getDayState() {
-  const all = JSON.parse(localStorage.getItem(STORAGE.meals) || "{}");
+  const all = readJsonStorage(STORAGE.meals, {});
   return all[getTodayKey()] || {};
 }
 
@@ -5442,23 +5702,23 @@ function getActiveDayKey() {
 }
 
 function saveDayState(state) {
-  const all = JSON.parse(localStorage.getItem(STORAGE.meals) || "{}");
+  const all = readJsonStorage(STORAGE.meals, {});
   all[getTodayKey()] = state;
   localStorage.setItem(STORAGE.meals, JSON.stringify(all));
 }
 
 function isDone(id) {
-  return Boolean(getDayState()[id]);
+  return normalizeMealStateEntry(getDayState()[id]).done;
 }
 
 function toggleMealCheck(button, mealId) {
   const state = getDayState();
-  const wasMarked = Boolean(state[mealId]);
-  state[mealId] = !wasMarked;
+  const wasMarked = normalizeMealStateEntry(state[mealId]).done;
+  setMealDoneInState(state, mealId, !wasMarked);
   saveDayState(state);
 
   // Detectar si recién llegamos a 4 comidas marcadas (goal del día)
-  const newCount = Object.values(state).filter(Boolean).length;
+  const newCount = countDoneMealsFromState(state);
   // FIX: solo celebrar la PRIMERA vez del día, no cada vez que oscilás entre 3 y 4
   const goalCelebratedKey = `goal-celebrated-${getTodayKey()}`;
   const alreadyCelebrated = localStorage.getItem(goalCelebratedKey) === "1";
@@ -5528,6 +5788,8 @@ function quickCheckCurrentMeal() {
   let closest = null;
   let closestDiff = Infinity;
   day.meals.forEach((m) => {
+    const selected = getSelectedMeal(m);
+    const selectedLabel = selected === m ? "" : " [Opcion B elegida]";
     const [h, mn] = m.time.split(":").map(Number);
     const diff = Math.abs(h * 60 + mn - nowMin);
     if (diff < closestDiff) {
@@ -5538,15 +5800,15 @@ function quickCheckCurrentMeal() {
   if (!closest) return;
 
   const state = getDayState();
-  if (state[closest.id]) {
+  if (normalizeMealStateEntry(state[closest.id]).done) {
     showToast(`Ya tenías marcado: ${displayText(closest.label)}`);
     return;
   }
 
-  state[closest.id] = true;
+  setMealDoneInState(state, closest.id, true);
   saveDayState(state);
 
-  const newCount = Object.values(state).filter(Boolean).length;
+  const newCount = countDoneMealsFromState(state);
   const goalCelebratedKey = `goal-celebrated-${getTodayKey()}`;
   const alreadyCelebrated = localStorage.getItem(goalCelebratedKey) === "1";
   const justHitGoal = newCount === 4 && !alreadyCelebrated;
@@ -5742,7 +6004,7 @@ function renderActiveDay() {
     .filter(Boolean);
 
   const day = days.find((item) => item.id === activeDay);
-  const doneMeals = day.meals.filter((item) => isDone(item.id));
+  const doneMeals = day.meals.filter((item) => isDone(item.id)).map(getSelectedMeal);
   const consumed = sumMacros(doneMeals);
   const todayObj = getTodayDayObject();
   const isViewingToday = day.id === todayObj.id;
@@ -5870,18 +6132,16 @@ function isUpcomingMeal(item, day) {
 // OPCION B + PREPARACION + TARJETA DE COMIDA
 // =====================================================
 function toggleAltMeal(mealId) {
-  const panel = document.querySelector(`[data-alt-for="${mealId}"]`);
-  const btn = document.querySelector(`[data-alt-btn="${mealId}"]`);
-  if (!panel) return;
-  const isOpen = panel.classList.toggle("open");
-  panel.setAttribute("aria-hidden", String(!isOpen));
-  if (btn) {
-    btn.setAttribute("aria-expanded", String(isOpen));
-    btn.innerHTML = isOpen
-      ? '<span class="alt-btn-icon">A</span> Volver a opción principal'
-      : '<span class="alt-btn-icon">B</span> No me convence - Ver opción B';
-    btn.classList.toggle("active", isOpen);
-  }
+  const state = getDayState();
+  const current = normalizeMealStateEntry(state[mealId]);
+  const nextVariant = current.variant === "alt" ? "primary" : "alt";
+  state[mealId] = { done: current.done, variant: nextVariant };
+  if (!state[mealId].done && nextVariant === "primary") delete state[mealId];
+  saveDayState(state);
+  renderActiveDay();
+  renderWeekOverview();
+  updateFabBadge();
+  showToast(nextVariant === "alt" ? "Opcion B elegida para macros" : "Volviste a la opcion principal");
 }
 window.toggleAltMeal = toggleAltMeal;
 
@@ -5910,6 +6170,7 @@ function renderMeal(item) {
   const totalC = item.foods.reduce((s, f) => s + f.c, 0);
   const totalG = item.foods.reduce((s, f) => s + f.g, 0);
   const hasAlt = Boolean(item.alt);
+  const selectedAlt = hasAlt && getMealVariant(item.id) === "alt";
 
   const renderDetailGrid = (mealItem, bodyId, isAlt = false) => `
     <div class="meal-detail-grid ${isAlt ? "alt-detail-grid" : ""}">
@@ -5930,9 +6191,9 @@ function renderMeal(item) {
   `;
 
   const altPanel = hasAlt ? `
-    <div class="alt-meal-panel" id="${altId}" data-alt-for="${item.id}" aria-hidden="true">
+    <div class="alt-meal-panel ${selectedAlt ? "open selected" : ""}" id="${altId}" data-alt-for="${item.id}" aria-hidden="${selectedAlt ? "false" : "true"}">
       <div class="alt-meal-header">
-        <span class="alt-badge">Opción B</span>
+        <span class="alt-badge">${selectedAlt ? "Opcion B elegida" : "Opcion B"}</span>
         <span class="alt-kcal">${item.alt.kcal} kcal</span>
       </div>
       <div class="alt-meal-name">${displayText(item.alt.name)}</div>
@@ -5947,8 +6208,8 @@ function renderMeal(item) {
   ` : "";
 
   const altBtn = hasAlt ? `
-    <button class="alt-meal-btn" type="button" data-alt-btn="${item.id}" onclick="event.stopPropagation(); toggleAltMeal('${item.id}')" aria-expanded="false" aria-controls="${altId}">
-      <span class="alt-btn-icon">B</span> No me convence - Ver opción B
+    <button class="alt-meal-btn ${selectedAlt ? "active" : ""}" type="button" data-alt-btn="${item.id}" onclick="event.stopPropagation(); toggleAltMeal('${item.id}')" aria-expanded="${selectedAlt ? "true" : "false"}" aria-controls="${altId}">
+      ${selectedAlt ? '<span class="alt-btn-icon">A</span> Volver a opcion principal' : '<span class="alt-btn-icon">B</span> Elegir opcion B'}
     </button>
   ` : "";
 
@@ -6316,7 +6577,7 @@ function updateUpcomingClass() {
 // AGUA (10 vasos · 2.5L)
 // =====================================================
 function getWaterState() {
-  const saved = JSON.parse(localStorage.getItem(STORAGE.water) || "{}");
+  const saved = readJsonStorage(STORAGE.water, {});
   return saved.date === getTodayKey() ? saved.count : 0;
 }
 
@@ -6388,8 +6649,8 @@ function getStreakEmoji(count) {
 
 function updateStreak() {
   const today = getTodayKey();
-  const streak = JSON.parse(localStorage.getItem(STORAGE.streak) || "{}");
-  const todayDoneCount = Object.values(getDayState()).filter(Boolean).length;
+  const streak = readJsonStorage(STORAGE.streak, {});
+  const todayDoneCount = countDoneMealsFromState(getDayState());
   const todayQualifies = todayDoneCount >= 4;
 
   // Si hoy NO califica pero el last era hoy, lo sacamos del registro
@@ -6450,7 +6711,7 @@ function celebrateStreak(count) {
 // TRACKER DE PESO
 // =====================================================
 function getWeightHistory() {
-  return JSON.parse(localStorage.getItem(STORAGE.weight) || "[]");
+  return readJsonStorage(STORAGE.weight, []);
 }
 
 // Compatibilidad: antes se precargaba 78kg. Desde ahora el primer peso lo carga Rony.
@@ -6776,9 +7037,9 @@ function updateFabBadge() {
   const fab = document.querySelector("#day-fab");
   if (!fab) return;
   const todayObj = getTodayDayObject();
-  const allMeals = JSON.parse(localStorage.getItem(STORAGE.meals) || "{}");
+  const allMeals = readJsonStorage(STORAGE.meals, {});
   const todayState = allMeals[getTodayKey()] || {};
-  const doneCount = Object.values(todayState).filter(Boolean).length;
+  const doneCount = countDoneMealsFromState(todayState);
   const totalCount = todayObj.meals.length;
   const remaining = totalCount - doneCount;
 
@@ -6820,7 +7081,7 @@ window.scrollToTodayPanel = scrollToTodayPanel;
 // WEEK OVERVIEW · resumen semanal con cumplimiento por día
 // =====================================================
 function getDayStateForDate(dateKey, allMealsCache) {
-  const all = allMealsCache || JSON.parse(localStorage.getItem(STORAGE.meals) || "{}");
+  const all = allMealsCache || readJsonStorage(STORAGE.meals, {});
   return all[dateKey] || {};
 }
 
@@ -6845,13 +7106,13 @@ function renderWeekOverview() {
   const dayOrder = ["lun", "mar", "mie", "jue", "vie", "sab", "dom"];
 
   // FIX: leer el localStorage UNA sola vez, no 7 veces (uno por día)
-  const allMealsCache = JSON.parse(localStorage.getItem(STORAGE.meals) || "{}");
+  const allMealsCache = readJsonStorage(STORAGE.meals, {});
 
   grid.innerHTML = dayOrder.map((dayId, i) => {
     const dayDef = days.find((d) => d.id === dayId);
     const dateKey = weekDates[i];
     const state = getDayStateForDate(dateKey, allMealsCache);
-    const doneCount = Object.values(state).filter(Boolean).length;
+    const doneCount = countDoneMealsFromState(state);
     const totalMeals = dayDef.meals.length;
     const isToday = dateKey === todayKey;
     const isComplete = doneCount >= 4;
@@ -6891,7 +7152,7 @@ function renderWeekOverview() {
 // =====================================================
 // EXPORTAR A CALENDARIO (.ics) · notificaciones reales en iPhone
 // =====================================================
-const ICS_RRULE_DAY = { 0: "SU", 1: "MO", 2: "TU", 3: "WE", 4: "TH", 5: "FR", 6: "SA" };
+const ICS_RRULE_DAY = { 1: "MO", 2: "TU", 3: "WE", 4: "TH", 5: "FR", 6: "SA", 7: "SU" };
 
 function pad2(n) { return String(n).padStart(2, "0"); }
 
@@ -7079,8 +7340,8 @@ function shareDay() {
 
   day.meals.forEach((m) => {
     lines.push(`*${m.time}* — ${displayText(m.label)}`);
-    lines.push(`▸ ${displayText(m.name)} (${m.kcal} kcal)`);
-    lines.push(`  ${displayText(m.desc)}`);
+    lines.push(`▸ ${displayText(selected.name)}${selectedLabel} (${selected.kcal} kcal)`);
+    lines.push(`  ${displayText(selected.desc)}`);
     lines.push("");
   });
 
@@ -7110,7 +7371,9 @@ if (shareDayBtn) shareDayBtn.addEventListener("click", shareDay);
 const shoppingBtn = document.querySelector("#shopping-btn");
 if (shoppingBtn) shoppingBtn.addEventListener("click", () => {
   const list = document.querySelector("#shopping-list");
-  list.classList.toggle("active");
+  const isActive = list.classList.toggle("active");
+  shoppingBtn.textContent = isActive ? "Ocultar compras" : "Mostrar compras";
+  shoppingBtn.setAttribute("aria-expanded", String(isActive));
   list.scrollIntoView({ behavior: "smooth", block: "start" });
 });
 
@@ -7131,32 +7394,8 @@ window.saveWeight = saveWeight;
 
 // Cleanup de localStorage viejo antes que nada
 cleanupOldData();
-applyProfessionalMenuRules();
-applyFiveDayTrainingRules();
-applyPlainMenuRules();
-applyWholeFoodPriorityRules();
-applyPostWorkoutWholeFoodRules();
-applyRonyFreshWeeklyMenuRules();
-applyPlanQualityRules();
-applyRiceRotationRules();
-applyFreshMainVarietyRules();
-applyRiceRotationRules();
-applyCalorieBalanceRules();
+rebuildPlanForDate(new Date(), { audit: true });
 // Segundo pase: algunos días quedan por arriba del maxComfort recién después de ajustes del primer pase.
-applyCalorieBalanceRules();
-applyRiceRotationRules();
-applyFreshMainVarietyRules();
-applyRiceRotationRules();
-applyMinimumEnergyFloorRules();
-applyRiceRotationRules();
-applyFreshMainVarietyRules();
-applyRiceRotationRules();
-ensureDailySupplementRules();
-trimHighCalorieDaysAfterSupplements();
-applyMinimumEnergyFloorRules();
-applyRiceRotationRules();
-applyFreshMainVarietyRules();
-auditPlanCompliance();
 
 // FIX BUG NUTRICIONAL: sincronizar los targets del día con la suma REAL de los foods.
 // Antes los targets (kcal/protein/carbs/fats del header del día) estaban hardcoded
@@ -7166,24 +7405,6 @@ auditPlanCompliance();
 
 // FIX: Sincronizar targets + prefixar IDs de comidas con índice de semana
 // Esto evita colisiones en localStorage cuando la misma comida aparece en varias semanas
-allWeeks.forEach((weekDays, wi) => {
-  weekDays.forEach((day) => {
-    // Prefix meal IDs with week index so they're unique across weeks
-    day.meals.forEach((m) => {
-      m.id = `w${wi}-${m.id}`;
-      if (m.alt) m.alt.id = `w${wi}-alt-${slug(m.alt.name)}`;
-    });
-    const totals = day.meals.reduce((acc, m) => {
-      acc.kcal += m.kcal;
-      m.foods.forEach((f) => { acc.p += f.p; acc.c += f.c; acc.g += f.g; });
-      return acc;
-    }, { kcal: 0, p: 0, c: 0, g: 0 });
-    day.kcal = totals.kcal;
-    day.protein = totals.p;
-    day.carbs = totals.c;
-    day.fats = totals.g;
-  });
-});
 
 
 const todayObj = getTodayDayObject();
@@ -7216,7 +7437,8 @@ let lastCheckedDayKey = getTodayKey();
 function syncCurrentPlanDate(reason = "timer") {
   // La PWA puede quedar suspendida varios dias; al volver sincronizamos dia y semana real.
   const currentKey = getTodayKey();
-  const newWeekIndex = getWeekIndex();
+  const now = new Date();
+  const newWeekIndex = getWeekIndex(now);
   const newWeekKey = `${newWeekIndex}:${formatLocalDateKey(getCurrentPlanWeekStart())}`;
   const storedWeek = localStorage.getItem(STORAGE.planWeek);
   const dayChanged = currentKey !== lastCheckedDayKey;
@@ -7225,11 +7447,8 @@ function syncCurrentPlanDate(reason = "timer") {
   if (!dayChanged && !weekChanged) return false;
 
   lastCheckedDayKey = currentKey;
-  if (weekChanged) {
-    weekIndex = newWeekIndex;
-    days = allWeeks[weekIndex];
-    localStorage.setItem(STORAGE.planWeek, newWeekKey);
-  }
+  rebuildPlanForDate(now);
+  localStorage.setItem(STORAGE.planWeek, newWeekKey);
 
   currentWeekName = getCurrentWeekName();
   const todayObj = getTodayDayObject();

@@ -8,6 +8,7 @@ const vm = require("node:vm");
 const repoRoot = path.resolve(__dirname, "..");
 const appScriptPath = path.join(repoRoot, "script.js");
 const indexHtmlPath = path.join(repoRoot, "index.html");
+const serviceWorkerPath = path.join(repoRoot, "sw.js");
 const readmePath = path.join(repoRoot, "README.md");
 
 function readAppScript() {
@@ -44,6 +45,7 @@ function buildAuditPrelude(prelude) {
   applyPlanQualityRules,
   applyRiceRotationRules,
   applyFreshMainVarietyRules,
+  rebuildPlanForDate,
   applyCalorieBalanceRules,
   applyMinimumEnergyFloorRules,
   ensureDailySupplementRules,
@@ -53,6 +55,7 @@ function buildAuditPrelude(prelude) {
   isMainMeal,
   mealHasRice,
   mealCarbGroup,
+  mealNameKey,
   hasWhey,
   hasCreatine,
   mealSearchText,
@@ -85,6 +88,10 @@ function runPrelude(preludeCode) {
 }
 
 function applyRules(A) {
+  if (typeof A.rebuildPlanForDate === "function") {
+    A.rebuildPlanForDate(new Date("2026-06-18T12:00:00-03:00"), { audit: false });
+    return;
+  }
   const ordered = [
     "applyProfessionalMenuRules",
     "applyFiveDayTrainingRules",
@@ -124,6 +131,10 @@ function normalizeText(value) {
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase();
+}
+
+function slugForAudit(value) {
+  return normalizeText(value).replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 }
 
 function visibleMealText(meal) {
@@ -236,6 +247,16 @@ function auditSourceQuality(src) {
   const readmeText = readTextFile(readmePath);
   assert(!/brewco-web\//i.test(readmeText), "Audit: README quedó con nombre de carpeta viejo (brewco-web/).");
   assert(!/09:45|11:15|13:10|14:15/.test(readmeText), "Audit: README conserva horarios viejos que ya no coinciden con la app actual.");
+
+  const indexText = readTextFile(indexHtmlPath);
+  const swText = readTextFile(serviceWorkerPath);
+  const indexAssetVersions = Array.from(indexText.matchAll(/\b(?:styles|script)\.(?:css|js)\?v=([^"']+)/g)).map((match) => match[1]);
+  const swAssetVersions = Array.from(swText.matchAll(/\b(?:styles|script)\.(?:css|js)\?v=([^"']+)/g)).map((match) => match[1]);
+  const allAssetVersions = new Set([...indexAssetVersions, ...swAssetVersions]);
+  assert(indexAssetVersions.length === 2, "Audit: index.html debe cache-bustear styles.css y script.js.");
+  assert(swAssetVersions.length === 2, "Audit: sw.js debe precachear styles.css/script.js con cache-bust.");
+  assert(allAssetVersions.size === 1, `Audit: index.html y sw.js tienen cache-bust distinto: ${Array.from(allAssetVersions).join(", ")}.`);
+  assert(/const\s+VERSION\s*=\s*"v\d+-\d{4}-\d{2}-\d{2}-/.test(swText), "Audit: sw.js debe tener VERSION versionada por fecha.");
 }
 
 function auditDayIndexMapping(A) {
@@ -244,6 +265,8 @@ function auditDayIndexMapping(A) {
   const monday = new Date("2026-06-08T12:00:00");
   assert(A.getPlanDayIndex(sunday) === 7, "Audit: domingo debe mapear a dayIndex 7.");
   assert(A.getPlanDayIndex(monday) === 1, "Audit: lunes debe mapear a dayIndex 1.");
+  const badSunday = A.allWeeks.flat().find((day) => day.id === "dom" && day.dayIndex !== 7);
+  assert(!badSunday, "Audit: los domingos del plan deben usar dayIndex 7.");
 }
 
 function audit(A) {
@@ -276,6 +299,8 @@ function audit(A) {
   const missingPrimaryCreatine = [];
   const duplicateMainNameHits = [];
   const sameDayMainAltHits = [];
+  const duplicateVisibleNameHits = [];
+  const mealIdMismatchHits = [];
   const postLunchVisibleRepeatHits = [];
   const scheduleHits = [];
   const morningLoadHits = [];
@@ -298,10 +323,26 @@ function audit(A) {
 
       let hasPrimaryCreatine = false;
       let hasRiceDay = false;
+      const visibleNamesThisDay = new Map();
+      const trackVisibleName = (name, slot) => {
+        const key = normalizeText(name);
+        if (!key) return;
+        const previous = visibleNamesThisDay.get(key);
+        if (previous) duplicateVisibleNameHits.push({ previous, current: slot });
+        else visibleNamesThisDay.set(key, slot);
+      };
 
       day.meals.forEach((meal, mealNumber) => {
         if (!meal.alt || !Array.isArray(meal.alt.foods)) {
           mealsMissingAlt.push({ weekNumber, dayNumber, mealNumber, label: meal.label, name: meal.name });
+        }
+        const expectedMealId = `w${weekNumber}-${slugForAudit(`${meal.time}-${meal.name}`)}`;
+        if (meal.id !== expectedMealId) {
+          mealIdMismatchHits.push({ weekNumber, dayNumber, mealNumber, label: meal.label, name: meal.name, id: meal.id, expected: expectedMealId });
+        }
+        trackVisibleName(meal.name, { weekNumber, dayNumber, mealNumber, label: meal.label, name: meal.name, variant: "primary" });
+        if (meal.alt) {
+          trackVisibleName(meal.alt.name, { weekNumber, dayNumber, mealNumber, label: meal.label, name: meal.alt.name, variant: "alt" });
         }
 
         const visible = visibleMealText(meal);
@@ -386,14 +427,34 @@ function audit(A) {
       const lunch = findMeal(/almuerzo/);
       const snack = findMeal(/merienda/);
       const dinner = findMeal(/cena/);
-      if (post && lunch) {
-        const postVisible = normalizeText(visibleMealText(post));
-        const lunchVisible = normalizeText(visibleMealText(lunch));
-        ["tortilla", "atun"].forEach((token) => {
-          if (postVisible.includes(token) && lunchVisible.includes(token)) {
-            postLunchVisibleRepeatHits.push({ weekNumber, dayNumber, id: day.id, token, post: post.name, postAlt: post.alt?.name || null, lunch: lunch.name, lunchAlt: lunch.alt?.name || null });
-          }
-        });
+      const visibleMainBlock = [
+        ["post", post],
+        ["lunch", lunch],
+        ["dinner", dinner]
+      ].filter(([, meal]) => meal);
+      for (let i = 0; i < visibleMainBlock.length; i++) {
+        for (let j = i + 1; j < visibleMainBlock.length; j++) {
+          const [leftLabel, leftMeal] = visibleMainBlock[i];
+          const [rightLabel, rightMeal] = visibleMainBlock[j];
+          const leftVisible = normalizeText(visibleMealText(leftMeal));
+          const rightVisible = normalizeText(visibleMealText(rightMeal));
+          ["tortilla", "atun", "arroz"].forEach((token) => {
+            if (leftVisible.includes(token) && rightVisible.includes(token)) {
+              postLunchVisibleRepeatHits.push({
+                weekNumber,
+                dayNumber,
+                id: day.id,
+                token,
+                leftLabel,
+                left: leftMeal.name,
+                leftAlt: leftMeal.alt?.name || null,
+                rightLabel,
+                right: rightMeal.name,
+                rightAlt: rightMeal.alt?.name || null
+              });
+            }
+          });
+        }
       }
 
       if (!isRest) {
@@ -510,6 +571,8 @@ function audit(A) {
   summarize("missingPrimaryCreatine", missingPrimaryCreatine);
   summarize("duplicateMainNameHits", duplicateMainNameHits);
   summarize("sameDayMainAltHits", sameDayMainAltHits);
+  summarize("duplicateVisibleNameHits", duplicateVisibleNameHits);
+  summarize("mealIdMismatchHits", mealIdMismatchHits);
   summarize("postLunchVisibleRepeatHits", postLunchVisibleRepeatHits);
   summarize("scheduleHits", scheduleHits);
   summarize("morningLoadHits", morningLoadHits);
@@ -530,13 +593,15 @@ function audit(A) {
   assert(missingPrimaryCreatine.length === 0, `Audit: faltan creatinas diarias principales (${missingPrimaryCreatine.length}).`);
   assert(duplicateMainNameHits.length === 0, `Audit: hay platos principales repetidos en la misma semana (${duplicateMainNameHits.length}).`);
   assert(sameDayMainAltHits.length === 0, `Audit: hay opciones B iguales a otro plato principal del mismo dia (${sameDayMainAltHits.length}).`);
-  assert(postLunchVisibleRepeatHits.length === 0, `Audit: post-entreno y almuerzo repiten tortilla/atun visible en el mismo dia (${postLunchVisibleRepeatHits.length}).`);
+  assert(duplicateVisibleNameHits.length === 0, `Audit: hay platos visibles repetidos en el mismo dia (${duplicateVisibleNameHits.length}).`);
+  assert(mealIdMismatchHits.length === 0, `Audit: hay IDs de comida desincronizados con nombre/hora (${mealIdMismatchHits.length}).`);
+  assert(postLunchVisibleRepeatHits.length === 0, `Audit: post/almuerzo/cena repiten tortilla/atun/arroz visible en el mismo dia (${postLunchVisibleRepeatHits.length}).`);
   assert(scheduleHits.length === 0, `Audit: horarios nuevos de entreno 12:00 fallaron (${scheduleHits.length}).`);
   assert(morningLoadHits.length === 0, `Audit: la manana de gym quedo muy cargada (${morningLoadHits.length}).`);
   assert(fridayFishHits.length === 0, `Audit: el viernes debe tener salmon principal y opcion B de pescado (${fridayFishHits.length}).`);
   assert(kcalOutliers.length === 0, `Audit: hay días fuera del rango kcal confort (${kcalOutliers.length}).`);
 
-  return { kcalOutliers, mealsMissingAlt, bannedHits, specialHits, dayTipHits, primaryWheyHits, onefitPancakeHits, riceAltHits, sameCarbAltHits, riceSequenceHits, sameTurnRiceHits, nextDayRiceHits, missingPrimaryCreatine, duplicateMainNameHits, sameDayMainAltHits, postLunchVisibleRepeatHits, scheduleHits, morningLoadHits, fridayFishHits };
+  return { kcalOutliers, mealsMissingAlt, bannedHits, specialHits, dayTipHits, primaryWheyHits, onefitPancakeHits, riceAltHits, sameCarbAltHits, riceSequenceHits, sameTurnRiceHits, nextDayRiceHits, missingPrimaryCreatine, duplicateMainNameHits, sameDayMainAltHits, duplicateVisibleNameHits, mealIdMismatchHits, postLunchVisibleRepeatHits, scheduleHits, morningLoadHits, fridayFishHits };
 }
 
 function main() {

@@ -124,9 +124,10 @@ body::before {
   border-right: 1px solid var(--line2);
   backdrop-filter: blur(28px) saturate(150%);
   -webkit-backdrop-filter: blur(28px) saturate(150%);
-  scrollbar-width: none;
+  scrollbar-width: thin;
 }
-.sidebar::-webkit-scrollbar { display:none; }
+.sidebar::-webkit-scrollbar { width: 6px; }
+.sidebar::-webkit-scrollbar-thumb { background: var(--line2); border-radius: 999px; }
 
 /* Scrollable sidebar gradient edge */
 .sidebar::after {
@@ -1177,6 +1178,7 @@ body::before {
 .prog-bar-row:last-child { margin-bottom: 0; }
 .prog-bar-head {
   display: flex; justify-content: space-between; align-items: baseline;
+  gap: 10px;
   margin-bottom: 5px;
 }
 .prog-bar-label {
@@ -1185,6 +1187,7 @@ body::before {
 }
 .prog-bar-value {
   font-size: 0.8rem; font-weight: 700; color: var(--ink);
+  white-space: nowrap;
 }
 .prog-bar-target { font-size: 0.75rem; font-weight: 500; color: var(--muted); }
 .prog-bar-track {
@@ -3285,9 +3288,10 @@ textarea {
   }
 
   .week-overview-grid {
-    grid-template-columns: repeat(7, minmax(74px, 1fr));
-    overflow-x: auto;
-    padding-bottom: 2px;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 4px;
+    overflow: visible;
+    padding-bottom: 0;
   }
 
   .tab-btn {
@@ -4009,6 +4013,11 @@ body {
 .alt-meal-panel.open {
   max-height: 9000px;
   padding: 18px;
+}
+
+.alt-meal-panel.selected {
+  border-color: var(--accent);
+  box-shadow: 5px 5px 0 rgba(16, 17, 14, 0.16);
 }
 
 .alt-badge {

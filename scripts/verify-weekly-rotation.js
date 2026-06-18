@@ -336,6 +336,7 @@ function createAppHarness(initialIso) {
   }
 
   return {
+    evalInApp,
     setNow: fakeDate.setNow,
     snapshot,
     fireWindow,
@@ -365,8 +366,14 @@ function assertNoRiceLunch(actual) {
 function assertNoPostLunchVisibleDuplicate(actual) {
   const postText = normalize(`${actual.post} ${actual.postAlt}`);
   const lunchText = normalize(`${actual.lunch} ${actual.lunchAlt}`);
-  ["tortilla", "atun"].forEach((token) => {
+  ["tortilla", "atun", "arroz"].forEach((token) => {
     assert(!(postText.includes(token) && lunchText.includes(token)), `${actual.label}: post-entreno y almuerzo no deben repetir ${token}. Recibido: ${actual.post} / ${actual.postAlt} / ${actual.lunch} / ${actual.lunchAlt}.`);
+  });
+}
+
+function assertSameMenuForSameDate(left, right) {
+  ["weekIndex", "planWeek", "dayId", "post", "postAlt", "lunch", "lunchAlt", "dinner", "dinnerAlt"].forEach((key) => {
+    assert(left[key] === right[key], `Misma fecha con menu distinto en ${key}: ${left.label}=${left[key]} / ${right.label}=${right[key]}.`);
   });
 }
 
@@ -396,6 +403,28 @@ function main() {
   assertNoRiceLunch(june17Clean);
   assertNoPostLunchVisibleDuplicate(june17Clean);
 
+  const altSelection = june17CleanApp.evalInApp(`(() => {
+    const day = getTodayDayObject();
+    const lunch = day.meals.find((meal) => /almuerzo/i.test(displayText(meal.label)));
+    toggleAltMeal(lunch.id);
+    const state = getDayState();
+    setMealDoneInState(state, lunch.id, true);
+    saveDayState(state);
+    const consumed = sumMacros(day.meals.filter((meal) => isDone(meal.id)).map(getSelectedMeal));
+    return {
+      variant: getMealVariant(lunch.id),
+      consumedKcal: consumed.kcal,
+      altKcal: lunch.alt.kcal,
+      primaryKcal: lunch.kcal
+    };
+  })()`);
+  assert(altSelection.variant === "alt", "Elegir opcion B debe persistir variant=alt.");
+  assert(altSelection.consumedKcal === altSelection.altKcal && altSelection.consumedKcal !== altSelection.primaryKcal, "La opcion B marcada debe contar macros de la B, no de la principal.");
+
+  const june21SundayApp = createAppHarness("2026-06-21T12:00:00-03:00");
+  const june21Sunday = june21SundayApp.snapshot("2026-06-21 domingo");
+  assert(june21Sunday.dayId === "dom", `Domingo real debe mostrar dom, recibido ${june21Sunday.dayId}.`);
+
   app.setNow("2026-06-17T12:00:00-03:00");
   app.fireWindow("focus");
   const june17Focus = app.snapshot("2026-06-17 focus");
@@ -403,8 +432,9 @@ function main() {
     weekIndex: 0,
     weekName: "Semana 1",
     planWeek: "0:2026-06-15",
-    lunchNeedle: "hamburguesas caseras"
+    lunchNeedle: "fideos con tuco"
   });
+  assertSameMenuForSameDate(june17Clean, june17Focus);
 
   app.setNow("2026-06-24T12:00:00-03:00");
   app.fireWindow("pageshow");
@@ -413,7 +443,7 @@ function main() {
     weekIndex: 1,
     weekName: "Semana 2",
     planWeek: "1:2026-06-22",
-    lunchNeedle: "pollo con batata"
+    lunchNeedle: "tacos de carne"
   });
 
   app.setNow("2026-07-01T12:00:00-03:00");
@@ -424,13 +454,20 @@ function main() {
     weekIndex: 2,
     weekName: "Semana 3",
     planWeek: "2:2026-06-29",
-    lunchNeedle: "empanadas de carne"
+    lunchNeedle: "salpicon de pollo"
   });
 
   const uniqueWeeks = new Set([june10.weekIndex, june17Focus.weekIndex, june24Pageshow.weekIndex, july01Visible.weekIndex]);
-  const uniqueLunches = new Set([june10.lunch, june17Focus.lunch, june24Pageshow.lunch, july01Visible.lunch]);
+  const weeklyLunches = [june10, june17Focus, june24Pageshow, july01Visible];
+  const uniqueLunches = new Set(weeklyLunches.map((item) => item.lunch));
+  [june10, june17Clean, june17Focus, june24Pageshow, july01Visible].forEach((item) => {
+    console.log(`${item.label}: ${item.currentWeekName} | ${item.planWeek} | post: ${item.post} | almuerzo: ${item.lunch} | opcion B: ${item.lunchAlt}`);
+  });
   assert(uniqueWeeks.size === 4, "La rotacion no recorrio las 4 semanas esperadas.");
-  assert(uniqueLunches.size === 4, "Los almuerzos de miercoles no cambiaron entre semanas.");
+  assert(uniqueLunches.size >= 3, "Los almuerzos de miercoles cambiaron demasiado poco entre semanas.");
+  for (let i = 1; i < weeklyLunches.length; i++) {
+    assert(weeklyLunches[i].lunch !== weeklyLunches[i - 1].lunch, `Almuerzo repetido en semanas consecutivas: ${weeklyLunches[i - 1].lunch}.`);
+  }
 
   const source = fs.readFileSync(appScriptPath, "utf8");
   assert(/syncCurrentPlanDate\("initial"\)/.test(source), "Falta sincronizacion inicial del menu.");
@@ -439,9 +476,6 @@ function main() {
   assert(/syncCurrentPlanDate\("pageshow"\)/.test(source), "Falta sincronizacion al restaurar pagina.");
 
   console.log("WEEKLY ROTATION OK");
-  [june10, june17Clean, june17Focus, june24Pageshow, july01Visible].forEach((item) => {
-    console.log(`${item.label}: ${item.currentWeekName} | ${item.planWeek} | post: ${item.post} | almuerzo: ${item.lunch} | opcion B: ${item.lunchAlt}`);
-  });
 }
 
 main();

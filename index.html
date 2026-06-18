@@ -16,7 +16,7 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="format-detection" content="telephone=no" />
     <link rel="stylesheet" href="assets/fonts/fonts.css" />
-    <link rel="stylesheet" href="styles.css?v=20260618-breakfastshell" />
+    <link rel="stylesheet" href="styles.css?v=20260618-varietyhardening" />
   </head>
   <body>
 
@@ -213,7 +213,7 @@
             </div>
             <div class="sl-actions">
               <button class="sl-btn" type="button" onclick="exportShopping()">Compartir</button>
-              <button class="sl-btn" type="button" id="shopping-btn">Ver / Ocultar</button>
+              <button class="sl-btn" type="button" id="shopping-btn" aria-expanded="false" aria-controls="shopping-content">Mostrar compras</button>
               <button class="sl-btn" type="button" onclick="resetShopping()">Resetear</button>
             </div>
           </div>
@@ -313,14 +313,14 @@
     <nav class="bottom-nav" aria-label="Navegación principal">
       <a class="bn-item" href="#plan-section"><span class="bn-icon">📅</span><span class="bn-label">Plan</span></a>
       <a class="bn-item" href="#weight-section"><span class="bn-icon">⚖️</span><span class="bn-label">Peso</span></a>
-      <button class="bn-item bn-fab-trigger" type="button" onclick="scrollToTodayPanel()">
+      <button class="bn-item bn-fab-trigger" type="button" onclick="scrollToTodayPanel()" aria-label="Ir al dia de hoy">
         <span class="bn-fab-inner">🍽️</span>
       </button>
       <a class="bn-item" href="#supp-section"><span class="bn-icon">💊</span><span class="bn-label">Supls</span></a>
       <button class="bn-item" type="button" onclick="showWatchModal()"><span class="bn-icon">⌚</span><span class="bn-label">Watch</span></button>
     </nav>
 
-    <script src="script.js?v=20260618-breakfastshell"></script>
+    <script src="script.js?v=20260618-varietyhardening"></script>
     <script>
       // Mirror sidebar values to mobile topbar
       function mirrorToTopbar() {
