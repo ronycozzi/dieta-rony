@@ -16,7 +16,7 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="format-detection" content="telephone=no" />
     <link rel="stylesheet" href="assets/fonts/fonts.css" />
-    <link rel="stylesheet" href="styles.css?v=20260618-varietyhardening" />
+    <link rel="stylesheet" href="styles.css?v=20260621-shoppingpanel" />
   </head>
   <body>
 
@@ -190,8 +190,8 @@
               <p>Tu gasto es alto por metabolismo rápido y gym de lunes a viernes al mediodía. El plan usa desayuno liviano, pre-entreno simple y se mueve cerca de <strong>2800–3000 kcal en días de gym</strong> y <strong>2450–2700 en descanso</strong>, ajustando con el peso semanal.</p>
             </article>
             <article class="review-card">
-              <h3>Creatina base · whey comodín</h3>
-              <p>La creatina (<strong>3–5g</strong>) sí va todos los días. El whey queda como recurso práctico <strong>solo si faltó proteína</strong> o no entró una comida real; la base sigue siendo huevos, pollo, carne magra, atún/pescado, queso y leche. NAC queda como apoyo opcional, no como suplemento principal de músculo.</p>
+              <h3>Creatina + whey diarios</h3>
+              <p>La creatina (<strong>3–5g</strong>) y el whey OneFit (<strong>1 scoop</strong>) van todos los días. El whey asegura proteína sin cargar la mañana; la base sigue siendo huevos, pollo, carne magra, atún/pescado, queso y leche. NAC queda como apoyo opcional, no como suplemento principal de músculo.</p>
             </article>
             <article class="review-card">
               <h3>Viernes: full body base</h3>
@@ -217,6 +217,7 @@
               <button class="sl-btn" type="button" onclick="resetShopping()">Resetear</button>
             </div>
           </div>
+          <div class="shopping-preview" id="shopping-preview" role="status" aria-live="polite"></div>
           <div id="shopping-content"></div>
           <div class="sl-progress">
             <div class="sl-prog-text">Completado: <span id="sl-count">0</span> / <span id="sl-total">0</span></div>
@@ -320,7 +321,7 @@
       <button class="bn-item" type="button" onclick="showWatchModal()"><span class="bn-icon">⌚</span><span class="bn-label">Watch</span></button>
     </nav>
 
-    <script src="script.js?v=20260618-varietyhardening"></script>
+    <script src="script.js?v=20260621-shoppingpanel"></script>
     <script>
       // Mirror sidebar values to mobile topbar
       function mirrorToTopbar() {

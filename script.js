@@ -13,6 +13,7 @@ const STORAGE = {
   meals:           "rony-dieta-meals",
   water:           "rony-dieta-water",
   shopping:        "rony-dieta-shopping",
+  shoppingPanel:   "rony-dieta-shopping-panel",
   streak:          "rony-dieta-streak",
   weight:          "rony-dieta-weight",
   fridayMode:      "rony-dieta-friday-mode",
@@ -2784,6 +2785,12 @@ function displayText(value) {
     .replace(/\batun\b/g, "atún")
     .replace(/\blimon\b/g, "limón")
     .replace(/\bLimon\b/g, "Limón")
+    .replace(/\bNoquis\b/g, "\u00d1oquis")
+    .replace(/\bnoquis\b/g, "\u00f1oquis")
+    .replace(/\bSalmon\b/g, "Salm\u00f3n")
+    .replace(/\bsalmon\b/g, "salm\u00f3n")
+    .replace(/\binfusion\b/g, "infusi\u00f3n")
+    .replace(/\bInfusion\b/g, "Infusi\u00f3n")
     .replace(/\bproteina\b/g, "proteína")
     .replace(/\bProteina\b/g, "Proteína")
     .replace(/\benergia\b/g, "energía")
@@ -2967,8 +2974,8 @@ function buildDetailedPrepSteps(item) {
     steps = [
       `Arma la base con ${ingredients}.`,
       "Si es tostado o sandwich caliente, pone pan, jamon y queso en sandwichera o sarten hasta que el queso funda.",
-      "Si es frio, escurri bien tomate o atun para que el pan no se humedezca.",
-      "Come la fruta indicada al lado para completar energia sin hacer una comida enorme."
+      "Si lleva atun o tomate, escurri bien antes de armarlo para que el pan no se humedezca.",
+      "Si el plan incluye fruta en esa comida, comela al lado; si no aparece, no hace falta agregarla."
     ];
     return addOriginalPrepTip(item, steps);
   }
@@ -3209,7 +3216,7 @@ const WAKE_TIME = "09:30";
 const TRAINING_TIME = "12:00";
 const TRAINING_DAY_TIMES = {
   breakfast: "10:00",
-  pre: "12:30",
+  pre: "11:15",
   post: "14:30",
   lunch: "16:00",
   snack: "19:30",
@@ -3228,13 +3235,13 @@ function wheyFood(label = "1 scoop whey con agua") {
   return food(label, WHEY.p, WHEY.c, WHEY.g);
 }
 
-function wheyWithBananaAndCreatineTemplate(name = "Whey opcional + banana + creatina") {
-  return altMeal(name, "Whey opcional - banana - agua - creatina", [
+function wheyWithBananaAndCreatineTemplate(name = "Whey diario + banana + creatina") {
+  return altMeal(name, "Whey diario - banana - agua - creatina", [
     wheyFood(),
     food("1 banana", 1, 27, 0),
     food("Creatina 5g", 0, 0, 0)
   ], [
-    "Usá este shake solo si te faltó proteína o no entró una comida real.",
+    "Usa este shake para cumplir el scoop diario sin cargar la comida.",
     "La creatina va todos los dias; el horario no es magico, lo importante es cumplirla."
   ]);
 }
@@ -4026,7 +4033,7 @@ function freshMainOptions() {
       food("Cebolla + morron + tomate", 2, 12, 0)
     ], ["Carne con verduras, pure arriba y horno hasta dorar."]),
     altMeal("Tarta de pollo, jamon y queso con ensalada", "Tarta - pollo - jamon - queso - ensalada", [
-      food("1 porcion grande de tarta", 18, 34, 14),
+      food("1 porcion grande de tarta de pollo, jamon y queso", 18, 34, 14),
       food("120g pollo extra", 34, 0, 4),
       food("Ensalada grande", 2, 10, 0)
     ], ["Tarta casera y ensalada grande para completar volumen."]),
@@ -4156,9 +4163,6 @@ function freshFridayFishAltTemplate() {
 
 function freshNightOptions() {
   return [
-    altMeal("Nocturno opcional: agua o infusion", "Agua - infusion", [
-      food("Agua o infusion sin azucar", 0, 0, 0)
-    ], ["Si llegaste bien a calorias y proteina, no hace falta comer mas."]),
     altMeal("Leche con banana chica", "Leche - banana chica", [
       food("200ml leche entera", 6, 10, 7),
       food("1 banana chica", 1, 20, 0)
@@ -4167,8 +4171,20 @@ function freshNightOptions() {
       food("1 rebanada pan integral", 4, 17, 2),
       food("50g jamon cocido", 10, 1, 3),
       food("30g queso en fetas", 7, 1, 5)
-    ], ["Refuerzo salado, chico y normal."])
+    ], ["Refuerzo salado, chico y normal."]),
+    altMeal("Vaso de leche y nueces", "Leche - nueces", [
+      food("250ml leche entera", 8, 12, 8),
+      food("15g nueces", 2, 2, 10)
+    ], ["Cierre simple, con proteina y grasa medida para dormir sin hambre."])
   ];
+}
+
+function savoryNightAltTemplate() {
+  return altMeal("Tostado chico de jamon y queso", "Pan - jamon - queso", [
+    food("1 rebanada pan integral", 4, 17, 2),
+    food("50g jamon cocido natural", 10, 1, 3),
+    food("30g queso en fetas o mozzarella", 7, 1, 5)
+  ], ["Refuerzo salado y simple si no queres algo dulce."]);
 }
 
 function pickFreshAlt(primary, options, seed, { main = false } = {}) {
@@ -4268,8 +4284,8 @@ function applyRonyFreshWeeklyMenuRules() {
         day.tags = ["Full body", "Quinto dia", "Entreno 12:00", "Metabolismo rapido"];
       }
       day.tip = isGymDay
-        ? "Entreno fijo 12:00: desayuno liviano 10:00, pre simple 12:30, post real 14:30 con creatina y almuerzo fuerte 16:00. El whey queda solo si te falta proteína después."
-        : "Descanso activo: desayuno liviano, creatina diaria, comida simple y whey solo como comodín si el día quedó corto de proteína.";
+        ? "Entreno fijo 12:00: desayuno liviano 10:00, pre simple 11:15, post real 14:30 con creatina y almuerzo fuerte 16:00. El whey va todos los dias."
+        : "Descanso activo: desayuno liviano, creatina diaria, whey diario y comida simple para sostener recuperacion sin pesadez.";
       if (isGymDay && !day.tags.includes("Entreno 12:00")) day.tags = [...day.tags, "Entreno 12:00"];
       if (!day.tags.includes("Comida real base")) day.tags = [...day.tags, "Comida real base"];
 
@@ -4828,9 +4844,9 @@ function addCreatineToMeal(mealItem) {
 function addWheyToMeal(mealItem) {
   if (hasWhey(mealItem)) return;
   mealItem.foods.push(wheyFood("1 scoop whey OneFit con agua"));
-  if (!/\bwhey\b/i.test(mealItem.name)) mealItem.name = `${mealItem.name} + whey opcional`;
-  if (!/\bwhey\b/i.test(mealItem.desc)) mealItem.desc = `${mealItem.desc} - whey opcional`;
-  mealItem.prep.push("Tomá 1 scoop de whey OneFit solo si te faltó proteína o no llegás con comida real.");
+  if (!/\bwhey\b/i.test(mealItem.name)) mealItem.name = `${mealItem.name} + whey`;
+  if (!/\bwhey\b/i.test(mealItem.desc)) mealItem.desc = `${mealItem.desc} - scoop fijo`;
+  mealItem.prep.push("Toma 1 scoop de whey OneFit con agua. Es tu proteina diaria fija; la comida real sigue siendo la base.");
 }
 
 function ensureDailySupplementRules() {
@@ -4844,6 +4860,9 @@ function ensureDailySupplementRules() {
       if (!supplementSlot) return;
 
       if (!day.meals.some(hasCreatine)) addCreatineToMeal(supplementSlot);
+      const wheySlot = day.meals.find(hasWhey) || supplementSlot;
+      if (!day.meals.some(hasWhey)) addWheyToMeal(wheySlot);
+      if (wheySlot.alt && !hasWhey(wheySlot.alt)) addWheyToMeal(wheySlot.alt);
     });
   });
 }
@@ -4892,15 +4911,14 @@ function applyWholeFoodPriorityRules() {
         }
 
         if (m.label === "Antes de dormir") {
-          applyMealTemplate(m, altMeal("Nocturno opcional: agua o infusion", "Agua o infusion - opcion B si falto proteina", [
-            food("Agua o infusion sin azucar", 0, 0, 0)
+          applyMealTemplate(m, altMeal("Leche con banana chica", "Leche - banana chica", [
+            food("200ml leche entera", 6, 10, 7),
+            food("1 banana chica", 1, 20, 0)
           ], [
-            "Si ya llegaste a la proteina del dia, no comas de mas antes de dormir.",
-            "Si te cuesta cerrar proteina, usa la opcion B con agua o leche."
+            "Cierre liviano con calorias reales, sin meter una comida grande.",
+            "Si ya estas lleno, toma solo la leche y deja la banana para otro momento."
           ]));
-          m.alt = altMeal("Whey opcional con agua", "Whey opcional - agua", [
-            wheyFood()
-          ], ["Usalo solo si ese día te faltó proteína y no querés sumar otra comida pesada."]);
+          m.alt = savoryNightAltTemplate();
         }
       });
     });
@@ -4941,7 +4959,7 @@ function applyPostWorkoutWholeFoodRules() {
         if (!/post-entreno/i.test(m.label)) return;
         const template = pickBreakfastTemplate(m, day, weekNumber, dayNumber, options, 9);
         applyMealTemplate(m, template);
-        m.alt = wheyWithBananaAndCreatineTemplate("Whey opcional + banana + creatina");
+        m.alt = wheyWithBananaAndCreatineTemplate("Whey diario + banana + creatina");
       });
     });
   });
@@ -4967,7 +4985,7 @@ function applyFiveDayTrainingRules() {
         postSlot.label = "Post-entreno";
         postSlot.time = postSlot.time < "15:00" ? "17:00" : postSlot.time;
         applyMealTemplate(postSlot, solidPostWorkoutTemplate());
-        postSlot.alt = wheyWithBananaAndCreatineTemplate("Whey opcional + banana + creatina");
+        postSlot.alt = wheyWithBananaAndCreatineTemplate("Whey diario + banana + creatina");
       }
     }
   });
@@ -5204,6 +5222,50 @@ function applyCalorieBalanceRules() {
         applyMealTemplate(mainMeal, template);
         mainMeal.alt = cloneMealTemplate(compactMains[(weekNumber + dayNumber + 1) % compactMains.length]);
       }
+    });
+  });
+}
+
+function applyFinalPlanGuardRules() {
+  allWeeks.forEach((weekDays) => {
+    weekDays.forEach((day) => {
+      const floor = day.isRestDay ? 2450 : 2650;
+      const fixNightAlt = () => {
+        const nightMeal = day.meals.find((m) => /dormir/i.test(m.label));
+        if (!nightMeal) return;
+        const usedNames = new Set();
+        day.meals.forEach((mealItem) => {
+          if (mealItem === nightMeal) return;
+          usedNames.add(mealNameKey(mealItem));
+          if (mealItem.alt) usedNames.add(mealNameKey(mealItem.alt));
+        });
+        const nightAltOk = nightMeal.alt
+          && mealNameKey(nightMeal.alt) !== mealNameKey(nightMeal)
+          && !usedNames.has(mealNameKey(nightMeal.alt));
+        if (nightAltOk) return;
+        const options = [savoryNightAltTemplate(), ...freshNightOptions(), metabolismBoosterTemplate("Refuerzo nocturno completo")];
+        nightMeal.alt = cloneMealTemplate(options.find((option) => {
+          const key = mealNameKey(option);
+          return key !== mealNameKey(nightMeal) && !usedNames.has(key);
+        }) || metabolismBoosterTemplate("Refuerzo nocturno completo"));
+      };
+
+      fixNightAlt();
+      if (calculateDayTotals(day).kcal >= floor) return;
+
+      const night = day.meals.find((m) => /dormir/i.test(m.label));
+      if (night) {
+        applyMealTemplate(night, metabolismBoosterTemplate(day.isRestDay ? "Refuerzo de leche, banana y nueces" : "Refuerzo post-dia de gym"));
+        night.alt = savoryNightAltTemplate();
+      } else {
+        day.meals.push(mealFromTemplate(
+          "23:30",
+          "Antes de dormir",
+          metabolismBoosterTemplate(day.isRestDay ? "Refuerzo de leche, banana y nueces" : "Refuerzo post-dia de gym"),
+          savoryNightAltTemplate()
+        ));
+      }
+      fixNightAlt();
     });
   });
 }
@@ -5469,6 +5531,8 @@ function rebuildPlanForDate(date = new Date(), { audit = false } = {}) {
   applyFreshMainVarietyRules();
   applyCrossWeekTurnVarietyRules();
   applyVisibleDayAltVarietyRules();
+  applyFinalPlanGuardRules();
+  ensureDailySupplementRules();
   syncPlanTargetsAndIds();
   weekIndex = getWeekIndex(date);
   days = allWeeks[weekIndex];
@@ -5503,15 +5567,15 @@ const supplementsBase = [
     name: "Creatina monohidrato",
     detail: "3-5g por día, todos los días. No se cicla y no depende de entrenar ese día; funciona por saturación y constancia.",
     when: "Con cualquier comida (o con el post-entreno). La clave es cumplirla todos los días."
+  },
+  {
+    name: "Whey protein OneFit",
+    detail: "1 scoop por dia con agua. Lo usamos para asegurar proteina diaria sin cargar demasiado las comidas de la manana.",
+    when: "Preferentemente post-entreno; en descanso, con la merienda."
   }
 ];
 
 const supplementsOptional = [
-  {
-    name: "Whey protein",
-    detail: "Comodín de proteína: usalo solo cuando ese día no llegues con huevos, pollo, carne magra, atún/pescado, queso o leche. No hace falta meterlo por obligación.",
-    when: "Post-entreno o entre comidas si quedaste corto de proteína. Con agua si la leche cae pesada."
-  },
   {
     name: "Omega 3 (EPA + DHA)",
     detail: "1-2g por día con almuerzo o cena. Reduce inflamación, mejora la recuperación post-gym y la salud cardiovascular. Más útil si comés poco pescado.",
@@ -5544,12 +5608,12 @@ const supplementsOptional = [
 // =====================================================
 const rules = [
   ["⚖️", "Mantenimiento 78-80kg", "Pesate cada lunes en ayunas. Si pasás de 80kg, achicá 1 porción de carbo en almuerzo/cena. Si bajás de 77kg, sumá 200 kcal/día. El objetivo es recomposición, no subir."],
-  ["🥩", "Proteína primero", "Prioridad: comida real (huevos, pollo, carne magra, atún, pescado, queso y leche). El whey queda como comodín si ese día faltó proteína."],
-  ["🥛", "Leche entera si la tolerás", "Densa en calorías y útil. Si te cae pesada, tomá el whey con agua solo cuando realmente lo necesites. Para 78-80kg, no hace falta forzar más calorías."],
+  ["🥩", "Proteína primero", "Prioridad: comida real (huevos, pollo, carne magra, atún, pescado, queso y leche). El whey OneFit suma 1 scoop diario para asegurar el piso."],
+  ["🥛", "Leche entera si la tolerás", "Densa en calorías y útil. Si te cae pesada, tomá el whey diario con agua. Para 78-80kg, no hace falta forzar más calorías."],
   ["💧", "Hidratación 3L+", "Mínimo 2.5L. En días de gym (especialmente piernas) o calor: 3-3.5L. La sed es señal tardía. La app te recuerda cada 90 min."],
   ["💊", "Creatina TODOS los días", "3-5g, incluso días de descanso. Lo que importa es que esté siempre presente en el músculo. Saltearla 1 día no rompe nada, pero la constancia es la clave."],
   ["🛌", "Dormir 8-9 horas", "El músculo crece cuando dormís. Con menos de 7h, perdés progreso aunque comas perfecto. Establecé una hora fija."],
-  ["🦵", "5 entrenos por semana", "Lunes a viernes quedan como base de gym a las 12:00. Desayuno liviano 10:00, pre simple 12:30, post 14:30 y almuerzo fuerte 16:00."],
+  ["🦵", "5 entrenos por semana", "Lunes a viernes quedan como base de gym a las 12:00. Desayuno liviano 10:00, pre simple 11:15, post 14:30 y almuerzo fuerte 16:00."],
   ["🔥", "Metabolismo rápido", "No conviene recortar de más. Los días de gym se mueven cerca de 2800-3000 kcal y los descansos cerca de 2450-2650 kcal, ajustando con el peso semanal."],
   ["📸", "Medí más allá de la balanza", "Balanza + cintura + foto sin remera cada 4 semanas. En recomposición la balanza no se mueve mucho pero el cuerpo cambia: más músculo, menos grasa."],
   ["🥦", "Fibra todos los días", "Frutas y verduras en cada comida principal. Mejora digestión, energía y absorción de proteína. Importante en mantenimiento para sentirte saciado."]
@@ -5629,7 +5693,7 @@ const shopping = {
   ],
   "Suplementos": [
     "Creatina monohidrato · 3-5g diario",
-    "Whey protein OneFit · opcional, 1 scoop si faltó proteína",
+    "Whey protein OneFit · 1 scoop diario",
     "NAC Swanson 600mg · opcional, 1 cápsula con comida",
     "Omega 3 (opcional pero recomendado)",
     "Vitamina D3 (opcional)",
@@ -5664,8 +5728,22 @@ function normalizeMealStateEntry(entry) {
   return { done: Boolean(entry), variant: "primary" };
 }
 
-function countDoneMealsFromState(state) {
-  return Object.values(state || {}).filter((entry) => normalizeMealStateEntry(entry).done).length;
+function getMealIdSetForDay(day) {
+  return new Set((day?.meals || []).map((mealItem) => mealItem.id));
+}
+
+function pruneMealStateForIds(state, allowedIds) {
+  if (!allowedIds) return state || {};
+  const clean = {};
+  Object.entries(state || {}).forEach(([id, entry]) => {
+    if (allowedIds.has(id)) clean[id] = entry;
+  });
+  return clean;
+}
+
+function countDoneMealsFromState(state, allowedIds = null) {
+  const cleanState = pruneMealStateForIds(state || {}, allowedIds);
+  return Object.values(cleanState).filter((entry) => normalizeMealStateEntry(entry).done).length;
 }
 
 function setMealDoneInState(state, mealId, done) {
@@ -5692,7 +5770,14 @@ function getDayStateForKey(key) {
 
 function getDayState() {
   const all = readJsonStorage(STORAGE.meals, {});
-  return all[getTodayKey()] || {};
+  const key = getTodayKey();
+  const rawState = all[key] || {};
+  const cleanState = pruneMealStateForIds(rawState, getMealIdSetForDay(getTodayDayObject()));
+  if (Object.keys(cleanState).length !== Object.keys(rawState).length) {
+    all[key] = cleanState;
+    localStorage.setItem(STORAGE.meals, JSON.stringify(all));
+  }
+  return cleanState;
 }
 
 function getActiveDayKey() {
@@ -5703,7 +5788,7 @@ function getActiveDayKey() {
 
 function saveDayState(state) {
   const all = readJsonStorage(STORAGE.meals, {});
-  all[getTodayKey()] = state;
+  all[getTodayKey()] = pruneMealStateForIds(state, getMealIdSetForDay(getTodayDayObject()));
   localStorage.setItem(STORAGE.meals, JSON.stringify(all));
 }
 
@@ -5788,8 +5873,6 @@ function quickCheckCurrentMeal() {
   let closest = null;
   let closestDiff = Infinity;
   day.meals.forEach((m) => {
-    const selected = getSelectedMeal(m);
-    const selectedLabel = selected === m ? "" : " [Opcion B elegida]";
     const [h, mn] = m.time.split(":").map(Number);
     const diff = Math.abs(h * 60 + mn - nowMin);
     if (diff < closestDiff) {
@@ -5969,9 +6052,9 @@ function renderOperationalBrief(day, consumed, adjustedKcal, proteinTarget) {
     : "Llegá liviano al mediodía, meté carbo simple en el pre y dejá el plato fuerte para después del gym.";
   let closeoutText;
   if (proteinGap <= 0 && kcalGap <= 120) {
-    closeoutText = "Vas en rango. Mantené comida real y dejá el whey guardado salvo cierre excepcional.";
+    closeoutText = "Vas en rango. Mantené comida real y cumplí el scoop diario de whey con agua.";
   } else if (proteinGap > 0) {
-    closeoutText = `Todavía faltan ${proteinGap}g de proteína. Priorizá huevos, pollo, carne, atún o queso; whey solo si al final seguís corto.`;
+    closeoutText = `Todavía faltan ${proteinGap}g de proteína. Cumplí el whey diario y priorizá huevos, pollo, carne, atún o queso para completar.`;
   } else {
     closeoutText = `Todavía faltan ~${kcalGap} kcal. Sumá una porción simple de arroz, papa, pan o fruta sin recargar grasas al pedo.`;
   }
@@ -6009,7 +6092,7 @@ function renderActiveDay() {
   const todayObj = getTodayDayObject();
   const isViewingToday = day.id === todayObj.id;
 
-  const isFridayWithoutGym = day.id === "vie" && localStorage.getItem(STORAGE.fridayMode) === "rest";
+  const isFridayWithoutGym = day.id === "vie" && getFridayModeForDay(day.id) === "rest";
   const adjustedKcal = isFridayWithoutGym ? day.kcal - 200 : day.kcal;
   const proteinTarget = isFridayWithoutGym ? Math.round(day.protein * 0.92) : day.protein;
 
@@ -6104,7 +6187,7 @@ function renderActiveDay() {
 }
 
 function setFridayMode(mode) {
-  localStorage.setItem(STORAGE.fridayMode, mode);
+  writeFridayModeForDay("vie", mode);
   renderActiveDay();
 }
 
@@ -6344,6 +6427,7 @@ function renderShopping() {
     </div>
   `).join("");
   restoreShoppingState();
+  syncShoppingPanelUI();
 }
 
 function getShoppingState() {
@@ -6384,6 +6468,50 @@ function updateShoppingProgress() {
   document.querySelector("#sl-count").textContent = done;
   document.querySelector("#sl-total").textContent = total;
   document.querySelector("#sl-fill").style.width = total ? `${(done / total) * 100}%` : "0%";
+  syncShoppingPreview(total, done);
+}
+
+function isShoppingPanelExpanded() {
+  return localStorage.getItem(STORAGE.shoppingPanel) === "open";
+}
+
+function setShoppingPanelExpanded(expanded, options = {}) {
+  localStorage.setItem(STORAGE.shoppingPanel, expanded ? "open" : "closed");
+  syncShoppingPanelUI();
+  if (expanded && options.scrollIntoView) {
+    document.querySelector("#shopping-list")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+}
+
+function syncShoppingPreview(total, done) {
+  const preview = document.querySelector("#shopping-preview");
+  if (!preview) return;
+  const remaining = Math.max(0, total - done);
+  const categories = Object.entries(shopping)
+    .slice(0, 3)
+    .map(([category, items]) => `${displayText(category)} · ${items.length}`)
+    .join("  ·  ");
+  preview.innerHTML = `
+    <div class="shopping-preview-copy">
+      <strong>${remaining} pendientes</strong> de ${total} items para dejar la semana lista.
+    </div>
+    <div class="shopping-preview-meta">${categories}</div>
+  `;
+}
+
+function syncShoppingPanelUI() {
+  const section = document.querySelector("#shopping-list");
+  const content = document.querySelector("#shopping-content");
+  const button = document.querySelector("#shopping-btn");
+  const preview = document.querySelector("#shopping-preview");
+  if (!section || !content || !button || !preview) return;
+
+  const expanded = isShoppingPanelExpanded();
+  section.classList.toggle("shopping-collapsed", !expanded);
+  content.hidden = !expanded;
+  preview.hidden = expanded;
+  button.textContent = expanded ? "Ocultar compras" : "Mostrar compras";
+  button.setAttribute("aria-expanded", String(expanded));
 }
 
 function exportShopping() {
@@ -6461,7 +6589,7 @@ function updateGymBanner() {
   const banner = document.querySelector("#gym-banner-dieta");
   if (!banner) return;
 
-  const isFridayRest = day.id === "vie" && localStorage.getItem(STORAGE.fridayMode) === "rest";
+  const isFridayRest = day.id === "vie" && getFridayModeForDay(day.id) === "rest";
   const preMeal = day.meals.find((m) => /pre-?entreno/i.test(m.label));
   const trainingTime = day.trainingTime || TRAINING_TIME;
 
@@ -6628,6 +6756,7 @@ function renderWater() {
 function resetDay() {
   if (!confirm("¿Resetear todas las marcas y el agua del día?")) return;
   saveDayState({});
+  localStorage.removeItem(`goal-celebrated-${getTodayKey()}`);
   setWater(0);
   renderActiveDay();
   renderWeekOverview();
@@ -7039,7 +7168,7 @@ function updateFabBadge() {
   const todayObj = getTodayDayObject();
   const allMeals = readJsonStorage(STORAGE.meals, {});
   const todayState = allMeals[getTodayKey()] || {};
-  const doneCount = countDoneMealsFromState(todayState);
+  const doneCount = countDoneMealsFromState(todayState, getMealIdSetForDay(todayObj));
   const totalCount = todayObj.meals.length;
   const remaining = totalCount - doneCount;
 
@@ -7098,6 +7227,39 @@ function getWeekDates() {
   });
 }
 
+function getDateKeyForDayId(dayId) {
+  const dayOrder = ["lun", "mar", "mie", "jue", "vie", "sab", "dom"];
+  const index = dayOrder.indexOf(dayId);
+  return getWeekDates()[index] || getTodayKey();
+}
+
+function readFridayModes() {
+  const raw = localStorage.getItem(STORAGE.fridayMode);
+  if (!raw) return {};
+  if (raw === "rest") return { [getTodayKey()]: "rest" };
+  if (raw === "gym") return {};
+  try {
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    localStorage.removeItem(STORAGE.fridayMode);
+    return {};
+  }
+}
+
+function getFridayModeForDay(dayId = "vie") {
+  if (dayId !== "vie") return "gym";
+  return readFridayModes()[getDateKeyForDayId(dayId)] === "rest" ? "rest" : "gym";
+}
+
+function writeFridayModeForDay(dayId, mode) {
+  const modes = readFridayModes();
+  const dateKey = getDateKeyForDayId(dayId);
+  if (mode === "rest") modes[dateKey] = "rest";
+  else delete modes[dateKey];
+  localStorage.setItem(STORAGE.fridayMode, JSON.stringify(modes));
+}
+
 function renderWeekOverview() {
   const grid = document.querySelector("#week-overview-grid");
   if (!grid) return;
@@ -7112,7 +7274,7 @@ function renderWeekOverview() {
     const dayDef = days.find((d) => d.id === dayId);
     const dateKey = weekDates[i];
     const state = getDayStateForDate(dateKey, allMealsCache);
-    const doneCount = countDoneMealsFromState(state);
+    const doneCount = countDoneMealsFromState(state, getMealIdSetForDay(dayDef));
     const totalMeals = dayDef.meals.length;
     const isToday = dateKey === todayKey;
     const isComplete = doneCount >= 4;
@@ -7140,11 +7302,11 @@ function renderWeekOverview() {
     `;
 
     return `
-      <div class="wo-day ${isToday ? "is-today" : ""} ${isComplete ? "complete" : ""} ${dayDef.isRestDay ? "rest-day" : ""}" onclick="setActiveDay('${dayId}')">
+      <button class="wo-day ${isToday ? "is-today" : ""} ${isComplete ? "complete" : ""} ${dayDef.isRestDay ? "rest-day" : ""}" type="button" onclick="setActiveDay('${dayId}')" aria-label="Ver ${displayText(dayDef.title)}: ${doneCount} de ${totalMeals} comidas">
         <div class="wo-tab">${dayDef.tab}</div>
         <div class="wo-icon">${dayDef.workout.icon}</div>
         ${ringEl}
-      </div>
+      </button>
     `;
   }).join("");
 }
@@ -7339,6 +7501,8 @@ function shareDay() {
   lines.push("");
 
   day.meals.forEach((m) => {
+    const selected = getSelectedMeal(m);
+    const selectedLabel = selected === m ? "" : " [Opcion B elegida]";
     lines.push(`*${m.time}* — ${displayText(m.label)}`);
     lines.push(`▸ ${displayText(selected.name)}${selectedLabel} (${selected.kcal} kcal)`);
     lines.push(`  ${displayText(selected.desc)}`);
@@ -7370,11 +7534,7 @@ const shareDayBtn = document.querySelector("#share-day-btn");
 if (shareDayBtn) shareDayBtn.addEventListener("click", shareDay);
 const shoppingBtn = document.querySelector("#shopping-btn");
 if (shoppingBtn) shoppingBtn.addEventListener("click", () => {
-  const list = document.querySelector("#shopping-list");
-  const isActive = list.classList.toggle("active");
-  shoppingBtn.textContent = isActive ? "Ocultar compras" : "Mostrar compras";
-  shoppingBtn.setAttribute("aria-expanded", String(isActive));
-  list.scrollIntoView({ behavior: "smooth", block: "start" });
+  setShoppingPanelExpanded(!isShoppingPanelExpanded(), { scrollIntoView: true });
 });
 
 const weightBtn = document.querySelector("#weight-save-btn");
@@ -7710,11 +7870,15 @@ function installShortcut(action) {
 }
 window.installShortcut = installShortcut;
 
+let lastWatchModalTrigger = null;
+
 function showWatchModal() {
   const modal = document.querySelector("#watch-modal");
   if (modal) {
+    lastWatchModalTrigger = document.activeElement && typeof document.activeElement.focus === "function" ? document.activeElement : null;
     modal.style.display = "flex";
     document.body.style.overflow = "hidden";
+    setTimeout(() => modal.querySelector("button")?.focus(), 0);
   }
 }
 window.showWatchModal = showWatchModal;
@@ -7725,6 +7889,9 @@ function closeWatchModal(event) {
   if (modal) {
     modal.style.display = "none";
     document.body.style.overflow = "";
+    if (lastWatchModalTrigger && document.body.contains(lastWatchModalTrigger)) {
+      lastWatchModalTrigger.focus();
+    }
   }
 }
 window.closeWatchModal = closeWatchModal;

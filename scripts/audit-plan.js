@@ -220,7 +220,7 @@ function auditSourceQuality(src) {
     /todos los d[ií]as[^.\n]{0,32}whey/i
   ];
   const staleScheduleCopyPatterns = [
-    /pre simple 11:15/i,
+    /pre simple 12:30/i,
     /desayuno liviano 09:45, pre simple 11:15, post 13:10 y almuerzo fuerte 14:15/i
   ];
   const collateralFiles = [
@@ -228,14 +228,6 @@ function auditSourceQuality(src) {
     { label: "index.html", text: readTextFile(indexHtmlPath) },
     { label: "README.md", text: readTextFile(readmePath) }
   ];
-  const mandatoryHits = [];
-  collateralFiles.forEach(({ label, text }) => {
-    mandatoryWheyPatterns.forEach((pattern) => {
-      if (pattern.test(text)) mandatoryHits.push(`${label}:${pattern}`);
-    });
-  });
-  assert(mandatoryHits.length === 0, `Audit: reapareció copy de whey obligatorio: ${mandatoryHits.join(", ")}.`);
-
   const staleScheduleHits = [];
   collateralFiles.forEach(({ label, text }) => {
     staleScheduleCopyPatterns.forEach((pattern) => {
@@ -246,7 +238,7 @@ function auditSourceQuality(src) {
 
   const readmeText = readTextFile(readmePath);
   assert(!/brewco-web\//i.test(readmeText), "Audit: README quedó con nombre de carpeta viejo (brewco-web/).");
-  assert(!/09:45|11:15|13:10|14:15/.test(readmeText), "Audit: README conserva horarios viejos que ya no coinciden con la app actual.");
+  assert(!/09:45|13:10|14:15/.test(readmeText), "Audit: README conserva horarios viejos que ya no coinciden con la app actual.");
 
   const indexText = readTextFile(indexHtmlPath);
   const swText = readTextFile(serviceWorkerPath);
@@ -288,7 +280,7 @@ function audit(A) {
   const bannedHits = [];
   const specialHits = [];
   const dayTipHits = [];
-  const primaryWheyHits = [];
+  const missingPrimaryWhey = [];
   const onefitPancakeHits = [];
   const weakFallbackHits = [];
   const riceAltHits = [];
@@ -317,11 +309,12 @@ function audit(A) {
           break;
         }
       }
-      if (/09:45|11:15|13:10|14:15/.test(day.tip || "")) {
+      if (/09:45|13:10|14:15/.test(day.tip || "")) {
         scheduleHits.push({ weekNumber, dayNumber, id: day.id, issue: "stale-day-tip", tip: day.tip });
       }
 
       let hasPrimaryCreatine = false;
+      let hasPrimaryWhey = false;
       let hasRiceDay = false;
       const visibleNamesThisDay = new Map();
       const trackVisibleName = (name, slot) => {
@@ -348,6 +341,7 @@ function audit(A) {
         const visible = visibleMealText(meal);
         const mainVisible = visibleMealText({ ...meal, alt: null });
         if (typeof A.hasCreatine === "function" && A.hasCreatine(meal)) hasPrimaryCreatine = true;
+        if (typeof A.hasWhey === "function" && A.hasWhey(meal)) hasPrimaryWhey = true;
 
         for (const re of bannedRenderTerms) {
           if (re.test(visible)) {
@@ -364,10 +358,6 @@ function audit(A) {
           if (A.isTooSpecialForRony(meal) || (meal.alt && A.isTooSpecialForRony(meal.alt))) {
             specialHits.push({ weekNumber, dayNumber, mealNumber, label: meal.label, name: meal.name });
           }
-        }
-
-        if (/whey/i.test(mainVisible)) {
-          primaryWheyHits.push({ weekNumber, dayNumber, mealNumber, label: meal.label, name: meal.name });
         }
 
         if (/leche, banana chica y queso en fetas|queso untable con tostadas y fruta/i.test(visible)) {
@@ -401,6 +391,7 @@ function audit(A) {
       });
 
       if (!hasPrimaryCreatine) missingPrimaryCreatine.push({ weekNumber, dayNumber, id: day.id, title: day.title });
+      if (!hasPrimaryWhey) missingPrimaryWhey.push({ weekNumber, dayNumber, id: day.id, title: day.title });
       if (day.id === "vie") {
         const fridayLunch = day.meals.find((meal) => /almuerzo/i.test(normalizeText(meal.label)));
         const primaryText = fridayLunch ? visibleMealText({ ...fridayLunch, alt: null }) : "";
@@ -561,7 +552,7 @@ function audit(A) {
   summarize("dayTipHits", dayTipHits);
   summarize("bannedHits", bannedHits);
   summarize("specialHits", specialHits);
-  summarize("primaryWheyHits", primaryWheyHits);
+  summarize("missingPrimaryWhey", missingPrimaryWhey);
   summarize("onefitPancakeHits", onefitPancakeHits);
   summarize("riceAltHits", riceAltHits);
   summarize("sameCarbAltHits", sameCarbAltHits);
@@ -582,7 +573,7 @@ function audit(A) {
   assert(dayTipHits.length === 0, `Audit: hay tips con ingredientes bloqueados (${dayTipHits.length}).`);
   assert(bannedHits.length === 0, `Audit: aparecen ingredientes bloqueados en el menú (${bannedHits.length}).`);
   assert(specialHits.length === 0, `Audit: quedaron comidas "muy especiales" (${specialHits.length}).`);
-  assert(primaryWheyHits.length === 0, `Audit: el whey quedó como comida principal en el menú renderizado (${primaryWheyHits.length}).`);
+  assert(missingPrimaryWhey.length === 0, `Audit: falta whey diario principal (${missingPrimaryWhey.length}).`);
   assert(onefitPancakeHits.length === 0, `Audit: el menú renderizado recayó en pancakes OneFit en vez de panqueques caseros (${onefitPancakeHits.length}).`);
   assert(weakFallbackHits.length === 0, `Audit: el menú renderizado dejó fallback flojo en desayuno/merienda (${weakFallbackHits.length}).`);
   assert(riceAltHits.length === 0, `Audit: hay opciones B de almuerzo/cena con arroz (${riceAltHits.length}).`);
@@ -601,7 +592,7 @@ function audit(A) {
   assert(fridayFishHits.length === 0, `Audit: el viernes debe tener salmon principal y opcion B de pescado (${fridayFishHits.length}).`);
   assert(kcalOutliers.length === 0, `Audit: hay días fuera del rango kcal confort (${kcalOutliers.length}).`);
 
-  return { kcalOutliers, mealsMissingAlt, bannedHits, specialHits, dayTipHits, primaryWheyHits, onefitPancakeHits, riceAltHits, sameCarbAltHits, riceSequenceHits, sameTurnRiceHits, nextDayRiceHits, missingPrimaryCreatine, duplicateMainNameHits, sameDayMainAltHits, duplicateVisibleNameHits, mealIdMismatchHits, postLunchVisibleRepeatHits, scheduleHits, morningLoadHits, fridayFishHits };
+  return { kcalOutliers, mealsMissingAlt, bannedHits, specialHits, dayTipHits, missingPrimaryWhey, onefitPancakeHits, riceAltHits, sameCarbAltHits, riceSequenceHits, sameTurnRiceHits, nextDayRiceHits, missingPrimaryCreatine, duplicateMainNameHits, sameDayMainAltHits, duplicateVisibleNameHits, mealIdMismatchHits, postLunchVisibleRepeatHits, scheduleHits, morningLoadHits, fridayFishHits };
 }
 
 function main() {

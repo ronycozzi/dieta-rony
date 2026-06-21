@@ -12,7 +12,7 @@ Jueves piernas · Viernes full body · Sábado/Domingo descanso.
 ### Plan
 - 7 días con kcal y macros calibrados por tipo de entreno
 - Comidas con preparaciones detalladas paso a paso (4-7 pasos cada una)
-- Días de gym con ritmo operativo real: desayuno 10:00, media mañana 11:30, pre-entreno 12:30, post-entreno 14:30 y almuerzo fuerte 16:00
+- Días de gym con ritmo operativo real: desayuno 10:00, pre-entreno 11:15, post-entreno 14:30 y almuerzo fuerte 16:00
 - Viernes base como quinto entrenamiento, con selector para descanso excepcional sin romper la semana
 - Sin yogur, avena, harina de arroz, arroz inflado, ricota, cottage, locro ni combinaciones raras fuera del criterio definido para Rony
 - Pescado 1x semana (salmón viernes) por omega 3
@@ -41,7 +41,7 @@ Jueves piernas · Viernes full body · Sábado/Domingo descanso.
 - "Resetear día"
 
 ### Nutrición
-- Suplementación base con creatina diaria y whey opcional como comodín si faltó proteína
+- Suplementación base con creatina diaria y whey OneFit diario
 - 10 reglas de mantenimiento + recomposición
 - Notificaciones programadas para cada comida y agua cada 90 min
 
@@ -77,9 +77,9 @@ o usar ngrok / Vercel / Netlify deploy.
 
 ## Validaciones
 
-Validación rápida del plan (menú renderizado limpio, sin ingredientes bloqueados, todas las comidas con opción B y kcal en rango):
+Validación completa antes de subir cambios:
 ```
-node scripts/audit-plan.js
+npm test
 ```
 
 ## Estructura

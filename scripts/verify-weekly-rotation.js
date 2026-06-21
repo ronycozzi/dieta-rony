@@ -306,6 +306,7 @@ function createAppHarness(initialIso) {
   function snapshot(label) {
     return evalInApp(`(() => {
       const day = getTodayDayObject();
+      const pre = day.meals.find((meal) => /pre-entreno/i.test(displayText(meal.label))) || {};
       const post = day.meals.find((meal) => /post-entreno/i.test(displayText(meal.label))) || {};
       const lunch = day.meals.find((meal) => /almuerzo/i.test(displayText(meal.label))) || {};
       const dinner = day.meals.find((meal) => /cena/i.test(displayText(meal.label))) || {};
@@ -316,6 +317,7 @@ function createAppHarness(initialIso) {
         currentWeekName: displayText(currentWeekName),
         activeDay,
         dayId: day.id,
+        preTime: pre.time || "",
         post: displayText(post.name || ""),
         postAlt: displayText((post.alt && post.alt.name) || ""),
         lunch: displayText(lunch.name || ""),
@@ -400,8 +402,21 @@ function main() {
     planWeek: "0:2026-06-15",
     lunchNeedle: "fideos con tuco"
   });
+  assert(june17Clean.preTime === "11:15", `El pre-entreno debe quedar antes de entrenar, 11:15. Recibido: ${june17Clean.preTime}.`);
   assertNoRiceLunch(june17Clean);
   assertNoPostLunchVisibleDuplicate(june17Clean);
+
+  const supplementCoverage = june17CleanApp.evalInApp(`(() => {
+    const missing = [];
+    allWeeks.forEach((week, wi) => week.forEach((day, di) => {
+      const wheyMeal = day.meals.find((meal) => hasWhey(meal));
+      if (!wheyMeal) missing.push('whey:' + wi + ':' + di + ':' + day.id);
+      else if (wheyMeal.alt && !hasWhey(wheyMeal.alt)) missing.push('whey-alt:' + wi + ':' + di + ':' + day.id);
+      if (!day.meals.some((meal) => hasCreatine(meal))) missing.push('creatine:' + wi + ':' + di + ':' + day.id);
+    }));
+    return missing;
+  })()`);
+  assert(supplementCoverage.length === 0, `Falta whey/creatina diaria o en opcion B: ${supplementCoverage.join(', ')}`);
 
   const altSelection = june17CleanApp.evalInApp(`(() => {
     const day = getTodayDayObject();
@@ -420,6 +435,27 @@ function main() {
   })()`);
   assert(altSelection.variant === "alt", "Elegir opcion B debe persistir variant=alt.");
   assert(altSelection.consumedKcal === altSelection.altKcal && altSelection.consumedKcal !== altSelection.primaryKcal, "La opcion B marcada debe contar macros de la B, no de la principal.");
+
+  const statePruning = june17CleanApp.evalInApp(`(() => {
+    const day = getTodayDayObject();
+    const valid = day.meals[0].id;
+    const state = {};
+    state[valid] = { done: true, variant: 'primary' };
+    state['old-meal-id-from-previous-menu'] = { done: true, variant: 'primary' };
+    saveDayState(state);
+    return {
+      count: countDoneMealsFromState(getDayState(), getMealIdSetForDay(day)),
+      hasOld: Object.prototype.hasOwnProperty.call(getDayState(), 'old-meal-id-from-previous-menu')
+    };
+  })()`);
+  assert(statePruning.count === 1 && statePruning.hasOld === false, "Estados viejos de comidas no deben contar ni persistir tras cambio de menu.");
+
+  const shareDayResult = june17CleanApp.evalInApp(`(() => {
+    navigator.clipboard = { writeText(text) { globalThis.__sharedText = text; return Promise.resolve(); } };
+    shareDay();
+    return typeof globalThis.__sharedText === 'string' && globalThis.__sharedText.includes('DIETA');
+  })()`);
+  assert(shareDayResult === true, "shareDay debe funcionar sin ReferenceError y copiar el texto.");
 
   const june21SundayApp = createAppHarness("2026-06-21T12:00:00-03:00");
   const june21Sunday = june21SundayApp.snapshot("2026-06-21 domingo");

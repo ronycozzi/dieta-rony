@@ -1,16 +1,16 @@
 // Service Worker · Dieta Rony Cozzi
 // Network-first para HTML/JS/CSS; cache-first para assets estáticos.
 
-const VERSION = "v53-2026-06-18-variety-hardening";
+const VERSION = "v55-2026-06-21-shopping-panel";
 const CACHE_NAME = `dieta-rony-${VERSION}`;
 const ASSETS = [
   "./",
   "./index.html",
   "./assets/fonts/fonts.css",
   "./styles.css",
-  "./styles.css?v=20260618-varietyhardening",
+  "./styles.css?v=20260621-shoppingpanel",
   "./script.js",
-  "./script.js?v=20260618-varietyhardening",
+  "./script.js?v=20260621-shoppingpanel",
   "./favicon.svg",
   "./manifest.json",
   "./assets/rony-cozzi.jpg",
