@@ -3235,13 +3235,13 @@ function wheyFood(label = "1 scoop whey con agua") {
   return food(label, WHEY.p, WHEY.c, WHEY.g);
 }
 
-function wheyWithBananaAndCreatineTemplate(name = "Whey diario + banana + creatina") {
-  return altMeal(name, "Whey diario - banana - agua - creatina", [
+function wheyWithBananaAndCreatineTemplate(name = "Whey + banana + creatina") {
+  return altMeal(name, "Whey - banana - agua - creatina", [
     wheyFood(),
     food("1 banana", 1, 27, 0),
     food("Creatina 5g", 0, 0, 0)
   ], [
-    "Usa este shake para cumplir el scoop diario sin cargar la comida.",
+    "Usalo cuando el dia quede corto de proteina y no llegues con comida real.",
     "La creatina va todos los dias; el horario no es magico, lo importante es cumplirla."
   ]);
 }
@@ -4284,8 +4284,8 @@ function applyRonyFreshWeeklyMenuRules() {
         day.tags = ["Full body", "Quinto dia", "Entreno 12:00", "Metabolismo rapido"];
       }
       day.tip = isGymDay
-        ? "Entreno fijo 12:00: desayuno liviano 10:00, pre simple 11:15, post real 14:30 con creatina y almuerzo fuerte 16:00. El whey va todos los dias."
-        : "Descanso activo: desayuno liviano, creatina diaria, whey diario y comida simple para sostener recuperacion sin pesadez.";
+        ? "Entreno fijo 12:00: desayuno liviano 10:00, pre simple 11:15, post real 14:30 con creatina y almuerzo fuerte 16:00. El whey queda como comodin si la proteina del dia no alcanza."
+        : "Descanso activo: desayuno liviano, creatina diaria y comida simple para sostener recuperacion sin pesadez. Si quedas corto de proteina, usa whey como respaldo.";
       if (isGymDay && !day.tags.includes("Entreno 12:00")) day.tags = [...day.tags, "Entreno 12:00"];
       if (!day.tags.includes("Comida real base")) day.tags = [...day.tags, "Comida real base"];
 
@@ -4833,6 +4833,19 @@ function hasWhey(mealItem) {
   return /\bwhey\b/i.test(text);
 }
 
+function getProteinSafetyFloor(day) {
+  const target = Number(day?.protein) || 0;
+  if (target >= 200) return 185;
+  if (target >= 185) return 175;
+  if (target >= 170) return 165;
+  return day?.isRestDay ? 155 : 165;
+}
+
+function dayNeedsWheyTopUp(day) {
+  if (!day || !Array.isArray(day.meals)) return false;
+  return calculateDayTotals(day).p < getProteinSafetyFloor(day);
+}
+
 function addCreatineToMeal(mealItem) {
   if (hasCreatine(mealItem)) return;
   mealItem.foods.push(food("Creatina 5g", 0, 0, 0));
@@ -4846,7 +4859,7 @@ function addWheyToMeal(mealItem) {
   mealItem.foods.push(wheyFood("1 scoop whey OneFit con agua"));
   if (!/\bwhey\b/i.test(mealItem.name)) mealItem.name = `${mealItem.name} + whey`;
   if (!/\bwhey\b/i.test(mealItem.desc)) mealItem.desc = `${mealItem.desc} - scoop fijo`;
-  mealItem.prep.push("Toma 1 scoop de whey OneFit con agua. Es tu proteina diaria fija; la comida real sigue siendo la base.");
+  mealItem.prep.push("Si con comida real no llegas a la proteina del dia, suma 1 scoop de whey OneFit con agua como comodin simple.");
 }
 
 function ensureDailySupplementRules() {
@@ -4860,6 +4873,8 @@ function ensureDailySupplementRules() {
       if (!supplementSlot) return;
 
       if (!day.meals.some(hasCreatine)) addCreatineToMeal(supplementSlot);
+      if (!dayNeedsWheyTopUp(day)) return;
+
       const wheySlot = day.meals.find(hasWhey) || supplementSlot;
       if (!day.meals.some(hasWhey)) addWheyToMeal(wheySlot);
       if (wheySlot.alt && !hasWhey(wheySlot.alt)) addWheyToMeal(wheySlot.alt);
@@ -4959,7 +4974,7 @@ function applyPostWorkoutWholeFoodRules() {
         if (!/post-entreno/i.test(m.label)) return;
         const template = pickBreakfastTemplate(m, day, weekNumber, dayNumber, options, 9);
         applyMealTemplate(m, template);
-        m.alt = wheyWithBananaAndCreatineTemplate("Whey diario + banana + creatina");
+        m.alt = wheyWithBananaAndCreatineTemplate("Whey + banana + creatina");
       });
     });
   });
@@ -4985,7 +5000,7 @@ function applyFiveDayTrainingRules() {
         postSlot.label = "Post-entreno";
         postSlot.time = postSlot.time < "15:00" ? "17:00" : postSlot.time;
         applyMealTemplate(postSlot, solidPostWorkoutTemplate());
-        postSlot.alt = wheyWithBananaAndCreatineTemplate("Whey diario + banana + creatina");
+        postSlot.alt = wheyWithBananaAndCreatineTemplate("Whey + banana + creatina");
       }
     }
   });
@@ -5568,14 +5583,14 @@ const supplementsBase = [
     detail: "3-5g por día, todos los días. No se cicla y no depende de entrenar ese día; funciona por saturación y constancia.",
     when: "Con cualquier comida (o con el post-entreno). La clave es cumplirla todos los días."
   },
-  {
-    name: "Whey protein OneFit",
-    detail: "1 scoop por dia con agua. Lo usamos para asegurar proteina diaria sin cargar demasiado las comidas de la manana.",
-    when: "Preferentemente post-entreno; en descanso, con la merienda."
-  }
 ];
 
 const supplementsOptional = [
+  {
+    name: "Whey protein OneFit",
+    detail: "1 scoop con agua cuando el dia queda corto de proteina. Sirve como comodin practico; la base sigue siendo huevos, pollo, carne magra, atun, pescado, queso y leche.",
+    when: "Preferentemente post-entreno o en una merienda floja en proteina."
+  },
   {
     name: "Omega 3 (EPA + DHA)",
     detail: "1-2g por día con almuerzo o cena. Reduce inflamación, mejora la recuperación post-gym y la salud cardiovascular. Más útil si comés poco pescado.",
@@ -5608,8 +5623,8 @@ const supplementsOptional = [
 // =====================================================
 const rules = [
   ["⚖️", "Mantenimiento 78-80kg", "Pesate cada lunes en ayunas. Si pasás de 80kg, achicá 1 porción de carbo en almuerzo/cena. Si bajás de 77kg, sumá 200 kcal/día. El objetivo es recomposición, no subir."],
-  ["🥩", "Proteína primero", "Prioridad: comida real (huevos, pollo, carne magra, atún, pescado, queso y leche). El whey OneFit suma 1 scoop diario para asegurar el piso."],
-  ["🥛", "Leche entera si la tolerás", "Densa en calorías y útil. Si te cae pesada, tomá el whey diario con agua. Para 78-80kg, no hace falta forzar más calorías."],
+  ["🥩", "Proteína primero", "Prioridad: comida real (huevos, pollo, carne magra, atún, pescado, queso y leche). El whey queda para rescatar días flojos, no como base obligatoria."],
+  ["🥛", "Leche entera si la tolerás", "Densa en calorías y útil. Si te cae pesada, tomá leche fría o usá agua en el whey cuando realmente haga falta. Para 78-80kg, no hace falta forzar más calorías."],
   ["💧", "Hidratación 3L+", "Mínimo 2.5L. En días de gym (especialmente piernas) o calor: 3-3.5L. La sed es señal tardía. La app te recuerda cada 90 min."],
   ["💊", "Creatina TODOS los días", "3-5g, incluso días de descanso. Lo que importa es que esté siempre presente en el músculo. Saltearla 1 día no rompe nada, pero la constancia es la clave."],
   ["🛌", "Dormir 8-9 horas", "El músculo crece cuando dormís. Con menos de 7h, perdés progreso aunque comas perfecto. Establecé una hora fija."],
@@ -5693,7 +5708,7 @@ const shopping = {
   ],
   "Suplementos": [
     "Creatina monohidrato · 3-5g diario",
-    "Whey protein OneFit · 1 scoop diario",
+    "Whey protein OneFit · usar si falta proteína ese día",
     "NAC Swanson 600mg · opcional, 1 cápsula con comida",
     "Omega 3 (opcional pero recomendado)",
     "Vitamina D3 (opcional)",
@@ -6052,9 +6067,9 @@ function renderOperationalBrief(day, consumed, adjustedKcal, proteinTarget) {
     : "Llegá liviano al mediodía, meté carbo simple en el pre y dejá el plato fuerte para después del gym.";
   let closeoutText;
   if (proteinGap <= 0 && kcalGap <= 120) {
-    closeoutText = "Vas en rango. Mantené comida real y cumplí el scoop diario de whey con agua.";
+    closeoutText = "Vas en rango. Mantené comida real, creatina diaria y dejá el whey solo para días que queden cortos.";
   } else if (proteinGap > 0) {
-    closeoutText = `Todavía faltan ${proteinGap}g de proteína. Cumplí el whey diario y priorizá huevos, pollo, carne, atún o queso para completar.`;
+    closeoutText = `Todavía faltan ${proteinGap}g de proteína. Priorizá huevos, pollo, carne, atún o queso; si igual no llegás, meté un scoop de whey con agua como comodín.`;
   } else {
     closeoutText = `Todavía faltan ~${kcalGap} kcal. Sumá una porción simple de arroz, papa, pan o fruta sin recargar grasas al pedo.`;
   }

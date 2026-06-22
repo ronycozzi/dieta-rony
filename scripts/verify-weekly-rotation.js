@@ -410,13 +410,15 @@ function main() {
     const missing = [];
     allWeeks.forEach((week, wi) => week.forEach((day, di) => {
       const wheyMeal = day.meals.find((meal) => hasWhey(meal));
-      if (!wheyMeal) missing.push('whey:' + wi + ':' + di + ':' + day.id);
-      else if (wheyMeal.alt && !hasWhey(wheyMeal.alt)) missing.push('whey-alt:' + wi + ':' + di + ':' + day.id);
+      if (dayNeedsWheyTopUp(day)) {
+        if (!wheyMeal) missing.push('whey-topup:' + wi + ':' + di + ':' + day.id);
+        else if (wheyMeal.alt && !hasWhey(wheyMeal.alt)) missing.push('whey-alt:' + wi + ':' + di + ':' + day.id);
+      }
       if (!day.meals.some((meal) => hasCreatine(meal))) missing.push('creatine:' + wi + ':' + di + ':' + day.id);
     }));
     return missing;
   })()`);
-  assert(supplementCoverage.length === 0, `Falta whey/creatina diaria o en opcion B: ${supplementCoverage.join(', ')}`);
+  assert(supplementCoverage.length === 0, `Falta creatina diaria o rescate de whey donde la proteína queda corta: ${supplementCoverage.join(', ')}`);
 
   const altSelection = june17CleanApp.evalInApp(`(() => {
     const day = getTodayDayObject();
