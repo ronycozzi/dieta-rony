@@ -3696,6 +3696,18 @@ function breakfastStyleGroup(item) {
   return "otro";
 }
 
+function isBreadHeavyBreakfastGroup(group) {
+  return group === "tostada" || group === "sandwich";
+}
+
+function pickFreshBreakfastAlt(primary, options, seed) {
+  const primaryGroup = breakfastStyleGroup(primary);
+  const differentGroup = pickFreshTemplate(options, seed, (option) =>
+    option.name !== primary.name && breakfastStyleGroup(option) !== primaryGroup
+  );
+  return differentGroup || pickFreshAlt(primary, options, seed);
+}
+
 function freshBreakfastOptions() {
   return [
     altMeal("Panqueques caseros de banana y huevo", "Banana - huevos - leche", [
@@ -4266,6 +4278,7 @@ function applyRonyFreshWeeklyMenuRules() {
   allWeeks.forEach((weekDays, weekNumber) => {
     const weekSeed = seedBase + weekNumber * 101;
     const usedWeekMainNames = new Set();
+    const breakfastGroupCounts = new Map();
     let lastBreakfastGroup = null;
     weekDays.forEach((day, dayNumber) => {
       const seed = weekSeed + dayNumber * 17;
@@ -4291,13 +4304,23 @@ function applyRonyFreshWeeklyMenuRules() {
 
       const breakfastOptions = freshLightBreakfastOptions();
       const postOptions = freshNoonPostWorkoutOptions();
+      const breadHeavyBreakfastCount = Array.from(breakfastGroupCounts.entries())
+        .filter(([group]) => isBreadHeavyBreakfastGroup(group))
+        .reduce((total, [, count]) => total + count, 0);
       const breakfast = pickFreshTemplate(
         breakfastOptions,
         seed,
-        (item) => breakfastStyleGroup(item) !== lastBreakfastGroup
+        (item) => {
+          const group = breakfastStyleGroup(item);
+          if (group === lastBreakfastGroup) return false;
+          if ((breakfastGroupCounts.get(group) || 0) >= 2) return false;
+          if (isBreadHeavyBreakfastGroup(group) && breadHeavyBreakfastCount >= 2) return false;
+          return true;
+        }
       );
-      const breakfastAlt = pickFreshAlt(breakfast, breakfastOptions, seed + 1);
+      const breakfastAlt = pickFreshBreakfastAlt(breakfast, breakfastOptions, seed + 1);
       lastBreakfastGroup = breakfastStyleGroup(breakfast);
+      breakfastGroupCounts.set(lastBreakfastGroup, (breakfastGroupCounts.get(lastBreakfastGroup) || 0) + 1);
       const snackA = pickFreshTemplate(freshSnackOptions(), seed + 2);
       const snackB = pickFreshTemplate(freshSnackOptions(), seed + 4, (item) => item.name !== snackA.name);
       const snackBAlt = pickFreshAlt(snackB, freshSnackOptions(), seed + 5);

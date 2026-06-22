@@ -56,6 +56,8 @@ function buildAuditPrelude(prelude) {
   mealHasRice,
   mealCarbGroup,
   mealNameKey,
+  breakfastStyleGroup,
+  isBreadHeavyBreakfastGroup,
   hasWhey,
   hasCreatine,
   mealSearchText,
@@ -306,10 +308,13 @@ function audit(A) {
   const scheduleHits = [];
   const morningLoadHits = [];
   const fridayFishHits = [];
+  const breakfastVarietyHits = [];
   const mainSlots = [];
   const daySlots = [];
 
   A.allWeeks.forEach((week, weekNumber) => {
+    const breakfastCounts = new Map();
+    let breadHeavyBreakfasts = 0;
     week.forEach((day, dayNumber) => {
       const tipText = normalizeText(day.tip || "");
       for (const re of bannedRenderTerms) {
@@ -523,6 +528,13 @@ function audit(A) {
           }
         });
       }
+      if (breakfast && typeof A.breakfastStyleGroup === "function") {
+        const breakfastGroup = A.breakfastStyleGroup(breakfast);
+        breakfastCounts.set(breakfastGroup, (breakfastCounts.get(breakfastGroup) || 0) + 1);
+        if (typeof A.isBreadHeavyBreakfastGroup === "function" && A.isBreadHeavyBreakfastGroup(breakfastGroup)) {
+          breadHeavyBreakfasts += 1;
+        }
+      }
       const target = isRest ? 2600 : 2850;
       const maxComfort = target + (isRest ? 160 : 180);
       const minComfort = isRest ? 2450 : 2650;
@@ -532,6 +544,12 @@ function audit(A) {
         kcalOutliers.push({ weekNumber, dayNumber, id: day.id, title: day.title, kcal, minComfort, maxComfort });
       }
     });
+    breakfastCounts.forEach((count, group) => {
+      if (count > 2) breakfastVarietyHits.push({ weekNumber, group, count, issue: "group-repeat" });
+    });
+    if (breadHeavyBreakfasts > 2) {
+      breakfastVarietyHits.push({ weekNumber, group: "bread-heavy", count: breadHeavyBreakfasts, issue: "bread-heavy-repeat" });
+    }
   });
 
   for (let i = 1; i < mainSlots.length; i++) {
@@ -587,6 +605,7 @@ function audit(A) {
   summarize("scheduleHits", scheduleHits);
   summarize("morningLoadHits", morningLoadHits);
   summarize("fridayFishHits", fridayFishHits);
+  summarize("breakfastVarietyHits", breakfastVarietyHits);
 
   assert(mealsMissingAlt.length === 0, `Audit: faltan opciones B (alt) en ${mealsMissingAlt.length} comidas.`);
   assert(dayTipHits.length === 0, `Audit: hay tips con ingredientes bloqueados (${dayTipHits.length}).`);
@@ -609,9 +628,10 @@ function audit(A) {
   assert(scheduleHits.length === 0, `Audit: horarios nuevos de entreno 12:00 fallaron (${scheduleHits.length}).`);
   assert(morningLoadHits.length === 0, `Audit: la manana de gym quedo muy cargada (${morningLoadHits.length}).`);
   assert(fridayFishHits.length === 0, `Audit: el viernes debe tener salmon principal y opcion B de pescado (${fridayFishHits.length}).`);
+  assert(breakfastVarietyHits.length === 0, `Audit: los desayunos quedaron poco variados en la semana (${breakfastVarietyHits.length}).`);
   assert(kcalOutliers.length === 0, `Audit: hay días fuera del rango kcal confort (${kcalOutliers.length}).`);
 
-  return { kcalOutliers, mealsMissingAlt, bannedHits, specialHits, dayTipHits, missingProteinTopUp, onefitPancakeHits, riceAltHits, sameCarbAltHits, riceSequenceHits, sameTurnRiceHits, nextDayRiceHits, missingPrimaryCreatine, duplicateMainNameHits, sameDayMainAltHits, duplicateVisibleNameHits, mealIdMismatchHits, postLunchVisibleRepeatHits, scheduleHits, morningLoadHits, fridayFishHits };
+  return { kcalOutliers, mealsMissingAlt, bannedHits, specialHits, dayTipHits, missingProteinTopUp, onefitPancakeHits, riceAltHits, sameCarbAltHits, riceSequenceHits, sameTurnRiceHits, nextDayRiceHits, missingPrimaryCreatine, duplicateMainNameHits, sameDayMainAltHits, duplicateVisibleNameHits, mealIdMismatchHits, postLunchVisibleRepeatHits, scheduleHits, morningLoadHits, fridayFishHits, breakfastVarietyHits };
 }
 
 function main() {
