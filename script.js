@@ -6464,6 +6464,7 @@ function renderShopping() {
       </div>
     </div>
   `).join("");
+  enhanceShoppingItems();
   restoreShoppingState();
   syncShoppingPanelUI();
 }
@@ -6472,9 +6473,37 @@ function getShoppingState() {
   return JSON.parse(localStorage.getItem("rony-dieta-shopping") || "[]");
 }
 
+function enhanceShoppingItems() {
+  document.querySelectorAll(".sl-item").forEach((item) => {
+    const name = item.querySelector(".sl-name")?.textContent?.trim() || "item";
+    item.dataset.itemName = name;
+    item.setAttribute("role", "button");
+    item.setAttribute("tabindex", "0");
+    if (!item.querySelector(".sl-state")) {
+      const state = document.createElement("span");
+      state.className = "sl-state";
+      item.appendChild(state);
+    }
+    item.onkeydown = (event) => {
+      if (event.key !== "Enter" && event.key !== " ") return;
+      event.preventDefault();
+      toggleShop(item);
+    };
+  });
+}
+
+function setShoppingItemDone(item, done) {
+  item.classList.toggle("done", done);
+  item.setAttribute("aria-pressed", String(done));
+  const name = item.dataset.itemName || item.querySelector(".sl-name")?.textContent?.trim() || "item";
+  item.setAttribute("aria-label", done ? `${name} marcado como comprado` : `Marcar ${name} como comprado`);
+  const state = item.querySelector(".sl-state");
+  if (state) state.textContent = done ? "Comprado" : "Pendiente";
+}
+
 function saveShoppingState() {
   const done = Array.from(document.querySelectorAll(".sl-item.done"))
-    .map((el) => el.querySelector(".sl-name")?.textContent?.trim())
+    .map((el) => el.dataset.itemName || el.querySelector(".sl-name")?.textContent?.trim())
     .filter(Boolean);
   localStorage.setItem("rony-dieta-shopping", JSON.stringify(done));
 }
@@ -6482,20 +6511,20 @@ function saveShoppingState() {
 function restoreShoppingState() {
   const done = getShoppingState();
   document.querySelectorAll(".sl-item").forEach((item) => {
-    const name = item.querySelector(".sl-name")?.textContent?.trim();
-    if (name && done.includes(name)) item.classList.add("done");
+    const name = item.dataset.itemName || item.querySelector(".sl-name")?.textContent?.trim();
+    setShoppingItemDone(item, Boolean(name && done.includes(name)));
   });
   updateShoppingProgress();
 }
 
 function toggleShop(item) {
-  item.classList.toggle("done");
+  setShoppingItemDone(item, !item.classList.contains("done"));
   saveShoppingState();
   updateShoppingProgress();
 }
 
 function resetShopping() {
-  document.querySelectorAll(".sl-item").forEach((item) => item.classList.remove("done"));
+  document.querySelectorAll(".sl-item").forEach((item) => setShoppingItemDone(item, false));
   localStorage.removeItem("rony-dieta-shopping");
   updateShoppingProgress();
 }
@@ -6525,15 +6554,28 @@ function syncShoppingPreview(total, done) {
   const preview = document.querySelector("#shopping-preview");
   if (!preview) return;
   const remaining = Math.max(0, total - done);
+  const pct = total ? Math.round((done / total) * 100) : 0;
+  const doneItems = new Set(getShoppingState());
   const categories = Object.entries(shopping)
     .slice(0, 3)
     .map(([category, items]) => `${displayText(category)} · ${items.length}`)
     .join("  ·  ");
+  const leadCategory = Object.entries(shopping)
+    .map(([category, items]) => ({
+      category: displayText(category),
+      pending: items.filter((item) => !doneItems.has(item.split(" · ")[0])).length
+    }))
+    .sort((a, b) => b.pending - a.pending)
+    .find((entry) => entry.pending > 0);
   preview.innerHTML = `
     <div class="shopping-preview-copy">
       <strong>${remaining} pendientes</strong> de ${total} items para dejar la semana lista.
+      <div class="shopping-preview-progress">${done} listos · ${pct}% cerrado</div>
     </div>
-    <div class="shopping-preview-meta">${categories}</div>
+    <div class="shopping-preview-meta">
+      ${leadCategory ? `<strong>Prioridad:</strong> ${leadCategory.category} · ${leadCategory.pending} faltan<br />` : "<strong>Semana cerrada.</strong><br />"}
+      ${categories}
+    </div>
   `;
 }
 

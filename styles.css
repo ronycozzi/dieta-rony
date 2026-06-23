@@ -1850,10 +1850,20 @@ body::before {
   display: flex; align-items: center; gap: 12px;
   padding: 9px 6px;
   border-bottom: 1px solid rgba(255,255,255,0.04);
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: inherit;
+  text-align: left;
   cursor: pointer; border-radius: 6px;
   transition: background 120ms;
 }
 .sl-item:hover { background: var(--surface2); }
+.sl-item:focus-visible {
+  outline: 2px solid rgba(79,139,255,0.55);
+  outline-offset: 2px;
+  background: var(--surface2);
+}
 .sl-item:last-child { border-bottom: none; }
 .sl-check {
   width: 22px; height: 22px; border-radius: 6px;
@@ -1869,6 +1879,23 @@ body::before {
 .sl-info { flex: 1; min-width: 0; }
 .sl-name { font-size: 0.87rem; font-weight: 600; color: var(--ink); display: block; transition: opacity 160ms; }
 .sl-qty  { font-size: 0.75rem; color: var(--muted); display: block; }
+.sl-state {
+  flex-shrink: 0;
+  min-width: 82px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  text-align: right;
+}
+.sl-item.done .sl-state { color: var(--green); }
+.shopping-preview-progress {
+  margin-top: 6px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: rgba(41,49,38,0.72);
+}
 
 /* ─── Bottom nav active state ────────────────────────────── */
 .bn-item.bn-active { color: var(--accent) !important; }
