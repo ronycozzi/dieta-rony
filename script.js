@@ -6441,7 +6441,137 @@ const SHOP_CAT_ICONS = {
   "Suplementos": "💊"
 };
 
+const SHOPPING_FOCUS_GROUPS = {
+  breakfast: [
+    { label: "huevos y tortillas", terms: ["huevo", "omelette", "revuelto", "tortilla", "pocha", "pochado"] },
+    { label: "pan, tostadas y sandwiches", terms: ["tostada", "pan integral", "sandwich", "tostado", "french toast", "medialuna", "arepa"] },
+    { label: "banana y fruta simple", terms: ["banana", "fruta", "naranja", "frutilla", "arandano", "frutos rojos", "mango"] },
+    { label: "jamon, queso y mozzarella", terms: ["jamon", "pavita", "queso", "mozzarella"] },
+    { label: "papa, tarta y base casera", terms: ["papa", "tarta", "zapallito", "batata"] }
+  ],
+  proteins: [
+    { label: "pollo", terms: ["pollo", "pechuga", "muslo"] },
+    { label: "carne magra", terms: ["carne", "bife", "lomo", "peceto", "asado", "vacio", "lomito"] },
+    { label: "atun y pescado", terms: ["atun", "salmon", "merluza", "trucha", "pescado"] },
+    { label: "huevos como apoyo", terms: ["huevo", "tortilla", "omelette"] },
+    { label: "lentejas y garbanzos", terms: ["lenteja", "garbanzo"] }
+  ],
+  carbs: [
+    { label: "papa y batata", terms: ["papa", "papas", "pure", "batata", "noisette"] },
+    { label: "pasta y fideos", terms: ["fideo", "pasta", "raviol", "tallar", "noodle", "cuscus"] },
+    { label: "arroz medido", terms: ["arroz", "chaufa", "risotto", "basmati"] },
+    { label: "pan, wraps y tacos", terms: ["pan", "wrap", "pita", "taco", "sandwich", "empanada"] },
+    { label: "legumbres", terms: ["lenteja", "garbanzo"] }
+  ],
+  produce: [
+    { label: "banana", terms: ["banana"] },
+    { label: "tomate y hojas verdes", terms: ["tomate", "lechuga", "rucula", "espinaca"] },
+    { label: "palta", terms: ["palta"] },
+    { label: "brocoli y verdes de plato", terms: ["brocoli", "espinaca", "zucchini", "morron", "zanahoria"] }
+  ],
+  recovery: [
+    { label: "banana y leche para pre/post", terms: ["banana", "leche"] },
+    { label: "creatina diaria", terms: ["creatina"] },
+    { label: "whey solo de respaldo", terms: ["whey"] }
+  ]
+};
+
+function summarizeShoppingSignals(texts, configs, limit = 3) {
+  return configs
+    .map((config) => ({
+      label: config.label,
+      hits: texts.reduce((total, text) => total + (includesAny(text, config.terms) ? 1 : 0), 0)
+    }))
+    .filter((entry) => entry.hits > 0)
+    .sort((a, b) => b.hits - a.hits || a.label.localeCompare(b.label, "es"))
+    .slice(0, limit);
+}
+
+function joinShoppingLabels(entries, fallback) {
+  const labels = entries.map((entry) => entry.label);
+  if (!labels.length) return fallback;
+  if (labels.length === 1) return labels[0];
+  if (labels.length === 2) return `${labels[0]} y ${labels[1]}`;
+  return `${labels[0]}, ${labels[1]} y ${labels[2]}`;
+}
+
+function getWeekBreakfastMeals() {
+  return days
+    .map((day) => day.meals.find((mealItem) => /desayuno/i.test(plainText(mealItem.label))))
+    .filter(Boolean);
+}
+
+function getWeekMainMeals(includeAlt = false) {
+  return days.flatMap((day) => day.meals
+    .filter((mealItem) => isMainMeal(mealItem))
+    .map((mealItem) => (includeAlt ? mealItem.alt : mealItem))
+    .filter(Boolean));
+}
+
+function buildShoppingWeekFocusData() {
+  const breakfasts = getWeekBreakfastMeals();
+  const primaryMains = getWeekMainMeals(false);
+  const altMains = getWeekMainMeals(true);
+  const allMeals = days.flatMap((day) => day.meals);
+
+  const breakfastSignals = summarizeShoppingSignals(breakfasts.map(mealSearchText), SHOPPING_FOCUS_GROUPS.breakfast);
+  const proteinSignals = summarizeShoppingSignals(primaryMains.map(mealSearchText), SHOPPING_FOCUS_GROUPS.proteins);
+  const carbSignals = summarizeShoppingSignals(primaryMains.map(mealSearchText), SHOPPING_FOCUS_GROUPS.carbs);
+  const produceSignals = summarizeShoppingSignals(allMeals.map(mealSearchText), SHOPPING_FOCUS_GROUPS.produce, 2);
+  const recoverySignals = summarizeShoppingSignals(allMeals.map(mealSearchText), SHOPPING_FOCUS_GROUPS.recovery, 3);
+  const altSignals = summarizeShoppingSignals(altMains.map(mealSearchText), [
+    ...SHOPPING_FOCUS_GROUPS.proteins,
+    ...SHOPPING_FOCUS_GROUPS.carbs
+  ]);
+
+  return {
+    weekName: displayText(weekNames[weekIndex]),
+    breakfastSummary: joinShoppingLabels(breakfastSignals, "desayunos simples y sostenibles"),
+    proteinSummary: joinShoppingLabels(proteinSignals, "pollo, carne magra y huevos"),
+    carbSummary: joinShoppingLabels(carbSignals, "papa, arroz y pasta"),
+    produceSummary: joinShoppingLabels(produceSignals, "banana y verduras de base"),
+    recoverySummary: joinShoppingLabels(recoverySignals, "banana, leche y creatina"),
+    altSummary: joinShoppingLabels(altSignals, "proteina real + carbo simple"),
+    stats: [
+      { value: breakfasts.length, label: "desayunos resueltos" },
+      { value: primaryMains.length, label: "platos fuertes" },
+      { value: altMains.length, label: "opciones B listas" }
+    ]
+  };
+}
+
+function renderShoppingWeekFocus() {
+  const node = document.querySelector("#shopping-week-focus");
+  if (!node) return;
+  const focus = buildShoppingWeekFocusData();
+  node.innerHTML = `
+    <article class="shopping-focus-card" aria-label="Prioridades de compra de la semana activa">
+      <div class="shopping-focus-head">
+        <div>
+          <div class="shopping-focus-kicker">Compra primero para ${focus.weekName}</div>
+          <h3>La semana pide ${focus.proteinSummary} con ${focus.carbSummary}.</h3>
+          <p>Desayunos apoyados en ${focus.breakfastSummary}; verduras y fruta con foco en ${focus.produceSummary}. El pre/post queda cubierto con ${focus.recoverySummary}.</p>
+        </div>
+        <div class="shopping-focus-stats">
+          ${focus.stats.map((stat) => `
+            <div class="shopping-focus-stat">
+              <strong>${stat.value}</strong>
+              <span>${stat.label}</span>
+            </div>
+          `).join("")}
+        </div>
+      </div>
+      <div class="shopping-focus-rail">
+        <span class="shopping-focus-chip">Base semanal: ${focus.breakfastSummary}</span>
+        <span class="shopping-focus-chip">Platos fuertes: ${focus.proteinSummary}</span>
+        <span class="shopping-focus-chip">Opcion B: ${focus.altSummary}</span>
+      </div>
+    </article>
+  `;
+}
+
 function renderShopping() {
+  renderShoppingWeekFocus();
   document.querySelector("#shopping-content").innerHTML = Object.entries(shopping).map(([category, items]) => `
     <div class="sl-category">
       <div class="sl-cat-title">
@@ -6635,6 +6765,60 @@ function copyToClipboardFallback(text, successMessage = "Lista copiada — pegal
     showToast("No se pudo copiar. Copiá manualmente.");
   }
   document.body.removeChild(ta);
+}
+
+function syncShoppingPreview(total, done) {
+  const preview = document.querySelector("#shopping-preview");
+  if (!preview) return;
+  const focus = buildShoppingWeekFocusData();
+  const remaining = Math.max(0, total - done);
+  const pct = total ? Math.round((done / total) * 100) : 0;
+  const doneItems = new Set(getShoppingState());
+  const categories = Object.entries(shopping)
+    .slice(0, 3)
+    .map(([category, items]) => `${displayText(category)} · ${items.length}`)
+    .join("  ·  ");
+  const leadCategory = Object.entries(shopping)
+    .map(([category, items]) => ({
+      category: displayText(category),
+      pending: items.filter((item) => !doneItems.has(item.split(" · ")[0])).length
+    }))
+    .sort((a, b) => b.pending - a.pending)
+    .find((entry) => entry.pending > 0);
+  preview.innerHTML = `
+    <div class="shopping-preview-copy">
+      <strong>${remaining} pendientes</strong> de ${total} items para dejar la semana lista.
+      <div class="shopping-preview-progress">${focus.weekName} · ${done} listos · ${pct}% cerrado</div>
+    </div>
+    <div class="shopping-preview-meta">
+      ${leadCategory ? `<strong>Prioridad:</strong> ${leadCategory.category} · ${leadCategory.pending} faltan<br />` : "<strong>Semana cerrada.</strong><br />"}
+      ${categories}<br />
+      <strong>Base:</strong> ${focus.proteinSummary} + ${focus.carbSummary}
+    </div>
+  `;
+}
+
+function exportShopping() {
+  const focus = buildShoppingWeekFocusData();
+  const lines = [
+    "🛒 LISTA DE COMPRAS · DIETA RONY (78-80kg)",
+    `${focus.weekName} · base semanal: ${focus.breakfastSummary}`,
+    `Proteina clave: ${focus.proteinSummary} | Carbos clave: ${focus.carbSummary}`,
+    `Opciones B cubiertas con: ${focus.altSummary}`,
+    ""
+  ];
+  Object.entries(shopping).forEach(([category, items]) => {
+    lines.push(`*${displayText(category)}*`);
+    items.forEach((item) => lines.push(`• ${displayText(item)}`));
+    lines.push("");
+  });
+  const text = lines.join("\n");
+
+  if (navigator.share) {
+    navigator.share({ title: "Lista de compras", text }).catch(() => copyToClipboard(text));
+  } else {
+    copyToClipboard(text);
+  }
 }
 
 // =====================================================
@@ -7697,6 +7881,7 @@ function syncCurrentPlanDate(reason = "timer") {
   renderTabs();
   renderActiveDay();
   renderWeekOverview();
+  renderShopping();
   updateNextMeal();
   updateGymBanner();
   updateFabBadge();
@@ -7730,6 +7915,7 @@ function checkDayChange() {
     renderTabs();
     renderActiveDay();
     renderWeekOverview();
+    renderShopping();
     updateGymBanner();
     updateFabBadge();
     if ("Notification" in window && Notification.permission === "granted") {

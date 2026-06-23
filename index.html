@@ -16,7 +16,7 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="format-detection" content="telephone=no" />
     <link rel="stylesheet" href="assets/fonts/fonts.css" />
-    <link rel="stylesheet" href="styles.css?v=20260623-shoppinga11y" />
+    <link rel="stylesheet" href="styles.css?v=20260623-weekfocus" />
   </head>
   <body>
 
@@ -208,7 +208,7 @@
         <section class="shopping-list" id="shopping-list">
           <div class="section-header">
             <div>
-              <div class="section-eyebrow">Semana completa</div>
+              <div class="section-eyebrow">Semana activa</div>
               <div class="section-title">Lista de compras</div>
             </div>
             <div class="sl-actions">
@@ -217,6 +217,7 @@
               <button class="sl-btn" type="button" onclick="resetShopping()">Resetear</button>
             </div>
           </div>
+          <div class="shopping-week-focus" id="shopping-week-focus"></div>
           <div class="shopping-preview" id="shopping-preview" role="status" aria-live="polite"></div>
           <div id="shopping-content"></div>
           <div class="sl-progress">
@@ -321,7 +322,7 @@
       <button class="bn-item" type="button" onclick="showWatchModal()"><span class="bn-icon">⌚</span><span class="bn-label">Watch</span></button>
     </nav>
 
-    <script src="script.js?v=20260623-shoppinga11y"></script>
+    <script src="script.js?v=20260623-weekfocus"></script>
     <script>
       // Mirror sidebar values to mobile topbar
       function mirrorToTopbar() {

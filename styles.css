@@ -764,6 +764,93 @@ body::before {
   font-size:0.92rem;
   line-height:1.45;
 }
+.shopping-week-focus {
+  margin: 10px 0 14px;
+}
+.shopping-focus-card {
+  border-radius: calc(var(--r-lg) - 2px);
+  border: 1px solid rgba(79,139,255,0.18);
+  background:
+    linear-gradient(135deg, rgba(79,139,255,0.12), rgba(255,255,255,0.92) 48%, rgba(0,229,160,0.08));
+  color: #263126;
+  padding: 16px 18px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.48);
+}
+.shopping-focus-head {
+  display:grid;
+  grid-template-columns:minmax(0, 1.5fr) minmax(220px, 0.85fr);
+  gap:16px;
+  align-items:start;
+}
+.shopping-focus-kicker {
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  margin-bottom:8px;
+  font-size:0.72rem;
+  font-weight:800;
+  letter-spacing:0.1em;
+  text-transform:uppercase;
+  color:#3157af;
+}
+.shopping-focus-card h3 {
+  margin:0 0 8px;
+  font-size:1.05rem;
+  line-height:1.15;
+  color:#182316;
+}
+.shopping-focus-card p {
+  margin:0;
+  font-size:0.87rem;
+  line-height:1.55;
+  color:rgba(24,35,22,0.78);
+}
+.shopping-focus-stats {
+  display:grid;
+  grid-template-columns:repeat(3, minmax(0, 1fr));
+  gap:10px;
+}
+.shopping-focus-stat {
+  padding:12px 10px;
+  border-radius:14px;
+  background:rgba(255,255,255,0.68);
+  border:1px solid rgba(24,35,22,0.08);
+  text-align:center;
+}
+.shopping-focus-stat strong {
+  display:block;
+  font-size:1.15rem;
+  line-height:1;
+  color:#182316;
+}
+.shopping-focus-stat span {
+  display:block;
+  margin-top:5px;
+  font-size:0.68rem;
+  line-height:1.35;
+  letter-spacing:0.05em;
+  text-transform:uppercase;
+  color:rgba(24,35,22,0.62);
+}
+.shopping-focus-rail {
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-top:14px;
+}
+.shopping-focus-chip {
+  display:inline-flex;
+  align-items:center;
+  min-height:34px;
+  padding:7px 12px;
+  border-radius:999px;
+  background:rgba(255,255,255,0.74);
+  border:1px solid rgba(49,87,175,0.14);
+  color:#233061;
+  font-size:0.76rem;
+  font-weight:700;
+  line-height:1.3;
+}
 .shopping-preview-copy strong {
   font-weight:800;
 }
@@ -928,6 +1015,10 @@ body::before {
   .tab-btn { font-size:0.76rem; min-height:40px; }
   .supp-section, .weight-section, .review-section, .shopping-list, .week-overview, .panel { padding:18px 14px; }
   .shopping-list .section-header { align-items:flex-start; gap:12px; flex-wrap:wrap; }
+  .shopping-focus-head { grid-template-columns:1fr; }
+  .shopping-focus-stats { grid-template-columns:repeat(3, minmax(0, 1fr)); }
+  .shopping-focus-card { padding:14px; }
+  .shopping-focus-card h3 { font-size:0.98rem; }
   .sl-actions { width:100%; justify-content:stretch; }
   .sl-btn { flex:1 1 132px; min-height:42px; white-space:normal; }
   .shopping-preview {
