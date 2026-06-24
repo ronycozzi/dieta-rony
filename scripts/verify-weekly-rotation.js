@@ -397,10 +397,10 @@ function main() {
   const june17CleanApp = createAppHarness("2026-06-17T12:00:00-03:00");
   const june17Clean = june17CleanApp.snapshot("2026-06-17 clean-load");
   assertSnapshot(june17Clean, {
-    weekIndex: 0,
-    weekName: "Semana 1",
-    planWeek: "0:2026-06-15",
-    lunchNeedle: "fideos con tuco"
+    weekIndex: 1,
+    weekName: "Semana 2",
+    planWeek: "1:2026-06-15",
+    lunchNeedle: "pastel de papa"
   });
   assert(june17Clean.preTime === "11:15", `El pre-entreno debe quedar antes de entrenar, 11:15. Recibido: ${june17Clean.preTime}.`);
   assertNoRiceLunch(june17Clean);
@@ -465,10 +465,10 @@ function main() {
   app.fireWindow("focus");
   const june17Focus = app.snapshot("2026-06-17 focus");
   assertSnapshot(june17Focus, {
-    weekIndex: 0,
-    weekName: "Semana 1",
-    planWeek: "0:2026-06-15",
-    lunchNeedle: "fideos con tuco"
+    weekIndex: 1,
+    weekName: "Semana 2",
+    planWeek: "1:2026-06-15",
+    lunchNeedle: "pastel de papa"
   });
   assertSameMenuForSameDate(june17Clean, june17Focus);
 
@@ -476,10 +476,10 @@ function main() {
   app.fireWindow("pageshow");
   const june24Pageshow = app.snapshot("2026-06-24 pageshow");
   assertSnapshot(june24Pageshow, {
-    weekIndex: 1,
-    weekName: "Semana 2",
-    planWeek: "1:2026-06-22",
-    lunchNeedle: "tacos de carne"
+    weekIndex: 2,
+    weekName: "Semana 3",
+    planWeek: "2:2026-06-22",
+    lunchNeedle: "carne al horno"
   });
 
   app.setNow("2026-07-01T12:00:00-03:00");
@@ -487,16 +487,26 @@ function main() {
   app.fireDocument("visibilitychange");
   const july01Visible = app.snapshot("2026-07-01 visible");
   assertSnapshot(july01Visible, {
-    weekIndex: 2,
-    weekName: "Semana 3",
-    planWeek: "2:2026-06-29",
-    lunchNeedle: "salpicon de pollo"
+    weekIndex: 3,
+    weekName: "Semana 4",
+    planWeek: "3:2026-06-29",
+    lunchNeedle: "pizza casera"
   });
 
-  const uniqueWeeks = new Set([june10.weekIndex, june17Focus.weekIndex, june24Pageshow.weekIndex, july01Visible.weekIndex]);
-  const weeklyLunches = [june10, june17Focus, june24Pageshow, july01Visible];
+  app.setNow("2026-07-08T12:00:00-03:00");
+  app.fireWindow("pageshow");
+  const july08Pageshow = app.snapshot("2026-07-08 pageshow");
+  assertSnapshot(july08Pageshow, {
+    weekIndex: 0,
+    weekName: "Semana 1",
+    planWeek: "0:2026-07-06",
+    lunchNeedle: "pastel de papa"
+  });
+
+  const uniqueWeeks = new Set([june17Focus.weekIndex, june24Pageshow.weekIndex, july01Visible.weekIndex, july08Pageshow.weekIndex]);
+  const weeklyLunches = [june10, june17Focus, june24Pageshow, july01Visible, july08Pageshow];
   const uniqueLunches = new Set(weeklyLunches.map((item) => item.lunch));
-  [june10, june17Clean, june17Focus, june24Pageshow, july01Visible].forEach((item) => {
+  [june10, june17Clean, june17Focus, june24Pageshow, july01Visible, july08Pageshow].forEach((item) => {
     console.log(`${item.label}: ${item.currentWeekName} | ${item.planWeek} | post: ${item.post} | almuerzo: ${item.lunch} | opcion B: ${item.lunchAlt}`);
   });
   assert(uniqueWeeks.size === 4, "La rotacion no recorrio las 4 semanas esperadas.");

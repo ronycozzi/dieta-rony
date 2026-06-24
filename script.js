@@ -20,7 +20,9 @@ const STORAGE = {
   planWeek:        "rony-dieta-plan-week",
   weightSeeded:    "weight-seeded"
 };
-const APP_BUILD = "2026-06-24-weekguard";
+const APP_BUILD = "2026-06-24-weekshift";
+const MENU_ROTATION_CORRECTION_START = "2026-06-15";
+const MENU_ROTATION_CORRECTION_OFFSET = 1;
 
 // =====================================================
 // HELPERS
@@ -57,6 +59,19 @@ function formatLocalDateKey(date) {
 
 function getTodayKey() {
   return formatLocalDateKey(new Date());
+}
+
+function getPlanWeekStart(date = new Date()) {
+  const d = new Date(date);
+  const dayNumber = d.getDay() === 0 ? 7 : d.getDay();
+  d.setDate(d.getDate() - (dayNumber - 1));
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+function getMenuRotationCorrection(date = new Date()) {
+  const weekStartKey = formatLocalDateKey(getPlanWeekStart(date));
+  return weekStartKey >= MENU_ROTATION_CORRECTION_START ? MENU_ROTATION_CORRECTION_OFFSET : 0;
 }
 
 function getPlanDayIndex(date = new Date()) {
@@ -3661,7 +3676,7 @@ function getPlanGenerationDate() {
 // - Comidas normales, sostenibles y con opcion B real.
 // =====================================================
 function freshMenuSeed(date = getPlanGenerationDate()) {
-  return date.getFullYear() * 100 + getISOWeekNumber(date);
+  return date.getFullYear() * 100 + getISOWeekNumber(date) + getMenuRotationCorrection(date) * 37;
 }
 
 function pickFreshTemplate(options, seed, predicate = () => true) {
@@ -5180,6 +5195,26 @@ function trimHighCalorieDaysAfterSupplements() {
 
       if (calculateDayTotals(day).kcal <= maxComfort + 25) return;
 
+      const heavySupplementSnack = [...day.meals].reverse().find((m) => {
+        if (!/(media|merienda)/i.test(m.label)) return false;
+        if (!/whey|creatina/i.test(mealSearchText(m))) return false;
+        return m.kcal > 320;
+      });
+      if (heavySupplementSnack) {
+        applyMealTemplate(heavySupplementSnack, wheyWithBananaAndCreatineTemplate("Whey + banana + creatina"));
+        heavySupplementSnack.alt = altMeal("Whey + tostada + creatina", "Whey - tostada - miel - creatina", [
+          wheyFood("1 scoop whey OneFit con agua"),
+          food("1 tostada integral", 4, 17, 2),
+          food("1 cdita miel", 0, 8, 0),
+          food("Creatina 5g", 0, 0, 0)
+        ], [
+          "Toma el whey con agua y creatina.",
+          "Come la tostada con miel aparte si queres algo con mordida."
+        ]);
+      }
+
+      if (calculateDayTotals(day).kcal <= maxComfort + 25) return;
+
       const flexibleSnack = [...day.meals].reverse().find((m) => {
         if (!/(media|merienda)/i.test(m.label)) return false;
         if (/whey|creatina/i.test(mealSearchText(m))) return false;
@@ -5570,6 +5605,7 @@ function rebuildPlanForDate(date = new Date(), { audit = false } = {}) {
   applyVisibleDayAltVarietyRules();
   applyFinalPlanGuardRules();
   ensureDailySupplementRules();
+  trimHighCalorieDaysAfterSupplements();
   syncPlanTargetsAndIds();
   weekIndex = getWeekIndex(date);
   days = allWeeks[weekIndex];
@@ -5577,7 +5613,11 @@ function rebuildPlanForDate(date = new Date(), { audit = false } = {}) {
   if (audit) auditPlanCompliance();
 }
 
-function getWeekIndex(date = new Date()) { return (getISOWeekNumber(date) - 1) % allWeeks.length; }
+function getWeekIndex(date = new Date()) {
+  const baseIndex = (getISOWeekNumber(date) - 1) % allWeeks.length;
+  const correction = getMenuRotationCorrection(date);
+  return (baseIndex + correction + allWeeks.length) % allWeeks.length;
+}
 function getNextMenuRefreshDate(from = new Date()) {
   const d = new Date(from);
   const daysUntilMonday = (8 - d.getDay()) % 7 || 7;
@@ -7597,12 +7637,7 @@ function nextOccurrenceOfDay(targetDayIndex) {
 }
 
 function getCurrentPlanWeekStart() {
-  const today = new Date();
-  const dayNumber = today.getDay() === 0 ? 7 : today.getDay();
-  const monday = new Date(today);
-  monday.setDate(today.getDate() - (dayNumber - 1));
-  monday.setHours(0, 0, 0, 0);
-  return monday;
+  return getPlanWeekStart(new Date());
 }
 
 function escapeICS(text) {
