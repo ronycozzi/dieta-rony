@@ -20,7 +20,7 @@ const STORAGE = {
   planWeek:        "rony-dieta-plan-week",
   weightSeeded:    "weight-seeded"
 };
-const APP_BUILD = "2026-06-24-command";
+const APP_BUILD = "2026-06-24-clean-mobile";
 const MENU_ROTATION_CORRECTION_START = "2026-06-15";
 const MENU_ROTATION_CORRECTION_OFFSET = 1;
 
@@ -5628,11 +5628,14 @@ function getNextMenuRefreshDate(from = new Date()) {
 function getMenuRefreshLabel() {
   return getNextMenuRefreshDate().toLocaleDateString("es-AR", { weekday: "long", day: "numeric", month: "short" });
 }
+function getMenuRefreshShortLabel() {
+  return getNextMenuRefreshDate().toLocaleDateString("es-AR", { day: "numeric", month: "short" });
+}
 let weekIndex = getWeekIndex();
 let days = allWeeks[weekIndex];
-const weekNames = ["Semana 1 · Mediterránea", "Semana 2 · Potencia criolla", "Semana 3 · Internacional mix", "Semana 4 · Proteico puro"];
+const weekNames = ["Rotacion 1 de 4", "Rotacion 2 de 4", "Rotacion 3 de 4", "Rotacion 4 de 4"];
 function getCurrentWeekName() {
-  return `${weekNames[weekIndex]} · cambia ${getMenuRefreshLabel()}`;
+  return `Menu ${weekIndex + 1}/4 · cambia ${getMenuRefreshShortLabel()}`;
 }
 let currentWeekName = getCurrentWeekName();
 
@@ -6516,22 +6519,12 @@ function buildWeekIntelligenceData() {
 function renderPlanIntelligence() {
   const node = document.querySelector("#plan-intelligence");
   if (!node) return;
-  const data = buildWeekIntelligenceData();
+  const optionBCount = getWeekMainMeals(true).length;
   node.innerHTML = `
-    <article class="plan-intel-hero">
-      <div>
-        <span class="plan-intel-kicker">Semana activa</span>
-        <strong>${data.weekName}</strong>
-        <p>Cambia el ${displayText(data.nextRefresh)}. Platos fuertes: ${data.primaryProteinSummary} con ${data.primaryCarbSummary}.</p>
-      </div>
-      <div class="plan-intel-stamp">ROTACION OK</div>
-    </article>
-    <div class="plan-intel-grid">
-      <div class="plan-intel-card"><span>Opcion B</span><strong>${data.optionBCount}</strong><small>alternativas reales listas</small></div>
-      <div class="plan-intel-card"><span>Variedad main</span><strong>${data.uniqueMainNames}/${data.primaryMains}</strong><small>nombres unicos en almuerzo/cena</small></div>
-      <div class="plan-intel-card"><span>Pescado</span><strong>${data.fishVisible}</strong><small>apariciones visibles con salmon/atun/pescado</small></div>
-      <div class="plan-intel-card ${data.riceVisible > 6 ? "warn" : ""}"><span>Arroz visible</span><strong>${data.riceVisible}</strong><small>control semanal anti-repeticion</small></div>
-      <div class="plan-intel-card wide"><span>Alternativas B</span><strong>${data.altProteinSummary}</strong><small>proteinas de respaldo para no caer siempre en lo mismo</small></div>
+    <div class="plan-simple-status">
+      <span>${displayText(weekNames[weekIndex])}</span>
+      <span>Cambia ${displayText(getMenuRefreshLabel())}</span>
+      <span>${optionBCount} opciones B en platos fuertes</span>
     </div>
   `;
 }
@@ -6638,8 +6631,6 @@ function renderActiveDay() {
         <div class="workout-tags">${day.tags.map((tag) => `<span class="workout-tag">${displayText(tag)}</span>`).join("")}</div>
       </div>
 
-      ${renderDayCommandCenter(day, consumed, adjustedKcal, proteinTarget)}
-
       <div class="day-total">
         <div class="dt-title">Progreso del día</div>
         ${renderProgressBar("kcal", consumed.kcal, adjustedKcal, "linear-gradient(90deg, #f4b84a, #ffe08a)")}
@@ -6647,10 +6638,6 @@ function renderActiveDay() {
         ${renderProgressBar("carbos", consumed.c + "g", (isFridayWithoutGym ? Math.round(day.carbs * 0.93) : day.carbs) + "g", "linear-gradient(90deg, #f4b84a, #ffe08a)")}
         ${renderProgressBar("grasas", consumed.g + "g", day.fats + "g", "linear-gradient(90deg, #61a8ff, #8fc6ff)")}
       </div>
-
-      ${renderOperationalBrief(day, consumed, adjustedKcal, proteinTarget)}
-
-      <div class="tip-card"><div class="tip-icon">💡</div><div class="tip-text">${displayText(day.tip)}</div></div>
 
       <div class="quick-actions">
         <button class="quick-btn" type="button" onclick="quickCheckCurrentMeal()">⚡ Marcar comida actual</button>
@@ -7403,7 +7390,15 @@ function updateNextMeal() {
       const context = viewedDay.id === scheduleDay.id
         ? ""
         : `<span class="next-meal-context">La tarjeta sigue anclada a hoy para no mezclar horarios ficticios.</span>`;
-      el.innerHTML = `Próxima: <strong>${next.time}</strong> · ${displayText(next.name)} <span class="next-meal-time">${timeLeft}</span>${context}`;
+      el.innerHTML = `
+        <div class="next-meal-main">
+          <span>Próxima</span>
+          <strong>${next.time}</strong>
+          <em>${timeLeft}</em>
+        </div>
+        <div class="next-meal-name">${displayText(next.name)}</div>
+        ${context}
+      `;
     } else {
       const suffix = viewedDay.id === scheduleDay.id
         ? "Ya no quedan comidas para hoy. Descansá bien."

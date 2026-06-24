@@ -201,7 +201,7 @@ function auditSourceQuality(src) {
   const brokenEncodingHits = src.match(/[A-Za-zÁÉÍÓÚáéíóúÑñ]\?[A-Za-zÁÉÍÓÚáéíóúÑñ]|Ã.|Â.|�/g) || [];
   assert(brokenEncodingHits.length === 0, `Audit: hay textos con encoding roto: ${brokenEncodingHits.slice(0, 10).join(", ")}.`);
 
-  ["togglePrep", "toggleAltMeal", "renderMeal", "syncShoppingPreview", "exportShopping", "renderPlanIntelligence", "renderDayCommandCenter"].forEach((name) => {
+  ["togglePrep", "toggleAltMeal", "renderMeal", "syncShoppingPreview", "exportShopping", "renderPlanIntelligence"].forEach((name) => {
     const functionDefs = countMatches(src, new RegExp(`\\bfunction\\s+${name}\\s*\\(`, "g"));
     const functionAssignments = countMatches(src, new RegExp(`\\b${name}\\s*=\\s*function\\b`, "g"));
     assert(functionDefs === 1 && functionAssignments === 0, `Audit: ${name} debe tener una sola definicion canonica.`);
@@ -239,7 +239,9 @@ function auditSourceQuality(src) {
   const indexText = readTextFile(indexHtmlPath);
   const swText = readTextFile(serviceWorkerPath);
   assert(/id="plan-intelligence"/.test(indexText), "Audit: falta el panel visible de inteligencia semanal en index.html.");
-  assert(/class="coach-command"/.test(src), "Audit: falta el Command Center diario en el render del plan.");
+  assert(/class="plan-simple-status"/.test(src), "Audit: el estado semanal debe ser compacto y simple.");
+  assert(!/\$\{renderDayCommandCenter\(day/.test(src), "Audit: el Command Center no debe volver al flujo principal del dia.");
+  assert(!/\$\{renderOperationalBrief\(day/.test(src), "Audit: el bloque Foco del dia no debe volver al flujo principal.");
   assert(/renderMealInsightTags/.test(src) && /renderAltDelta/.test(src), "Audit: faltan tags de comida o comparacion de opcion B.");
   const indexAssetVersions = Array.from(indexText.matchAll(/\b(?:styles|script)\.(?:css|js)\?v=([^"']+)/g)).map((match) => match[1]);
   const swAssetVersions = Array.from(swText.matchAll(/\b(?:styles|script)\.(?:css|js)\?v=([^"']+)/g)).map((match) => match[1]);

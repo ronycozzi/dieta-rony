@@ -389,7 +389,7 @@ function main() {
   const june10 = app.snapshot("2026-06-10 initial");
   assertSnapshot(june10, {
     weekIndex: 3,
-    weekName: "Semana 4",
+    weekName: "Menu 4/4",
     planWeek: "3:2026-06-08",
     lunchNeedle: "salpicon de pollo"
   });
@@ -398,7 +398,7 @@ function main() {
   const june17Clean = june17CleanApp.snapshot("2026-06-17 clean-load");
   assertSnapshot(june17Clean, {
     weekIndex: 1,
-    weekName: "Semana 2",
+    weekName: "Menu 2/4",
     planWeek: "1:2026-06-15",
     lunchNeedle: "pastel de papa"
   });
@@ -466,7 +466,7 @@ function main() {
   const june17Focus = app.snapshot("2026-06-17 focus");
   assertSnapshot(june17Focus, {
     weekIndex: 1,
-    weekName: "Semana 2",
+    weekName: "Menu 2/4",
     planWeek: "1:2026-06-15",
     lunchNeedle: "pastel de papa"
   });
@@ -477,7 +477,7 @@ function main() {
   const june24Pageshow = app.snapshot("2026-06-24 pageshow");
   assertSnapshot(june24Pageshow, {
     weekIndex: 2,
-    weekName: "Semana 3",
+    weekName: "Menu 3/4",
     planWeek: "2:2026-06-22",
     lunchNeedle: "carne al horno"
   });
@@ -488,7 +488,7 @@ function main() {
   const july01Visible = app.snapshot("2026-07-01 visible");
   assertSnapshot(july01Visible, {
     weekIndex: 3,
-    weekName: "Semana 4",
+    weekName: "Menu 4/4",
     planWeek: "3:2026-06-29",
     lunchNeedle: "pizza casera"
   });
@@ -498,7 +498,7 @@ function main() {
   const july08Pageshow = app.snapshot("2026-07-08 pageshow");
   assertSnapshot(july08Pageshow, {
     weekIndex: 0,
-    weekName: "Semana 1",
+    weekName: "Menu 1/4",
     planWeek: "0:2026-07-06",
     lunchNeedle: "pastel de papa"
   });
