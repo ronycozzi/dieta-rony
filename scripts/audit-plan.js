@@ -201,7 +201,7 @@ function auditSourceQuality(src) {
   const brokenEncodingHits = src.match(/[A-Za-zÁÉÍÓÚáéíóúÑñ]\?[A-Za-zÁÉÍÓÚáéíóúÑñ]|Ã.|Â.|�/g) || [];
   assert(brokenEncodingHits.length === 0, `Audit: hay textos con encoding roto: ${brokenEncodingHits.slice(0, 10).join(", ")}.`);
 
-  ["togglePrep", "toggleAltMeal", "renderMeal", "syncShoppingPreview", "exportShopping", "renderPlanIntelligence"].forEach((name) => {
+  ["togglePrep", "toggleAltMeal", "renderMeal", "syncShoppingPreview", "exportShopping"].forEach((name) => {
     const functionDefs = countMatches(src, new RegExp(`\\bfunction\\s+${name}\\s*\\(`, "g"));
     const functionAssignments = countMatches(src, new RegExp(`\\b${name}\\s*=\\s*function\\b`, "g"));
     assert(functionDefs === 1 && functionAssignments === 0, `Audit: ${name} debe tener una sola definicion canonica.`);
@@ -238,8 +238,11 @@ function auditSourceQuality(src) {
 
   const indexText = readTextFile(indexHtmlPath);
   const swText = readTextFile(serviceWorkerPath);
-  assert(/id="plan-intelligence"/.test(indexText), "Audit: falta el panel visible de inteligencia semanal en index.html.");
-  assert(/class="plan-simple-status"/.test(src), "Audit: el estado semanal debe ser compacto y simple.");
+  assert(/class="plan-block"\s+id="plan-section"/.test(indexText), "Audit: el ancla del plan debe vivir en el bloque limpio de dias.");
+  assert(/id="week-tabs"/.test(indexText) && /id="day-container"/.test(indexText), "Audit: falta selector de dias o contenedor del dia.");
+  assert(!/id="water-dots"|id="week-overview-grid"|id="plan-intelligence"|class="plan-status-line"|id="gym-banner-dieta"/.test(indexText), "Audit: reaparecio una seccion duplicada en el flujo principal.");
+  assert(/day-context-meta/.test(src), "Audit: el encabezado del dia debe mostrar kcal y macros en Hoy real.");
+  assert(!/class="day-header-top"|class="workout-info"|class="workout-tags"/.test(src), "Audit: reaparecio el encabezado duplicado de entrenamiento antes de las comidas.");
   assert(!/\$\{renderDayCommandCenter\(day/.test(src), "Audit: el Command Center no debe volver al flujo principal del dia.");
   assert(!/\$\{renderOperationalBrief\(day/.test(src), "Audit: el bloque Foco del dia no debe volver al flujo principal.");
   assert(/renderMealInsightTags/.test(src) && /renderAltDelta/.test(src), "Audit: faltan tags de comida o comparacion de opcion B.");

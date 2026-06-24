@@ -12,7 +12,7 @@ Jueves piernas · Viernes full body · Sábado/Domingo descanso.
 ### Plan
 - 7 días con kcal y macros calibrados por tipo de entreno
 - Comidas con preparaciones detalladas paso a paso (4-7 pasos cada una)
-- Estado semanal compacto: rotación activa, próximo cambio y opciones B disponibles
+- Selector limpio de días para ver el plan de cada jornada sin duplicar paneles
 - Opción B para cada comida con comparación de kcal/proteína/carbos/grasas contra la opción principal
 - Días de gym con ritmo operativo real: desayuno 10:00, pre-entreno 11:15, post-entreno 14:30 y almuerzo fuerte 16:00
 - Viernes base como quinto entrenamiento, con selector para descanso excepcional sin romper la semana
@@ -22,10 +22,8 @@ Jueves piernas · Viernes full body · Sábado/Domingo descanso.
 ### Tracking
 - Marcar comidas completadas (persiste por día con localStorage)
 - Sincronización opcional con Neon + Vercel Functions cuando `DATABASE_URL` está configurada
-- Estado visible de sync dentro de la app: Neon activo, modo local, offline o sync pendiente
-- Auditoría automática contra duplicados críticos de render, compras y estado semanal
+- Auditoría automática contra duplicados críticos de render, compras, rotación y secciones de UI innecesarias
 - Barras de progreso de kcal, proteína, carbos y grasas en vivo
-- Contador de 10 vasos de agua diarios (2.5L)
 - Tracker de peso semanal con alertas:
   - Si pasás de 80kg → "achicá una porción de carbo"
   - Si bajás de 77kg → "sumá 200 kcal/día"
@@ -34,8 +32,9 @@ Jueves piernas · Viernes full body · Sábado/Domingo descanso.
 
 ### Vista
 - Reloj y fecha en vivo
-- Banner del día actual con qué entrenás y qué comer
-- Resumen semanal con cumplimiento día a día (mini grid)
+- Próxima comida destacada arriba del plan
+- Selector de días como navegación principal
+- Encabezado "Hoy real" con calorías y macros antes de las comidas
 - Próxima comida con cuenta regresiva anclada al día real para no mezclar horarios cuando navegás otros tabs
 - Toggle viernes: gym (2750 kcal) / descanso (2550 kcal)
 

@@ -20,7 +20,7 @@ const STORAGE = {
   planWeek:        "rony-dieta-plan-week",
   weightSeeded:    "weight-seeded"
 };
-const APP_BUILD = "2026-06-24-clean-mobile";
+const APP_BUILD = "2026-06-24-minimal-day";
 const MENU_ROTATION_CORRECTION_START = "2026-06-15";
 const MENU_ROTATION_CORRECTION_OFFSET = 1;
 
@@ -6318,7 +6318,6 @@ function renderTabs() {
   const weekLabelEl = document.querySelector("#current-week-label");
   const todayPlanDayIndex = getPlanDayIndex();
   if (weekLabelEl) weekLabelEl.textContent = currentWeekName;
-  renderPlanIntelligence();
   tabsEl.innerHTML = days.map((day) => {
     const isToday = day.dayIndex === todayPlanDayIndex;
     return `
@@ -6516,19 +6515,6 @@ function buildWeekIntelligenceData() {
   };
 }
 
-function renderPlanIntelligence() {
-  const node = document.querySelector("#plan-intelligence");
-  if (!node) return;
-  const optionBCount = getWeekMainMeals(true).length;
-  node.innerHTML = `
-    <div class="plan-simple-status">
-      <span>${displayText(weekNames[weekIndex])}</span>
-      <span>Cambia ${displayText(getMenuRefreshLabel())}</span>
-      <span>${optionBCount} opciones B en platos fuertes</span>
-    </div>
-  `;
-}
-
 function renderOperationalBrief(day, consumed, adjustedKcal, proteinTarget) {
   const proteinGap = Math.max(0, proteinTarget - consumed.p);
   const kcalGap = Math.max(0, adjustedKcal - consumed.kcal);
@@ -6594,30 +6580,30 @@ function renderActiveDay() {
   const isFridayWithoutGym = day.id === "vie" && getFridayModeForDay(day.id) === "rest";
   const adjustedKcal = isFridayWithoutGym ? day.kcal - 200 : day.kcal;
   const proteinTarget = isFridayWithoutGym ? Math.round(day.protein * 0.92) : day.protein;
+  const carbsTarget = isFridayWithoutGym ? Math.round(day.carbs * 0.93) : day.carbs;
+  const activityMeta = isFridayWithoutGym
+    ? "Descanso excepcional"
+    : day.isRestDay
+    ? "Día de descanso"
+    : `Entreno ${day.trainingTime || TRAINING_TIME}`;
 
   document.querySelector("#day-container").innerHTML = `
     <section class="panel active">
       <div class="day-header">
         <div class="day-context-strip ${isViewingToday ? "is-today" : "is-planning"}" role="status" aria-live="polite">
-          <div>
+          <div class="day-context-main">
             <span class="day-context-kicker">${isViewingToday ? "Hoy real" : "Planificación"}</span>
-            <strong>${isViewingToday ? "Estás viendo el día operativo de hoy." : `Estás viendo ${displayText(day.title)}. Hoy real es ${displayText(todayObj.title)}.`}</strong>
+            <strong>${displayText(day.title)} · ~${adjustedKcal} kcal</strong>
+            <div class="day-context-meta">
+              <span>${activityMeta}</span>
+              <span>${proteinTarget}g proteína</span>
+              <span>${carbsTarget}g carbos</span>
+              <span>${day.fats}g grasas</span>
+            </div>
+            ${isViewingToday ? "" : `<small>Hoy real es ${displayText(todayObj.title)}.</small>`}
           </div>
           ${isViewingToday ? "" : `<button class="day-context-action" type="button" onclick="scrollToTodayPanel()">Volver a hoy</button>`}
         </div>
-        <div class="day-header-top">
-          <div class="day-icon ${day.isRestDay ? "rest" : ""}">${day.workout.icon}</div>
-          <div>
-            <div class="day-label">${displayText(day.title)}</div>
-            <div class="day-type">${displayText(day.type)} · <span>~${adjustedKcal} kcal</span></div>
-          </div>
-        </div>
-        ${day.workout.duration !== "—" ? `
-          <div class="workout-info">
-            <strong>🏋️ ${displayText(day.workout.name)}</strong> · ${displayText(day.workout.duration)}
-            ${day.trainingTime ? ` · Entreno ${day.trainingTime}` : ""}
-            ${day.workout.optional ? '<span class="opt-label">opcional</span>' : ""}
-          </div>` : ""}
         ${day.id === "vie" ? `
           <div class="friday-toggle">
             <label class="toggle-row">
@@ -6628,22 +6614,21 @@ function renderActiveDay() {
               </select>
             </label>
           </div>` : ""}
-        <div class="workout-tags">${day.tags.map((tag) => `<span class="workout-tag">${displayText(tag)}</span>`).join("")}</div>
       </div>
+
+      ${day.meals.map(renderMeal).join("")}
 
       <div class="day-total">
         <div class="dt-title">Progreso del día</div>
         ${renderProgressBar("kcal", consumed.kcal, adjustedKcal, "linear-gradient(90deg, #f4b84a, #ffe08a)")}
         ${renderProgressBar("proteína", consumed.p + "g", proteinTarget + "g", "linear-gradient(90deg, #ff6b5f, #ff9588)")}
-        ${renderProgressBar("carbos", consumed.c + "g", (isFridayWithoutGym ? Math.round(day.carbs * 0.93) : day.carbs) + "g", "linear-gradient(90deg, #f4b84a, #ffe08a)")}
+        ${renderProgressBar("carbos", consumed.c + "g", carbsTarget + "g", "linear-gradient(90deg, #f4b84a, #ffe08a)")}
         ${renderProgressBar("grasas", consumed.g + "g", day.fats + "g", "linear-gradient(90deg, #61a8ff, #8fc6ff)")}
       </div>
 
       <div class="quick-actions">
         <button class="quick-btn" type="button" onclick="quickCheckCurrentMeal()">⚡ Marcar comida actual</button>
       </div>
-
-      ${day.meals.map(renderMeal).join("")}
     </section>
   `;
 
@@ -7494,7 +7479,7 @@ function renderWater() {
 // RESET DÍA
 // =====================================================
 function resetDay() {
-  if (!confirm("¿Resetear todas las marcas y el agua del día?")) return;
+  if (!confirm("¿Resetear todas las marcas del día?")) return;
   saveDayState({});
   localStorage.removeItem(`goal-celebrated-${getTodayKey()}`);
   setWater(0);
@@ -8520,7 +8505,7 @@ window.addEventListener("offline", () => {
 // APPLE WATCH / SIRI SHORTCUTS INTEGRATION
 // =====================================================
 
-// URL scheme: ?action=water|meal|weight|today — disparado por Siri Shortcuts
+// URL scheme: ?action=meal|weight|today — disparado por Siri Shortcuts
 (function handleURLActions() {
   const params = new URLSearchParams(window.location.search);
   const action = params.get("action");
@@ -8533,14 +8518,8 @@ window.addEventListener("offline", () => {
   // Ejecutar la acción después de que la app cargue
   setTimeout(() => {
     if (action === "water") {
-      // Agrega un vaso de agua y muestra confirmación
-      const dots = document.querySelectorAll(".water-dot:not(.active)");
-      if (dots.length > 0) {
-        dots[0].click();
-        showToast("💧 Vaso de agua registrado desde el Watch");
-      } else {
-        showToast("💧 ¡Ya completaste los 10 vasos de hoy!");
-      }
+      showToast("El tracker de agua fue retirado de la vista principal");
+      scrollToTodayPanel();
     } else if (action === "meal") {
       // Marca la comida más cercana al horario actual
       setActiveDay(getTodayDayObject().id);
@@ -8569,9 +8548,9 @@ function getShortcutURL(action) {
 // Instalar atajo — abre la app Atajos de Apple con el atajo pre-configurado
 function installShortcut(action) {
   const url = getShortcutURL(action);
-  const names = { water: "Agua Dieta", meal: "Marcar Comida", weight: "Registrar Peso", today: "Ver Plan Hoy" };
-  const icons = { water: "💧", meal: "✅", weight: "⚖️", today: "📊" };
-  const siriPhrases = { water: "Agua dieta", meal: "Marcar comida dieta", weight: "Peso dieta", today: "Ver dieta" };
+  const names = { meal: "Marcar Comida", weight: "Registrar Peso", today: "Ver Plan Hoy" };
+  const icons = { meal: "✅", weight: "⚖️", today: "📊" };
+  const siriPhrases = { meal: "Marcar comida dieta", weight: "Peso dieta", today: "Ver dieta" };
   const name = names[action] || action;
   const icon = icons[action] || "⚡";
   const siriPhrase = siriPhrases[action] || name;

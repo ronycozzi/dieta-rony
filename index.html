@@ -16,7 +16,7 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="format-detection" content="telephone=no" />
     <link rel="stylesheet" href="assets/fonts/fonts.css" />
-    <link rel="stylesheet" href="styles.css?v=20260624-clean-mobile" />
+    <link rel="stylesheet" href="styles.css?v=20260624-minimal-day" />
   </head>
   <body>
 
@@ -112,35 +112,14 @@
 
         <!-- BENTO HEADER -->
         <div class="bento-header">
-          <div class="bento-gym" id="gym-banner-dieta"></div>
           <div class="bento-next">
             <div class="bento-card-label" id="next-meal-label">⏰ Hoy · próxima comida</div>
             <div id="next-meal" class="bento-next-content">Cargando…</div>
           </div>
-          <div class="bento-water">
-            <div class="bento-card-label">💧 Agua &nbsp;<strong id="water-label">0/10</strong></div>
-            <div class="water-dots" id="water-dots"></div>
-          </div>
         </div>
 
-        <!-- WEEK OVERVIEW -->
-        <section class="week-overview" id="plan-section">
-          <div class="section-header">
-            <div>
-              <div class="section-eyebrow">Esta semana</div>
-              <div class="section-title">Cumplimiento</div>
-            </div>
-          </div>
-          <div class="week-overview-grid" id="week-overview-grid"></div>
-        </section>
-
         <!-- WEEK TABS + DAY PLAN -->
-        <div class="plan-block">
-          <div class="plan-status-line">
-            <div class="current-week-label" id="current-week-label"></div>
-            <div class="cloud-status" id="cloud-status" data-state="checking" aria-live="polite">Cloud revisando</div>
-          </div>
-          <section class="plan-intelligence" id="plan-intelligence" aria-label="Inteligencia de rotacion semanal"></section>
+        <div class="plan-block" id="plan-section">
           <nav class="week-tabs" id="week-tabs" aria-label="Plan semanal"></nav>
           <main id="day-container"></main>
         </div>
@@ -268,19 +247,13 @@
             <span class="watch-feature-icon">🗣️</span>
             <div>
               <strong>Siri Shortcuts desde el Watch</strong>
-              <p>Instalá los atajos de abajo → desde el Watch podés decir "Oye Siri, agregar agua" o ejecutarlos con un toque en la complicación de Atajos.</p>
+              <p>Instalá los atajos de abajo → desde el Watch podés marcar comida, registrar peso o abrir el plan del día con un toque.</p>
             </div>
           </div>
         </div>
 
         <div class="watch-section-label">ATAJOS DE SIRI — INSTALÁ EN UN TAP</div>
         <div class="watch-shortcuts-grid">
-          <div class="watch-shortcut-card">
-            <div class="wsc-icon">💧</div>
-            <div class="wsc-name">Agregar agua</div>
-            <div class="wsc-desc">Abre la app y registra un vaso. Decile a Siri: "Agua dieta"</div>
-            <button class="wsc-btn" onclick="installShortcut('water')">Instalar atajo</button>
-          </div>
           <div class="watch-shortcut-card">
             <div class="wsc-icon">✅</div>
             <div class="wsc-name">Marcar comida</div>
@@ -326,7 +299,7 @@
       <button class="bn-item" type="button" onclick="showWatchModal()"><span class="bn-icon">⌚</span><span class="bn-label">Watch</span></button>
     </nav>
 
-    <script src="script.js?v=20260624-clean-mobile"></script>
+    <script src="script.js?v=20260624-minimal-day"></script>
     <script>
       // Mirror sidebar values to mobile topbar
       function mirrorToTopbar() {
