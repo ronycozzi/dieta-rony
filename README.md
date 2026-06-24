@@ -12,6 +12,9 @@ Jueves piernas · Viernes full body · Sábado/Domingo descanso.
 ### Plan
 - 7 días con kcal y macros calibrados por tipo de entreno
 - Comidas con preparaciones detalladas paso a paso (4-7 pasos cada una)
+- Command Center diario con score operativo, próxima acción, proteína repartida y guardia anti-repetición
+- Inteligencia semanal visible: proteínas dominantes, carbos dominantes, opción B, pescado y control de arroz
+- Opción B para cada comida con comparación de kcal/proteína/carbos/grasas contra la opción principal
 - Días de gym con ritmo operativo real: desayuno 10:00, pre-entreno 11:15, post-entreno 14:30 y almuerzo fuerte 16:00
 - Viernes base como quinto entrenamiento, con selector para descanso excepcional sin romper la semana
 - Sin yogur, avena, harina de arroz, arroz inflado, ricota, cottage, locro ni combinaciones raras fuera del criterio definido para Rony
@@ -21,6 +24,7 @@ Jueves piernas · Viernes full body · Sábado/Domingo descanso.
 - Marcar comidas completadas (persiste por día con localStorage)
 - Sincronización opcional con Neon + Vercel Functions cuando `DATABASE_URL` está configurada
 - Estado visible de sync dentro de la app: Neon activo, modo local, offline o sync pendiente
+- Auditoría automática contra duplicados críticos de render, compras, Command Center e inteligencia semanal
 - Barras de progreso de kcal, proteína, carbos y grasas en vivo
 - Contador de 10 vasos de agua diarios (2.5L)
 - Tracker de peso semanal con alertas:

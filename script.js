@@ -20,7 +20,7 @@ const STORAGE = {
   planWeek:        "rony-dieta-plan-week",
   weightSeeded:    "weight-seeded"
 };
-const APP_BUILD = "2026-06-24-stability";
+const APP_BUILD = "2026-06-24-command";
 const MENU_ROTATION_CORRECTION_START = "2026-06-15";
 const MENU_ROTATION_CORRECTION_OFFSET = 1;
 
@@ -6315,6 +6315,7 @@ function renderTabs() {
   const weekLabelEl = document.querySelector("#current-week-label");
   const todayPlanDayIndex = getPlanDayIndex();
   if (weekLabelEl) weekLabelEl.textContent = currentWeekName;
+  renderPlanIntelligence();
   tabsEl.innerHTML = days.map((day) => {
     const isToday = day.dayIndex === todayPlanDayIndex;
     return `
@@ -6363,6 +6364,174 @@ function renderProgressBar(label, current, target, color) {
       <div class="prog-bar-track">
         <div class="prog-bar-fill animating" style="width: ${pct}%; background: ${color};"></div>
       </div>
+    </div>
+  `;
+}
+
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function countBy(items, groupFn) {
+  return items.reduce((acc, item) => {
+    const key = groupFn(item) || "otro";
+    acc[key] = (acc[key] || 0) + 1;
+    return acc;
+  }, {});
+}
+
+function topGroupLabels(counts, labels, limit = 3) {
+  const entries = Object.entries(counts)
+    .filter(([, count]) => count > 0)
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "es"))
+    .slice(0, limit)
+    .map(([key, count]) => `${labels[key] || key} ${count}`);
+  return entries.length ? entries.join(" / ") : "equilibrado";
+}
+
+function getNextActionMeal(day) {
+  if (!day?.meals?.length) return null;
+  const todayObj = getTodayDayObject();
+  const isToday = day.id === todayObj.id;
+  const now = new Date();
+  const nowMin = now.getHours() * 60 + now.getMinutes();
+  const pending = day.meals.filter((item) => !isDone(item.id));
+  if (!pending.length) return null;
+  if (!isToday) return pending[0];
+  return pending.find((item) => {
+    const [h, m] = item.time.split(":").map(Number);
+    return h * 60 + m >= nowMin - 30;
+  }) || pending[pending.length - 1];
+}
+
+function buildDayIntelligence(day, consumed, adjustedKcal, proteinTarget) {
+  const doneCount = day.meals.filter((item) => isDone(item.id)).length;
+  const totalMeals = day.meals.length || 1;
+  const proteinMeals = day.meals.filter((item) => macroTotalsForMeal(getSelectedMeal(item)).p >= 20).length;
+  const mainMeals = day.meals.filter(isMainMeal);
+  const mainCarbs = countBy(mainMeals.map(getSelectedMeal), mealCarbGroup);
+  const mainProteins = countBy(mainMeals.map(getSelectedMeal), mealProteinGroup);
+  const riceCount = mainCarbs.arroz || 0;
+  const score = clamp(
+    48
+      + Math.round((doneCount / totalMeals) * 22)
+      + Math.round(Math.min(consumed.p / Math.max(proteinTarget, 1), 1) * 16)
+      + Math.round(Math.min(consumed.kcal / Math.max(adjustedKcal, 1), 1) * 10)
+      + (riceCount <= 1 ? 4 : -8),
+    0,
+    100
+  );
+  const next = getNextActionMeal(day);
+  const selectedNext = next ? getSelectedMeal(next) : null;
+
+  return {
+    score,
+    doneCount,
+    totalMeals,
+    proteinMeals,
+    next,
+    selectedNext,
+    riceCount,
+    mainCarbs,
+    mainProteins,
+    proteinGap: Math.max(0, proteinTarget - consumed.p),
+    kcalGap: Math.max(0, adjustedKcal - consumed.kcal)
+  };
+}
+
+function renderCoachMetric(label, value, detail) {
+  return `
+    <div class="coach-metric">
+      <span>${label}</span>
+      <strong>${value}</strong>
+      <small>${detail}</small>
+    </div>
+  `;
+}
+
+function renderDayCommandCenter(day, consumed, adjustedKcal, proteinTarget) {
+  const intel = buildDayIntelligence(day, consumed, adjustedKcal, proteinTarget);
+  const nextText = intel.selectedNext
+    ? `${intel.next.time} - ${displayText(intel.selectedNext.name)}`
+    : "Dia cerrado";
+  const proteinCopy = intel.proteinGap > 0
+    ? `Faltan ${intel.proteinGap}g de proteina real.`
+    : "Proteina cubierta para recuperar.";
+  const kcalCopy = intel.kcalGap > 160
+    ? `Quedan unas ${intel.kcalGap} kcal utiles.`
+    : "Energia del dia en zona.";
+  const riceCopy = intel.riceCount > 1
+    ? "Atencion: arroz aparece mas de una vez en platos fuertes."
+    : "Arroz controlado: sin abuso en platos fuertes.";
+  const scoreStyle = `--score:${intel.score * 3.6}deg`;
+
+  return `
+    <section class="coach-command" aria-label="Centro de control nutricional del dia">
+      <div class="coach-score-card">
+        <div class="coach-score-ring" style="${scoreStyle}">
+          <strong>${intel.score}</strong>
+          <span>score</span>
+        </div>
+        <div>
+          <div class="coach-kicker">Command Center</div>
+          <h2>${displayText(day.title)} bajo control</h2>
+          <p>${proteinCopy} ${kcalCopy}</p>
+        </div>
+      </div>
+      <div class="coach-metrics">
+        ${renderCoachMetric("Proxima accion", nextText, intel.next ? displayText(intel.next.label) : "completo")}
+        ${renderCoachMetric("Proteina repartida", `${intel.proteinMeals}/${intel.totalMeals}`, "comidas con 20g+")}
+        ${renderCoachMetric("Carbos fuertes", topGroupLabels(intel.mainCarbs, { arroz: "arroz", pasta: "pasta", papa: "papa", pan: "pan/wrap", legumbre: "legumbre", otro: "otro" }, 2), riceCopy)}
+        ${renderCoachMetric("Proteinas fuertes", topGroupLabels(intel.mainProteins, { pollo: "pollo", carne: "carne", pescado: "pescado", huevo: "huevo", atun: "atun", legumbre: "legumbre", whey: "whey", mixto: "mixto" }, 2), "rotacion del dia")}
+      </div>
+    </section>
+  `;
+}
+
+function buildWeekIntelligenceData() {
+  const primaryMains = getWeekMainMeals(false);
+  const altMains = getWeekMainMeals(true);
+  const allVisibleMeals = days.flatMap((day) => day.meals.flatMap((item) => [item, item.alt].filter(Boolean)));
+  const primaryProteins = countBy(primaryMains, mealProteinGroup);
+  const primaryCarbs = countBy(primaryMains, mealCarbGroup);
+  const altProteins = countBy(altMains, mealProteinGroup);
+  const riceVisible = allVisibleMeals.filter((item) => isMainMeal(item) && mealHasRice(item)).length;
+  const fishVisible = allVisibleMeals.filter((item) => mealProteinGroup(item) === "pescado").length;
+  const uniqueMainNames = new Set(primaryMains.map((item) => mealNameKey(item))).size;
+
+  return {
+    weekName: displayText(weekNames[weekIndex]),
+    nextRefresh: getMenuRefreshLabel(),
+    primaryProteinSummary: topGroupLabels(primaryProteins, { pollo: "pollo", carne: "carne", pescado: "pescado", huevo: "huevo", jamon: "jamon", legumbre: "legumbre", mixto: "mixto" }),
+    primaryCarbSummary: topGroupLabels(primaryCarbs, { arroz: "arroz", pasta: "pasta", papa: "papa", pan: "pan/wrap", legumbre: "legumbre", otro: "otro" }),
+    altProteinSummary: topGroupLabels(altProteins, { pollo: "pollo", carne: "carne", pescado: "pescado", huevo: "huevo", jamon: "jamon", legumbre: "legumbre", mixto: "mixto" }, 2),
+    optionBCount: altMains.length,
+    riceVisible,
+    fishVisible,
+    uniqueMainNames,
+    primaryMains: primaryMains.length
+  };
+}
+
+function renderPlanIntelligence() {
+  const node = document.querySelector("#plan-intelligence");
+  if (!node) return;
+  const data = buildWeekIntelligenceData();
+  node.innerHTML = `
+    <article class="plan-intel-hero">
+      <div>
+        <span class="plan-intel-kicker">Semana activa</span>
+        <strong>${data.weekName}</strong>
+        <p>Cambia el ${displayText(data.nextRefresh)}. Platos fuertes: ${data.primaryProteinSummary} con ${data.primaryCarbSummary}.</p>
+      </div>
+      <div class="plan-intel-stamp">ROTACION OK</div>
+    </article>
+    <div class="plan-intel-grid">
+      <div class="plan-intel-card"><span>Opcion B</span><strong>${data.optionBCount}</strong><small>alternativas reales listas</small></div>
+      <div class="plan-intel-card"><span>Variedad main</span><strong>${data.uniqueMainNames}/${data.primaryMains}</strong><small>nombres unicos en almuerzo/cena</small></div>
+      <div class="plan-intel-card"><span>Pescado</span><strong>${data.fishVisible}</strong><small>apariciones visibles con salmon/atun/pescado</small></div>
+      <div class="plan-intel-card ${data.riceVisible > 6 ? "warn" : ""}"><span>Arroz visible</span><strong>${data.riceVisible}</strong><small>control semanal anti-repeticion</small></div>
+      <div class="plan-intel-card wide"><span>Alternativas B</span><strong>${data.altProteinSummary}</strong><small>proteinas de respaldo para no caer siempre en lo mismo</small></div>
     </div>
   `;
 }
@@ -6468,6 +6637,8 @@ function renderActiveDay() {
           </div>` : ""}
         <div class="workout-tags">${day.tags.map((tag) => `<span class="workout-tag">${displayText(tag)}</span>`).join("")}</div>
       </div>
+
+      ${renderDayCommandCenter(day, consumed, adjustedKcal, proteinTarget)}
 
       <div class="day-total">
         <div class="dt-title">Progreso del día</div>
@@ -6575,6 +6746,55 @@ function togglePrep(button) {
   const label = button.querySelector(".prep-label");
   if (label) label.textContent = isOpen ? "Ocultar preparación" : "Ver preparación";
 }
+function signedDelta(value, suffix = "") {
+  if (value > 0) return `+${value}${suffix}`;
+  if (value < 0) return `${value}${suffix}`;
+  return `0${suffix}`;
+}
+
+function renderAltDelta(primary, alt) {
+  if (!primary || !alt) return "";
+  const primaryMacros = macroTotalsForMeal(primary);
+  const altMacros = macroTotalsForMeal(alt);
+  const deltas = [
+    { label: "kcal", value: alt.kcal - primary.kcal, suffix: "" },
+    { label: "P", value: altMacros.p - primaryMacros.p, suffix: "g" },
+    { label: "C", value: altMacros.c - primaryMacros.c, suffix: "g" },
+    { label: "G", value: altMacros.g - primaryMacros.g, suffix: "g" }
+  ];
+  return `
+    <div class="alt-delta-row" aria-label="Diferencia nutricional contra opcion principal">
+      ${deltas.map((item) => `<span class="${item.value > 0 ? "up" : item.value < 0 ? "down" : "flat"}">${item.label} ${signedDelta(item.value, item.suffix)}</span>`).join("")}
+    </div>
+  `;
+}
+
+function mealIntentTags(item) {
+  const label = plainText(item?.label);
+  const text = mealSearchText(item);
+  const tags = [];
+  if (label.includes("pre")) tags.push("liviano");
+  else if (label.includes("post")) tags.push("recuperacion");
+  else if (isMainMeal(item)) tags.push("plato fuerte");
+  else if (label.includes("desayuno")) tags.push("arranque");
+  else tags.push("apoyo");
+  tags.push(mealProteinGroup(item));
+  tags.push(mealCarbGroup(item));
+  if (/\bwhey\b/.test(text)) tags.push("whey");
+  if (/creatina/.test(text)) tags.push("creatina");
+  return Array.from(new Set(tags)).slice(0, 4);
+}
+
+function renderMealInsightTags(item, selectedAlt) {
+  const tags = mealIntentTags(item);
+  return `
+    <div class="meal-insight-row">
+      ${selectedAlt ? '<span class="variant-pill">Usando opcion B</span>' : ""}
+      ${tags.map((tag) => `<span>${displayText(tag)}</span>`).join("")}
+    </div>
+  `;
+}
+
 function renderMeal(item) {
   const done = isDone(item.id);
   const day = days.find((d) => d.id === activeDay);
@@ -6585,12 +6805,13 @@ function renderMeal(item) {
   const prepId = `meal-prep-${item.id}`;
   const altId = `meal-alt-${item.id}`;
   const altPrepId = `meal-alt-prep-${item.id}`;
-  const note = item.note ? `<div class="meal-note">Nota: ${displayText(item.note)}</div>` : "";
-  const totalP = item.foods.reduce((s, f) => s + f.p, 0);
-  const totalC = item.foods.reduce((s, f) => s + f.c, 0);
-  const totalG = item.foods.reduce((s, f) => s + f.g, 0);
   const hasAlt = Boolean(item.alt);
   const selectedAlt = hasAlt && getMealVariant(item.id) === "alt";
+  const displayMeal = selectedAlt ? item.alt : item;
+  const note = !selectedAlt && item.note ? `<div class="meal-note">Nota: ${displayText(item.note)}</div>` : "";
+  const totalP = displayMeal.foods.reduce((s, f) => s + f.p, 0);
+  const totalC = displayMeal.foods.reduce((s, f) => s + f.c, 0);
+  const totalG = displayMeal.foods.reduce((s, f) => s + f.g, 0);
 
   const renderDetailGrid = (mealItem, bodyId, isAlt = false) => `
     <div class="meal-detail-grid ${isAlt ? "alt-detail-grid" : ""}">
@@ -6623,6 +6844,7 @@ function renderMeal(item) {
         <span class="mm c">${item.alt.foods.reduce((s, f) => s + f.c, 0)}g C</span>
         <span class="mm g">${item.alt.foods.reduce((s, f) => s + f.g, 0)}g G</span>
       </div>
+      ${renderAltDelta(item, item.alt)}
       ${renderDetailGrid(item.alt, altPrepId, true)}
     </div>
   ` : "";
@@ -6635,26 +6857,27 @@ function renderMeal(item) {
 
   const typeSlug = slug(item.label);
   return `
-    <article class="meal ${done ? "done" : ""} ${isUpcoming ? "is-upcoming" : ""}" data-type="${typeSlug}" data-meal-id="${item.id}">
+    <article class="meal ${done ? "done" : ""} ${isUpcoming ? "is-upcoming" : ""} ${selectedAlt ? "selected-alt" : ""}" data-type="${typeSlug}" data-meal-id="${item.id}">
       <div class="meal-type-stripe"></div>
       ${isUpcoming ? '<div class="upcoming-tag">Toca ahora</div>' : ""}
       <div class="meal-head">
-        <button class="meal-open-btn" type="button" aria-expanded="false" aria-controls="${detailId}" onclick="toggleMeal(this)" aria-label="Abrir detalle de ${displayText(item.label)}: ${displayText(item.name)}">
+        <button class="meal-open-btn" type="button" aria-expanded="false" aria-controls="${detailId}" onclick="toggleMeal(this)" aria-label="Abrir detalle de ${displayText(item.label)}: ${displayText(displayMeal.name)}">
           <div class="meal-time-col">
             <div class="meal-time">${item.time}</div>
           </div>
           <div class="meal-info-col">
             <div class="meal-label-chip">${displayText(item.label)}</div>
-            <div class="meal-name">${displayText(item.name)}</div>
-            <div class="meal-desc">${displayText(item.desc)}</div>
+            <div class="meal-name">${displayText(displayMeal.name)}</div>
+            <div class="meal-desc">${displayText(displayMeal.desc)}</div>
             <div class="meal-mini-macros">
               <span class="mm p">${totalP}g P</span>
               <span class="mm c">${totalC}g C</span>
               <span class="mm g">${totalG}g G</span>
             </div>
+            ${renderMealInsightTags(displayMeal, selectedAlt)}
           </div>
           <div class="meal-kcal">
-            <div class="meal-kcal-val">${item.kcal}</div>
+            <div class="meal-kcal-val">${displayMeal.kcal}</div>
             <div class="meal-kcal-lbl">kcal</div>
           </div>
         </button>
@@ -6982,35 +7205,6 @@ function setShoppingPanelExpanded(expanded, options = {}) {
   }
 }
 
-function syncShoppingPreview(total, done) {
-  const preview = document.querySelector("#shopping-preview");
-  if (!preview) return;
-  const remaining = Math.max(0, total - done);
-  const pct = total ? Math.round((done / total) * 100) : 0;
-  const doneItems = new Set(getShoppingState());
-  const categories = Object.entries(shopping)
-    .slice(0, 3)
-    .map(([category, items]) => `${displayText(category)} · ${items.length}`)
-    .join("  ·  ");
-  const leadCategory = Object.entries(shopping)
-    .map(([category, items]) => ({
-      category: displayText(category),
-      pending: items.filter((item) => !doneItems.has(item.split(" · ")[0])).length
-    }))
-    .sort((a, b) => b.pending - a.pending)
-    .find((entry) => entry.pending > 0);
-  preview.innerHTML = `
-    <div class="shopping-preview-copy">
-      <strong>${remaining} pendientes</strong> de ${total} items para dejar la semana lista.
-      <div class="shopping-preview-progress">${done} listos · ${pct}% cerrado</div>
-    </div>
-    <div class="shopping-preview-meta">
-      ${leadCategory ? `<strong>Prioridad:</strong> ${leadCategory.category} · ${leadCategory.pending} faltan<br />` : "<strong>Semana cerrada.</strong><br />"}
-      ${categories}
-    </div>
-  `;
-}
-
 function syncShoppingPanelUI() {
   const section = document.querySelector("#shopping-list");
   const content = document.querySelector("#shopping-content");
@@ -7024,22 +7218,6 @@ function syncShoppingPanelUI() {
   preview.hidden = expanded;
   button.textContent = expanded ? "Ocultar compras" : "Mostrar compras";
   button.setAttribute("aria-expanded", String(expanded));
-}
-
-function exportShopping() {
-  const lines = ["🛒 LISTA DE COMPRAS · DIETA RONY (78-80kg)", ""];
-  Object.entries(shopping).forEach(([category, items]) => {
-    lines.push(`*${displayText(category)}*`);
-    items.forEach((item) => lines.push(`• ${displayText(item)}`));
-    lines.push("");
-  });
-  const text = lines.join("\n");
-
-  if (navigator.share) {
-    navigator.share({ title: "Lista de compras", text }).catch(() => copyToClipboard(text));
-  } else {
-    copyToClipboard(text);
-  }
 }
 
 function copyToClipboard(text, successMessage = "Lista copiada — pegala en WhatsApp") {

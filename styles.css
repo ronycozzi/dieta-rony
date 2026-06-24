@@ -4701,3 +4701,378 @@ body {
     align-self: flex-start;
   }
 }
+
+/* Command OS layer: visible nutrition intelligence + stronger product rhythm */
+.plan-intelligence {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.9fr) minmax(0, 1.35fr);
+  gap: 12px;
+  padding: 14px;
+  border-bottom: 2px solid var(--ink);
+  background:
+    linear-gradient(90deg, rgba(16,17,14,0.05), rgba(255,122,61,0.08)),
+    #fffdf7;
+}
+
+.plan-intel-hero {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 14px;
+  min-width: 0;
+  padding: 16px;
+  border: 2px solid var(--ink);
+  background: #0d0f0c;
+  color: #f7f3e8;
+  box-shadow: 5px 5px 0 rgba(16,17,14,0.16);
+}
+
+.plan-intel-kicker,
+.coach-kicker {
+  display: block;
+  margin-bottom: 7px;
+  color: #ffb38f;
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.plan-intel-hero strong {
+  display: block;
+  font-family: "Space Grotesk", "Plus Jakarta Sans", sans-serif;
+  font-size: clamp(1.15rem, 1.5vw, 1.75rem);
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+.plan-intel-hero p {
+  margin: 9px 0 0;
+  color: rgba(247,243,232,0.72);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.plan-intel-stamp {
+  display: grid;
+  place-items: center;
+  min-width: 94px;
+  padding: 10px;
+  border: 2px solid #f7f3e8;
+  color: #f7f3e8;
+  font-size: 0.68rem;
+  font-weight: 950;
+  letter-spacing: 0.12em;
+  text-align: center;
+  text-transform: uppercase;
+  transform: rotate(-2deg);
+}
+
+.plan-intel-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  min-width: 0;
+}
+
+.plan-intel-card {
+  min-width: 0;
+  padding: 13px 12px;
+  border: 2px solid var(--ink);
+  background: #f7f3e8;
+  color: #161711;
+  box-shadow: 4px 4px 0 rgba(16,17,14,0.12);
+}
+
+.plan-intel-card.wide {
+  grid-column: span 2;
+}
+
+.plan-intel-card.warn {
+  background: #fff2df;
+}
+
+.plan-intel-card span,
+.coach-metric span {
+  display: block;
+  color: #8a5543;
+  font-size: 0.65rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.plan-intel-card strong {
+  display: block;
+  margin-top: 5px;
+  font-family: "Space Grotesk", "Plus Jakarta Sans", sans-serif;
+  font-size: clamp(1.18rem, 1.4vw, 1.65rem);
+  line-height: 1;
+  overflow-wrap: anywhere;
+}
+
+.plan-intel-card small {
+  display: block;
+  margin-top: 7px;
+  color: rgba(22,23,17,0.62);
+  font-size: 0.72rem;
+  line-height: 1.35;
+}
+
+.panel.active > .coach-command {
+  grid-column: 1 / -1;
+  grid-row: 2;
+}
+
+.panel.active > .day-total {
+  grid-row: 3;
+}
+
+.panel.active > .day-brief {
+  grid-row: 4;
+}
+
+.panel.active > .tip-card {
+  grid-row: 5;
+}
+
+.panel.active > .quick-actions {
+  grid-row: 6;
+}
+
+.coach-command {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.95fr) minmax(0, 1.55fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.coach-score-card,
+.coach-metric {
+  border: 2px solid var(--ink);
+  background: #fffdf7;
+  color: #161711;
+  box-shadow: 6px 6px 0 rgba(16,17,14,0.12);
+}
+
+.coach-score-card {
+  display: grid;
+  grid-template-columns: 106px minmax(0, 1fr);
+  gap: 16px;
+  align-items: center;
+  padding: 16px;
+}
+
+.coach-score-ring {
+  --score: 0deg;
+  width: 94px;
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--ink);
+  background:
+    conic-gradient(#ff7a3d var(--score), #e2e4d8 0),
+    #f7f3e8;
+  color: #161711;
+  position: relative;
+}
+
+.coach-score-ring::after {
+  content: "";
+  position: absolute;
+  inset: 11px;
+  background: #fffdf7;
+  border: 2px solid var(--ink);
+}
+
+.coach-score-ring strong,
+.coach-score-ring span {
+  position: relative;
+  z-index: 1;
+}
+
+.coach-score-ring strong {
+  align-self: end;
+  font-family: "Space Grotesk", "Plus Jakarta Sans", sans-serif;
+  font-size: 2rem;
+  line-height: 0.85;
+}
+
+.coach-score-ring span {
+  align-self: start;
+  color: #8a5543;
+  font-size: 0.62rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.coach-score-card h2 {
+  margin: 0;
+  color: #161711;
+  font-family: "Space Grotesk", "Plus Jakarta Sans", sans-serif;
+  font-size: clamp(1.35rem, 2vw, 2.4rem);
+  line-height: 0.98;
+  letter-spacing: 0;
+}
+
+.coach-score-card p {
+  margin: 10px 0 0;
+  color: rgba(22,23,17,0.68);
+  font-size: 0.86rem;
+  line-height: 1.5;
+}
+
+.coach-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.coach-metric {
+  min-width: 0;
+  padding: 14px 12px;
+}
+
+.coach-metric strong {
+  display: block;
+  margin-top: 7px;
+  color: #161711;
+  font-size: 0.95rem;
+  line-height: 1.22;
+  overflow-wrap: anywhere;
+}
+
+.coach-metric small {
+  display: block;
+  margin-top: 7px;
+  color: rgba(22,23,17,0.58);
+  font-size: 0.72rem;
+  line-height: 1.35;
+}
+
+.meal.selected-alt {
+  background: #fff8ed;
+}
+
+.meal-insight-row,
+.alt-delta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 8px;
+}
+
+.meal-insight-row span,
+.variant-pill,
+.alt-delta-row span {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  padding: 4px 7px;
+  border: 1px solid rgba(16,17,14,0.22);
+  background: rgba(16,17,14,0.045);
+  color: rgba(22,23,17,0.72);
+  font-size: 0.62rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.meal-insight-row .variant-pill,
+.variant-pill {
+  background: #0d0f0c;
+  color: #f7f3e8;
+  border-color: #0d0f0c;
+}
+
+.alt-delta-row {
+  margin: 10px 0 12px;
+}
+
+.alt-delta-row span.up {
+  background: #eef7ed;
+}
+
+.alt-delta-row span.down {
+  background: #f4f0e8;
+}
+
+.alt-delta-row span.flat {
+  background: #f7f3e8;
+}
+
+@media (max-width: 1180px) {
+  .plan-intelligence,
+  .coach-command {
+    grid-template-columns: 1fr;
+  }
+
+  .plan-intel-grid,
+  .coach-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .panel.active > .coach-command,
+  .panel.active > .day-total,
+  .panel.active > .day-brief,
+  .panel.active > .tip-card,
+  .panel.active > .quick-actions {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .panel.active > .day-total {
+    position: relative;
+    top: auto;
+  }
+}
+
+@media (max-width: 700px) {
+  .plan-intelligence {
+    padding: 10px;
+  }
+
+  .plan-intel-hero {
+    flex-direction: column;
+    padding: 13px;
+  }
+
+  .plan-intel-stamp {
+    align-self: flex-start;
+    min-width: 0;
+    transform: none;
+  }
+
+  .plan-intel-grid,
+  .coach-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .plan-intel-card.wide {
+    grid-column: auto;
+  }
+
+  .coach-score-card {
+    grid-template-columns: 82px minmax(0, 1fr);
+    gap: 12px;
+    padding: 13px;
+  }
+
+  .coach-score-ring {
+    width: 76px;
+  }
+
+  .coach-score-ring::after {
+    inset: 8px;
+  }
+
+  .coach-score-ring strong {
+    font-size: 1.55rem;
+  }
+
+  .coach-score-card h2 {
+    font-size: 1.25rem;
+  }
+}
