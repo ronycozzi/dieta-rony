@@ -15,11 +15,13 @@ const ALLOWED_KEYS = new Set([
 ]);
 
 let sqlClientPromise;
+let schemaReadyPromise;
 
 function sendJson(res, status, payload) {
   res.statusCode = status;
   res.setHeader("Content-Type", "application/json; charset=utf-8");
   res.setHeader("Cache-Control", "no-store");
+  res.setHeader("X-Content-Type-Options", "nosniff");
   res.end(JSON.stringify(payload));
 }
 
@@ -60,9 +62,26 @@ async function ensureSchema(sql) {
   `;
 }
 
+async function ensureSchemaOnce(sql) {
+  if (!schemaReadyPromise) {
+    schemaReadyPromise = ensureSchema(sql).catch((error) => {
+      schemaReadyPromise = null;
+      throw error;
+    });
+  }
+  return schemaReadyPromise;
+}
+
 function sanitizeOwner(value) {
   const owner = String(value || OWNER_DEFAULT).trim().toLowerCase();
   return /^[a-z0-9_-]{1,40}$/.test(owner) ? owner : OWNER_DEFAULT;
+}
+
+function isAllowedOrigin(req) {
+  const origin = req.headers.origin;
+  if (!origin) return true;
+  const host = req.headers["x-forwarded-host"] || req.headers.host || "";
+  return origin === `https://${host}` || origin === `http://${host}`;
 }
 
 function readBody(req) {
@@ -80,11 +99,94 @@ function readBody(req) {
   });
 }
 
+function parseRequestBody(raw) {
+  if (!raw) return {};
+  try {
+    return JSON.parse(raw);
+  } catch {
+    const error = new Error("invalid_json");
+    error.statusCode = 400;
+    throw error;
+  }
+}
+
+function isPlainObject(value) {
+  return Boolean(value && typeof value === "object" && !Array.isArray(value));
+}
+
+function isDateKey(value) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(String(value || ""));
+}
+
+function isValidMealState(value) {
+  if (!isPlainObject(value)) return false;
+  return Object.values(value).every((dayState) => {
+    if (!isPlainObject(dayState)) return false;
+    return Object.values(dayState).every((entry) => {
+      if (typeof entry === "boolean") return true;
+      return isPlainObject(entry)
+        && typeof entry.done === "boolean"
+        && (!entry.variant || entry.variant === "primary" || entry.variant === "alt");
+    });
+  });
+}
+
+function isValidFridayMode(value) {
+  if (!isPlainObject(value)) return false;
+  return Object.entries(value).every(([date, mode]) => isDateKey(date) && mode === "rest");
+}
+
+function isValidWater(value) {
+  return isPlainObject(value)
+    && isDateKey(value.date)
+    && Number.isInteger(Number(value.count))
+    && Number(value.count) >= 0
+    && Number(value.count) <= 20;
+}
+
+function isValidWeightHistory(value) {
+  return Array.isArray(value) && value.length <= 260 && value.every((entry) => (
+    isPlainObject(entry)
+    && isDateKey(entry.date)
+    && Number(entry.weight) >= 40
+    && Number(entry.weight) <= 200
+  ));
+}
+
+function isValidShopping(value) {
+  return Array.isArray(value)
+    && value.length <= 500
+    && value.every((item) => typeof item === "string" && item.length <= 160);
+}
+
+function isValidStreak(value) {
+  return isPlainObject(value)
+    && Number.isFinite(Number(value.count || 0))
+    && Number(value.count || 0) >= 0;
+}
+
+function isValidValueForKey(key, value) {
+  if (value === null) return true;
+  if (key === "rony-dieta-meals") return isValidMealState(value);
+  if (key === "rony-dieta-water") return isValidWater(value);
+  if (key === "rony-dieta-shopping") return isValidShopping(value);
+  if (key === "rony-dieta-shopping-panel") return value === "open" || value === "closed";
+  if (key === "rony-dieta-streak") return isValidStreak(value);
+  if (key === "rony-dieta-weight") return isValidWeightHistory(value);
+  if (key === "rony-dieta-friday-mode") return isValidFridayMode(value);
+  if (key === "rony-dieta-plan-week") return typeof value === "string" && /^[0-9]+:\d{4}-\d{2}-\d{2}$/.test(value);
+  if (key === "weight-seeded") return value === 1 || value === "1" || value === true;
+  return false;
+}
+
 function normalizeState(input) {
   const state = {};
   if (!input || typeof input !== "object" || Array.isArray(input)) return state;
   Object.entries(input).forEach(([key, value]) => {
-    if (ALLOWED_KEYS.has(key)) state[key] = value === undefined ? null : value;
+    const normalizedValue = value === undefined ? null : value;
+    if (ALLOWED_KEYS.has(key) && isValidValueForKey(key, normalizedValue)) {
+      state[key] = normalizedValue;
+    }
   });
   return state;
 }
@@ -145,7 +247,7 @@ async function handleGet(req, res, sql, ownerId) {
 
 async function handlePost(req, res, sql, ownerId) {
   const raw = await readBody(req);
-  const body = raw ? JSON.parse(raw) : {};
+  const body = parseRequestBody(raw);
   const state = normalizeState(body.state);
   const entries = Object.entries(state);
 
@@ -189,7 +291,14 @@ async function handlePost(req, res, sql, ownerId) {
 }
 
 module.exports = async function handler(req, res) {
+  if (!isAllowedOrigin(req)) {
+    sendJson(res, 403, { ok: false, error: "forbidden_origin" });
+    return;
+  }
+
   if (req.method === "OPTIONS") {
+    res.setHeader("Allow", "GET, POST, OPTIONS");
+    res.setHeader("Cache-Control", "no-store");
     res.statusCode = 204;
     res.end();
     return;
@@ -206,7 +315,7 @@ module.exports = async function handler(req, res) {
       return;
     }
 
-    await ensureSchema(sql);
+    await ensureSchemaOnce(sql);
     const url = new URL(req.url, `https://${req.headers.host || "localhost"}`);
     const ownerId = sanitizeOwner(url.searchParams.get("owner") || req.headers["x-rony-owner"]);
 
@@ -221,10 +330,21 @@ module.exports = async function handler(req, res) {
 
     sendJson(res, 405, { ok: false, error: "method_not_allowed" });
   } catch (error) {
-    const message = error && error.message === "payload_too_large" ? "payload_too_large" : "sync_failed";
-    sendJson(res, message === "payload_too_large" ? 413 : 500, {
+    const known = new Set(["payload_too_large", "invalid_json"]);
+    const message = error && known.has(error.message) ? error.message : "sync_failed";
+    const status = error?.statusCode || (message === "payload_too_large" ? 413 : message === "invalid_json" ? 400 : 500);
+    sendJson(res, status, {
       ok: false,
       error: message
     });
   }
+};
+
+module.exports._internals = {
+  isAllowedOrigin,
+  isValidValueForKey,
+  normalizeState,
+  normalizeMenuWeek,
+  parseRequestBody,
+  sanitizeOwner
 };

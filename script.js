@@ -20,7 +20,7 @@ const STORAGE = {
   planWeek:        "rony-dieta-plan-week",
   weightSeeded:    "weight-seeded"
 };
-const APP_BUILD = "2026-06-24-neonsync";
+const APP_BUILD = "2026-06-24-stability";
 const MENU_ROTATION_CORRECTION_START = "2026-06-15";
 const MENU_ROTATION_CORRECTION_OFFSET = 1;
 
@@ -5799,9 +5799,55 @@ const CLOUD_SYNC_ENDPOINT = "/api/sync";
 const CLOUD_SYNC_OWNER = "rony";
 const CLOUD_SYNC_META_KEY = "rony-dieta-cloud-sync";
 const CLOUD_SYNC_KEYS = Array.from(new Set(Object.values(STORAGE)));
+const CLOUD_SYNC_KEEPALIVE_LIMIT_BYTES = 60_000;
 let cloudSyncTimer = null;
 let cloudSyncPulling = false;
 let cloudSyncAvailable = false;
+
+function readCloudSyncMeta() {
+  return readJsonStorage(CLOUD_SYNC_META_KEY, {});
+}
+
+function writeCloudSyncMeta(update) {
+  const previous = readCloudSyncMeta();
+  const next = { ...previous, ...update };
+  if (next.lastError === null) delete next.lastError;
+  localStorage.setItem(CLOUD_SYNC_META_KEY, JSON.stringify(next));
+  updateCloudSyncStatus(next);
+  return next;
+}
+
+function updateCloudSyncStatus(meta = readCloudSyncMeta()) {
+  const el = document.querySelector("#cloud-status");
+  if (!el) return;
+
+  const offline = typeof navigator !== "undefined" && navigator.onLine === false;
+  let state = "local";
+  let text = "Modo local";
+  let title = "La app guarda en este dispositivo y sincroniza cuando Neon este disponible.";
+
+  if (offline) {
+    state = "offline";
+    text = "Offline";
+    title = "Sin internet: la app sigue guardando local y sincroniza al volver.";
+  } else if (meta.syncing) {
+    state = "syncing";
+    text = "Sincronizando";
+    title = "Guardando cambios en Neon.";
+  } else if (meta.lastError) {
+    state = "error";
+    text = "Sync pendiente";
+    title = "Hubo un error de sync; la app conserva todo local y reintenta.";
+  } else if (meta.configured) {
+    state = "cloud";
+    text = "Neon activo";
+    title = meta.lastPush ? `Ultimo guardado cloud: ${new Date(meta.lastPush).toLocaleString("es-AR")}` : "Conectado a Neon.";
+  }
+
+  el.dataset.state = state;
+  el.textContent = text;
+  el.title = title;
+}
 
 function parseCloudStoredValue(raw) {
   if (raw === null || raw === undefined) return null;
@@ -5917,6 +5963,7 @@ function renderAfterCloudMerge() {
   updateStreak();
   updateGymBanner();
   updateFabBadge();
+  updateCloudSyncStatus();
 }
 
 function scheduleCloudSync(reason = "state") {
@@ -5928,29 +5975,43 @@ function scheduleCloudSync(reason = "state") {
 async function pushCloudSync(reason = "state") {
   if (!("fetch" in window)) return;
   try {
+    const payload = JSON.stringify({
+      reason,
+      state: collectCloudSyncState(),
+      menuWeek: getCloudMenuWeekRecord()
+    });
+    const useKeepalive = reason === "pagehide" && payload.length <= CLOUD_SYNC_KEEPALIVE_LIMIT_BYTES;
+    writeCloudSyncMeta({
+      configured: cloudSyncAvailable,
+      syncing: reason !== "pagehide",
+      lastAttempt: new Date().toISOString(),
+      reason
+    });
     const response = await fetch(`${CLOUD_SYNC_ENDPOINT}?owner=${encodeURIComponent(CLOUD_SYNC_OWNER)}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        reason,
-        state: collectCloudSyncState(),
-        menuWeek: getCloudMenuWeekRecord()
-      }),
-      keepalive: reason === "pagehide"
+      body: payload,
+      keepalive: useKeepalive
     });
     const data = await response.json().catch(() => ({}));
+    if (!response.ok || data.ok === false) {
+      throw new Error(data.error || `sync_http_${response.status}`);
+    }
     cloudSyncAvailable = Boolean(data.configured);
-    localStorage.setItem(CLOUD_SYNC_META_KEY, JSON.stringify({
+    writeCloudSyncMeta({
       configured: cloudSyncAvailable,
+      syncing: false,
       lastPush: new Date().toISOString(),
+      lastError: null,
       reason
-    }));
+    });
   } catch (error) {
-    localStorage.setItem(CLOUD_SYNC_META_KEY, JSON.stringify({
+    writeCloudSyncMeta({
       configured: cloudSyncAvailable,
+      syncing: false,
       lastError: new Date().toISOString(),
       reason
-    }));
+    });
   }
 }
 
@@ -5963,6 +6024,9 @@ async function initCloudSync() {
       cache: "no-store"
     });
     const data = await response.json();
+    if (!response.ok || data.ok === false) {
+      throw new Error(data.error || `sync_http_${response.status}`);
+    }
     cloudSyncAvailable = Boolean(data.configured);
     let changed = false;
     if (data.configured && data.state && typeof data.state === "object") {
@@ -5970,16 +6034,19 @@ async function initCloudSync() {
         if (CLOUD_SYNC_KEYS.includes(key)) changed = mergeCloudValue(key, value) || changed;
       });
     }
-    localStorage.setItem(CLOUD_SYNC_META_KEY, JSON.stringify({
+    writeCloudSyncMeta({
       configured: cloudSyncAvailable,
-      lastPull: new Date().toISOString()
-    }));
+      syncing: false,
+      lastPull: new Date().toISOString(),
+      lastError: null
+    });
     if (changed) renderAfterCloudMerge();
   } catch (error) {
-    localStorage.setItem(CLOUD_SYNC_META_KEY, JSON.stringify({
+    writeCloudSyncMeta({
       configured: cloudSyncAvailable,
+      syncing: false,
       lastError: new Date().toISOString()
-    }));
+    });
   } finally {
     cloudSyncPulling = false;
     scheduleCloudSync("initial");
@@ -8085,6 +8152,7 @@ updateClock();
 updateNextMeal();
 updateGymBanner();
 updateStreak();
+updateCloudSyncStatus();
 initCloudSync();
 // Intervals con manejo de visibilidad: pausan cuando la página está en background (ahorra batería en mobile)
 let clockInterval = null;
@@ -8200,6 +8268,15 @@ window.addEventListener("pageshow", () => {
 
 window.addEventListener("pagehide", () => {
   pushCloudSync("pagehide");
+});
+
+window.addEventListener("online", () => {
+  updateCloudSyncStatus();
+  scheduleCloudSync("online");
+});
+
+window.addEventListener("offline", () => {
+  updateCloudSyncStatus();
 });
 
 // =====================================================

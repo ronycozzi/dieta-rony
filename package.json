@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "test": "node --check script.js && node --check sw.js && node --check api/sync.js && node --check scripts/audit-plan.js && node --check scripts/verify-weekly-rotation.js && node scripts/audit-plan.js && node scripts/verify-weekly-rotation.js"
+    "test": "node --check script.js && node --check sw.js && node --check api/sync.js && node --check scripts/audit-plan.js && node --check scripts/verify-weekly-rotation.js && node --check scripts/verify-sync-contract.js && node scripts/audit-plan.js && node scripts/verify-weekly-rotation.js && node scripts/verify-sync-contract.js"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0"

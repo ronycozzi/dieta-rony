@@ -16,7 +16,7 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="format-detection" content="telephone=no" />
     <link rel="stylesheet" href="assets/fonts/fonts.css" />
-    <link rel="stylesheet" href="styles.css?v=20260624-neonsync" />
+    <link rel="stylesheet" href="styles.css?v=20260624-stability" />
   </head>
   <body>
 
@@ -136,7 +136,10 @@
 
         <!-- WEEK TABS + DAY PLAN -->
         <div class="plan-block">
-          <div class="current-week-label" id="current-week-label"></div>
+          <div class="plan-status-line">
+            <div class="current-week-label" id="current-week-label"></div>
+            <div class="cloud-status" id="cloud-status" data-state="checking" aria-live="polite">Cloud revisando</div>
+          </div>
           <nav class="week-tabs" id="week-tabs" aria-label="Plan semanal"></nav>
           <main id="day-container"></main>
         </div>
@@ -322,7 +325,7 @@
       <button class="bn-item" type="button" onclick="showWatchModal()"><span class="bn-icon">⌚</span><span class="bn-label">Watch</span></button>
     </nav>
 
-    <script src="script.js?v=20260624-neonsync"></script>
+    <script src="script.js?v=20260624-stability"></script>
     <script>
       // Mirror sidebar values to mobile topbar
       function mirrorToTopbar() {

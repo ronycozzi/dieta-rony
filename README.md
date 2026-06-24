@@ -20,6 +20,7 @@ Jueves piernas · Viernes full body · Sábado/Domingo descanso.
 ### Tracking
 - Marcar comidas completadas (persiste por día con localStorage)
 - Sincronización opcional con Neon + Vercel Functions cuando `DATABASE_URL` está configurada
+- Estado visible de sync dentro de la app: Neon activo, modo local, offline o sync pendiente
 - Barras de progreso de kcal, proteína, carbos y grasas en vivo
 - Contador de 10 vasos de agua diarios (2.5L)
 - Tracker de peso semanal con alertas:
@@ -90,6 +91,12 @@ DATABASE_URL=postgresql://...
 No pongas la URL de Neon en `script.js`: queda visible para cualquiera. La API de
 Vercel la lee del servidor.
 
+Garantias actuales:
+- `/api/sync` no se cachea en el Service Worker.
+- Vercel manda `Cache-Control: no-store` para HTML, Service Worker y API.
+- El backend valida formas de datos antes de guardar en Neon.
+- Errores HTTP de sync quedan como `sync pendiente`, no como guardado exitoso.
+
 ## Validaciones
 
 Validación completa antes de subir cambios:
@@ -103,6 +110,8 @@ npm test
 dieta-rony-github/
 ├── api/sync.js     ← Vercel Function para Neon
 ├── migrations/     ← SQL de tablas Neon
+├── scripts/        ← Auditores de menu, rotacion y sync
+├── vercel.json     ← Headers de cache/seguridad para Vercel
 ├── index.html      ← UI completa
 ├── styles.css      ← Tema oscuro, responsive, safe area iOS
 ├── script.js       ← Toda la lógica y dataset semanal

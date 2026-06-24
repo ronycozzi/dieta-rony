@@ -418,6 +418,59 @@ body::before {
 
 /* ─── Plan Block ────────────────────────────────────────── */
 .plan-block { display:flex; flex-direction:column; gap:10px; }
+.plan-status-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+}
+.current-week-label {
+  min-width: 0;
+}
+.cloud-status {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 30px;
+  padding: 6px 11px;
+  border-radius: 999px;
+  border: 1px solid var(--line2);
+  background: var(--surface2);
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+.cloud-status::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 10px currentColor;
+}
+.cloud-status[data-state="cloud"] {
+  color: var(--green);
+  border-color: rgba(0,229,160,0.26);
+  background: var(--green-dim);
+}
+.cloud-status[data-state="syncing"] {
+  color: var(--accent);
+  border-color: rgba(79,139,255,0.28);
+  background: var(--accent-dim);
+}
+.cloud-status[data-state="error"] {
+  color: var(--amber);
+  border-color: rgba(255,181,71,0.28);
+  background: var(--amber-dim);
+}
+.cloud-status[data-state="offline"],
+.cloud-status[data-state="local"] {
+  color: var(--muted);
+}
 
 /* ─── Week Tabs ─────────────────────────────────────────── */
 .week-tabs {
@@ -4609,5 +4662,42 @@ body {
   .wo-ring {
     width: 36px;
     height: 36px;
+  }
+}
+
+/* Stability layer: week identity + cloud sync state */
+.plan-status-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+}
+
+.plan-status-line .current-week-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cloud-status {
+  flex: 0 0 auto;
+}
+
+@media (max-width: 600px) {
+  .plan-status-line {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .plan-status-line .current-week-label {
+    width: 100%;
+    white-space: normal;
+  }
+
+  .cloud-status {
+    align-self: flex-start;
   }
 }

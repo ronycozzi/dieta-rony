@@ -1,16 +1,16 @@
 // Service Worker · Dieta Rony Cozzi
 // Network-first para HTML/JS/CSS; cache-first para assets estáticos.
 
-const VERSION = "v62-2026-06-24-neon-sync";
+const VERSION = "v63-2026-06-24-stability";
 const CACHE_NAME = `dieta-rony-${VERSION}`;
 const ASSETS = [
   "./",
   "./index.html",
   "./assets/fonts/fonts.css",
   "./styles.css",
-  "./styles.css?v=20260624-neonsync",
+  "./styles.css?v=20260624-stability",
   "./script.js",
-  "./script.js?v=20260624-neonsync",
+  "./script.js?v=20260624-stability",
   "./favicon.svg",
   "./manifest.json",
   "./assets/rony-cozzi.jpg",
@@ -46,6 +46,13 @@ self.addEventListener("fetch", (event) => {
   const isSameOrigin = url.origin === self.location.origin;
   const accept = event.request.headers.get("accept") || "";
   const isNavigate = event.request.mode === "navigate" || accept.includes("text/html");
+  const isApiRequest = isSameOrigin && url.pathname.startsWith("/api/");
+  const wantsNoStore = event.request.cache === "no-store" || event.request.cache === "reload";
+
+  if (isApiRequest || wantsNoStore) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
 
   const isAppFile = isSameOrigin && (
     isNavigate ||
