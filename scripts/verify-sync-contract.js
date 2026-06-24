@@ -106,6 +106,11 @@ async function main() {
   assert(/!response\.ok \|\| data\.ok === false/.test(app), "El cliente debe tratar errores HTTP de sync como errores reales.");
   assert(/CLOUD_SYNC_KEEPALIVE_LIMIT_BYTES/.test(app), "El cliente debe limitar payload keepalive.");
   assert(/updateCloudSyncStatus/.test(app), "La app debe exponer estado de sync cloud al usuario.");
+  assert(/function\s+pullCloudSync\s*\(/.test(app), "La app debe traer cambios desde Neon sin recargar.");
+  assert(/requestCloudPull\("visible"/.test(app), "La app debe hacer pull al volver de background.");
+  assert(/requestCloudPull\("focus"/.test(app), "La app debe hacer pull al recuperar foco.");
+  assert(/CLOUD_SYNC_FOREGROUND_PULL_INTERVAL_MS/.test(app), "La app debe tener polling foreground para sync entre dispositivos abiertos.");
+  assert(/updatedAt:\s*new Date\(\)\.toISOString\(\)/.test(app), "Las marcas de comidas deben tener timestamp para resolver conflictos entre dispositivos.");
 
   console.log("SYNC CONTRACT OK");
 }

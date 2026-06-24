@@ -20,7 +20,7 @@ const STORAGE = {
   planWeek:        "rony-dieta-plan-week",
   weightSeeded:    "weight-seeded"
 };
-const APP_BUILD = "2026-06-24-minimal-day";
+const APP_BUILD = "2026-06-24-live-sync";
 const MENU_ROTATION_CORRECTION_START = "2026-06-15";
 const MENU_ROTATION_CORRECTION_OFFSET = 1;
 
@@ -5803,7 +5803,12 @@ const CLOUD_SYNC_OWNER = "rony";
 const CLOUD_SYNC_META_KEY = "rony-dieta-cloud-sync";
 const CLOUD_SYNC_KEYS = Array.from(new Set(Object.values(STORAGE)));
 const CLOUD_SYNC_KEEPALIVE_LIMIT_BYTES = 60_000;
+const CLOUD_SYNC_PULL_MIN_INTERVAL_MS = 8_000;
+const CLOUD_SYNC_FOREGROUND_PULL_INTERVAL_MS = 15_000;
 let cloudSyncTimer = null;
+let cloudPullTimer = null;
+let cloudPullInterval = null;
+let cloudLastPullAt = 0;
 let cloudSyncPulling = false;
 let cloudSyncAvailable = false;
 
@@ -5878,6 +5883,62 @@ function mergeObjectsByDate(remoteValue, localValue) {
   return merged;
 }
 
+function getMealEntryUpdatedAt(entry) {
+  const value = entry && typeof entry === "object" ? entry.updatedAt : null;
+  const time = Date.parse(value || "");
+  return Number.isFinite(time) ? time : 0;
+}
+
+function mergeLegacyMealEntries(remoteEntry, localEntry) {
+  const remote = normalizeMealStateEntry(remoteEntry);
+  const local = normalizeMealStateEntry(localEntry);
+  return {
+    done: remote.done || local.done,
+    variant: local.variant === "alt" ? "alt" : remote.variant
+  };
+}
+
+function mergeMealDayState(remoteDay, localDay) {
+  const remote = remoteDay && typeof remoteDay === "object" && !Array.isArray(remoteDay) ? remoteDay : {};
+  const local = localDay && typeof localDay === "object" && !Array.isArray(localDay) ? localDay : {};
+  const merged = {};
+  const mealIds = new Set([...Object.keys(remote), ...Object.keys(local)]);
+
+  mealIds.forEach((id) => {
+    const remoteEntry = remote[id];
+    const localEntry = local[id];
+    if (localEntry === undefined) {
+      merged[id] = remoteEntry;
+      return;
+    }
+    if (remoteEntry === undefined) {
+      merged[id] = localEntry;
+      return;
+    }
+
+    const remoteTime = getMealEntryUpdatedAt(remoteEntry);
+    const localTime = getMealEntryUpdatedAt(localEntry);
+    if (remoteTime || localTime) {
+      merged[id] = localTime >= remoteTime ? localEntry : remoteEntry;
+    } else {
+      merged[id] = mergeLegacyMealEntries(remoteEntry, localEntry);
+    }
+  });
+
+  return merged;
+}
+
+function mergeMealStateByDate(remoteValue, localValue) {
+  const remote = remoteValue && typeof remoteValue === "object" && !Array.isArray(remoteValue) ? remoteValue : {};
+  const local = localValue && typeof localValue === "object" && !Array.isArray(localValue) ? localValue : {};
+  const merged = {};
+  const dates = new Set([...Object.keys(remote), ...Object.keys(local)]);
+  dates.forEach((date) => {
+    merged[date] = mergeMealDayState(remote[date], local[date]);
+  });
+  return merged;
+}
+
 function mergeWeightHistory(remoteValue, localValue) {
   const byDate = new Map();
   (Array.isArray(remoteValue) ? remoteValue : []).forEach((entry) => {
@@ -5913,7 +5974,8 @@ function mergeCloudValue(key, remoteValue) {
   const localValue = parseCloudStoredValue(rawLocal);
   let merged;
 
-  if (key === STORAGE.meals || key === STORAGE.fridayMode) merged = mergeObjectsByDate(remoteValue, localValue);
+  if (key === STORAGE.meals) merged = mergeMealStateByDate(remoteValue, localValue);
+  else if (key === STORAGE.fridayMode) merged = mergeObjectsByDate(remoteValue, localValue);
   else if (key === STORAGE.weight) merged = mergeWeightHistory(remoteValue, localValue);
   else if (key === STORAGE.shopping) merged = mergeShoppingState(remoteValue, localValue);
   else if (key === STORAGE.water) merged = mergeWaterState(remoteValue, localValue);
@@ -6018,9 +6080,16 @@ async function pushCloudSync(reason = "state") {
   }
 }
 
-async function initCloudSync() {
+async function pullCloudSync(reason = "pull", options = {}) {
   if (!("fetch" in window)) return;
+  const force = Boolean(options.force);
+  const pushMerged = Boolean(options.pushMerged);
+  const now = Date.now();
+  if (!force && now - cloudLastPullAt < CLOUD_SYNC_PULL_MIN_INTERVAL_MS) return false;
+  if (cloudSyncPulling) return false;
   cloudSyncPulling = true;
+  cloudLastPullAt = now;
+  let changed = false;
   try {
     const response = await fetch(`${CLOUD_SYNC_ENDPOINT}?owner=${encodeURIComponent(CLOUD_SYNC_OWNER)}`, {
       headers: { "Accept": "application/json" },
@@ -6031,7 +6100,6 @@ async function initCloudSync() {
       throw new Error(data.error || `sync_http_${response.status}`);
     }
     cloudSyncAvailable = Boolean(data.configured);
-    let changed = false;
     if (data.configured && data.state && typeof data.state === "object") {
       Object.entries(data.state).forEach(([key, value]) => {
         if (CLOUD_SYNC_KEYS.includes(key)) changed = mergeCloudValue(key, value) || changed;
@@ -6041,29 +6109,62 @@ async function initCloudSync() {
       configured: cloudSyncAvailable,
       syncing: false,
       lastPull: new Date().toISOString(),
-      lastError: null
+      lastError: null,
+      reason
     });
     if (changed) renderAfterCloudMerge();
+    if (changed && pushMerged) scheduleCloudSync(`${reason}-merge`);
   } catch (error) {
     writeCloudSyncMeta({
       configured: cloudSyncAvailable,
       syncing: false,
-      lastError: new Date().toISOString()
+      lastError: new Date().toISOString(),
+      reason
     });
   } finally {
     cloudSyncPulling = false;
-    scheduleCloudSync("initial");
   }
+  return changed;
+}
+
+function requestCloudPull(reason = "foreground", delay = 250, force = false) {
+  if (!("fetch" in window)) return;
+  clearTimeout(cloudPullTimer);
+  cloudPullTimer = setTimeout(() => {
+    pullCloudSync(reason, { force, pushMerged: true });
+  }, delay);
+}
+
+function startCloudPullLoop() {
+  if (cloudPullInterval || !("fetch" in window)) return;
+  cloudPullInterval = setInterval(() => {
+    if (document.hidden || navigator.onLine === false) return;
+    pullCloudSync("foreground-poll", { pushMerged: true });
+  }, CLOUD_SYNC_FOREGROUND_PULL_INTERVAL_MS);
+}
+
+function stopCloudPullLoop() {
+  if (cloudPullInterval) {
+    clearInterval(cloudPullInterval);
+    cloudPullInterval = null;
+  }
+}
+
+async function initCloudSync() {
+  await pullCloudSync("initial", { force: true, pushMerged: true });
+  scheduleCloudSync("initial");
+  startCloudPullLoop();
 }
 
 function normalizeMealStateEntry(entry) {
   if (entry && typeof entry === "object") {
     return {
       done: Boolean(entry.done),
-      variant: entry.variant === "alt" ? "alt" : "primary"
+      variant: entry.variant === "alt" ? "alt" : "primary",
+      updatedAt: typeof entry.updatedAt === "string" ? entry.updatedAt : null
     };
   }
-  return { done: Boolean(entry), variant: "primary" };
+  return { done: Boolean(entry), variant: "primary", updatedAt: null };
 }
 
 function getMealIdSetForDay(day) {
@@ -6086,11 +6187,12 @@ function countDoneMealsFromState(state, allowedIds = null) {
 
 function setMealDoneInState(state, mealId, done) {
   const current = normalizeMealStateEntry(state[mealId]);
+  const updatedAt = new Date().toISOString();
   if (!done) {
-    delete state[mealId];
+    state[mealId] = { done: false, variant: current.variant, updatedAt };
     return;
   }
-  state[mealId] = { done: true, variant: current.variant };
+  state[mealId] = { done: true, variant: current.variant, updatedAt };
 }
 
 function getMealVariant(mealId) {
@@ -6698,8 +6800,7 @@ function toggleAltMeal(mealId) {
   const state = getDayState();
   const current = normalizeMealStateEntry(state[mealId]);
   const nextVariant = current.variant === "alt" ? "primary" : "alt";
-  state[mealId] = { done: current.done, variant: nextVariant };
-  if (!state[mealId].done && nextVariant === "primary") delete state[mealId];
+  state[mealId] = { done: current.done, variant: nextVariant, updatedAt: new Date().toISOString() };
   saveDayState(state);
   renderActiveDay();
   renderWeekOverview();
@@ -7480,7 +7581,12 @@ function renderWater() {
 // =====================================================
 function resetDay() {
   if (!confirm("¿Resetear todas las marcas del día?")) return;
-  saveDayState({});
+  const updatedAt = new Date().toISOString();
+  const resetState = {};
+  getMealIdSetForDay(getTodayDayObject()).forEach((mealId) => {
+    resetState[mealId] = { done: false, variant: "primary", updatedAt };
+  });
+  saveDayState(resetState);
   localStorage.removeItem(`goal-celebrated-${getTodayKey()}`);
   setWater(0);
   renderActiveDay();
@@ -8408,8 +8514,11 @@ function stopIntervals() {
 document.addEventListener("visibilitychange", () => {
   if (document.hidden) {
     stopIntervals();
+    stopCloudPullLoop();
   } else {
     syncCurrentPlanDate("visible");
+    requestCloudPull("visible", 0, true);
+    startCloudPullLoop();
     updateClock();
     updateNextMeal();
     startIntervals();
@@ -8418,18 +8527,22 @@ document.addEventListener("visibilitychange", () => {
 
 window.addEventListener("focus", () => {
   syncCurrentPlanDate("focus");
+  requestCloudPull("focus", 0, true);
 });
 
 window.addEventListener("pageshow", () => {
   syncCurrentPlanDate("pageshow");
+  requestCloudPull("pageshow", 0, true);
 });
 
 window.addEventListener("pagehide", () => {
+  stopCloudPullLoop();
   pushCloudSync("pagehide");
 });
 
 window.addEventListener("online", () => {
   updateCloudSyncStatus();
+  requestCloudPull("online", 0, true);
   scheduleCloudSync("online");
 });
 

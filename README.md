@@ -21,7 +21,8 @@ Jueves piernas · Viernes full body · Sábado/Domingo descanso.
 
 ### Tracking
 - Marcar comidas completadas (persiste por día con localStorage)
-- Sincronización opcional con Neon + Vercel Functions cuando `DATABASE_URL` está configurada
+- Sincronización bidireccional con Neon + Vercel Functions cuando `DATABASE_URL` está configurada
+- Pull automático al abrir, volver a primer plano, recuperar foco y cada 15 segundos mientras la app está visible
 - Auditoría automática contra duplicados críticos de render, compras, rotación y secciones de UI innecesarias
 - Barras de progreso de kcal, proteína, carbos y grasas en vivo
 - Tracker de peso semanal con alertas:
