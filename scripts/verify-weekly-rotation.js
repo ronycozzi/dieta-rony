@@ -410,15 +410,13 @@ function main() {
     const missing = [];
     allWeeks.forEach((week, wi) => week.forEach((day, di) => {
       const wheyMeal = day.meals.find((meal) => hasWhey(meal));
-      if (dayNeedsWheyTopUp(day)) {
-        if (!wheyMeal) missing.push('whey-topup:' + wi + ':' + di + ':' + day.id);
-        else if (wheyMeal.alt && !hasWhey(wheyMeal.alt)) missing.push('whey-alt:' + wi + ':' + di + ':' + day.id);
-      }
+      if (!wheyMeal) missing.push('whey-daily:' + wi + ':' + di + ':' + day.id);
+      else if (wheyMeal.alt && !hasWhey(wheyMeal.alt)) missing.push('whey-alt:' + wi + ':' + di + ':' + day.id);
       if (!day.meals.some((meal) => hasCreatine(meal))) missing.push('creatine:' + wi + ':' + di + ':' + day.id);
     }));
     return missing;
   })()`);
-  assert(supplementCoverage.length === 0, `Falta creatina diaria o rescate de whey donde la proteína queda corta: ${supplementCoverage.join(', ')}`);
+  assert(supplementCoverage.length === 0, `Falta creatina diaria o whey diario: ${supplementCoverage.join(', ')}`);
 
   const altSelection = june17CleanApp.evalInApp(`(() => {
     const day = getTodayDayObject();
@@ -506,6 +504,21 @@ function main() {
   for (let i = 1; i < weeklyLunches.length; i++) {
     assert(weeklyLunches[i].lunch !== weeklyLunches[i - 1].lunch, `Almuerzo repetido en semanas consecutivas: ${weeklyLunches[i - 1].lunch}.`);
   }
+
+  let previousExtendedLunch = null;
+  for (let step = 0; step < 16; step++) {
+    const d = new Date(Date.UTC(2026, 5, 10 + step * 7));
+    const dateKey = d.toISOString().slice(0, 10);
+    const extendedApp = createAppHarness(`${dateKey}T12:00:00-03:00`);
+    const snap = extendedApp.snapshot(`${dateKey} extended`);
+    assertNoRiceLunch(snap);
+    assertNoPostLunchVisibleDuplicate(snap);
+    if (previousExtendedLunch) {
+      assert(snap.lunch !== previousExtendedLunch, `${dateKey}: almuerzo repetido contra la semana anterior: ${snap.lunch}.`);
+    }
+    previousExtendedLunch = snap.lunch;
+  }
+  console.log("EXTENDED 16-WEEK ROTATION OK");
 
   const source = fs.readFileSync(appScriptPath, "utf8");
   assert(/syncCurrentPlanDate\("initial"\)/.test(source), "Falta sincronizacion inicial del menu.");

@@ -1,16 +1,16 @@
 // Service Worker · Dieta Rony Cozzi
 // Network-first para HTML/JS/CSS; cache-first para assets estáticos.
 
-const VERSION = "v59-2026-06-23-week-focus";
+const VERSION = "v60-2026-06-24-week-guard";
 const CACHE_NAME = `dieta-rony-${VERSION}`;
 const ASSETS = [
   "./",
   "./index.html",
   "./assets/fonts/fonts.css",
   "./styles.css",
-  "./styles.css?v=20260623-weekfocus",
+  "./styles.css?v=20260624-weekguard",
   "./script.js",
-  "./script.js?v=20260623-weekfocus",
+  "./script.js?v=20260624-weekguard",
   "./favicon.svg",
   "./manifest.json",
   "./assets/rony-cozzi.jpg",
@@ -55,7 +55,7 @@ self.addEventListener("fetch", (event) => {
 
   if (isAppFile) {
     event.respondWith(
-      fetch(event.request)
+      fetch(new Request(event.request, { cache: "reload" }))
         .then((response) => {
           if (response.ok && isSameOrigin) {
             const copy = response.clone();

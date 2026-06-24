@@ -41,7 +41,7 @@ Jueves piernas · Viernes full body · Sábado/Domingo descanso.
 - "Resetear día"
 
 ### Nutrición
-- Suplementación base con creatina diaria y whey OneFit como comodín si falta proteína
+- Suplementación base con creatina diaria y 1 scoop de whey OneFit todos los días
 - 10 reglas de mantenimiento + recomposición
 - Notificaciones programadas para cada comida y agua cada 90 min
 

@@ -20,6 +20,7 @@ const STORAGE = {
   planWeek:        "rony-dieta-plan-week",
   weightSeeded:    "weight-seeded"
 };
+const APP_BUILD = "2026-06-24-weekguard";
 
 // =====================================================
 // HELPERS
@@ -2935,7 +2936,7 @@ function buildDetailedPrepSteps(item) {
       "No requiere coccion.",
       `Prepara solamente lo indicado: ${ingredients}.`,
       "Usalo como cierre liviano si ya cumpliste calorias, proteina y agua del dia.",
-      "Si quedaste corto de proteina, elegi la otra opcion nocturna del plan."
+      "Si quedaste corto de proteina, suma comida real simple: huevos, atun, queso, leche o carne magra."
     ];
     return addOriginalPrepTip(item, steps);
   }
@@ -3241,7 +3242,7 @@ function wheyWithBananaAndCreatineTemplate(name = "Whey + banana + creatina") {
     food("1 banana", 1, 27, 0),
     food("Creatina 5g", 0, 0, 0)
   ], [
-    "Usalo cuando el dia quede corto de proteina y no llegues con comida real.",
+    "Tomalo como parte fija del dia: 1 scoop de whey OneFit con agua y banana.",
     "La creatina va todos los dias; el horario no es magico, lo importante es cumplirla."
   ]);
 }
@@ -4297,8 +4298,8 @@ function applyRonyFreshWeeklyMenuRules() {
         day.tags = ["Full body", "Quinto dia", "Entreno 12:00", "Metabolismo rapido"];
       }
       day.tip = isGymDay
-        ? "Entreno fijo 12:00: desayuno liviano 10:00, pre simple 11:15, post real 14:30 con creatina y almuerzo fuerte 16:00. El whey queda como comodin si la proteina del dia no alcanza."
-        : "Descanso activo: desayuno liviano, creatina diaria y comida simple para sostener recuperacion sin pesadez. Si quedas corto de proteina, usa whey como respaldo.";
+        ? "Entreno fijo 12:00: desayuno liviano 10:00, pre simple 11:15, post real 14:30 con creatina y almuerzo fuerte 16:00. Whey OneFit diario, simple y medido."
+        : "Descanso activo: desayuno liviano, creatina diaria, whey diario y comida simple para sostener recuperacion sin pesadez.";
       if (isGymDay && !day.tags.includes("Entreno 12:00")) day.tags = [...day.tags, "Entreno 12:00"];
       if (!day.tags.includes("Comida real base")) day.tags = [...day.tags, "Comida real base"];
 
@@ -4881,8 +4882,8 @@ function addWheyToMeal(mealItem) {
   if (hasWhey(mealItem)) return;
   mealItem.foods.push(wheyFood("1 scoop whey OneFit con agua"));
   if (!/\bwhey\b/i.test(mealItem.name)) mealItem.name = `${mealItem.name} + whey`;
-  if (!/\bwhey\b/i.test(mealItem.desc)) mealItem.desc = `${mealItem.desc} - scoop fijo`;
-  mealItem.prep.push("Si con comida real no llegas a la proteina del dia, suma 1 scoop de whey OneFit con agua como comodin simple.");
+  if (!/\bwhey\b/i.test(mealItem.desc)) mealItem.desc = `${mealItem.desc} - whey diario`;
+  mealItem.prep.push("Toma 1 scoop de whey OneFit con 250-300 ml de agua. Es fijo diario; la comida real sigue siendo la base.");
 }
 
 function ensureDailySupplementRules() {
@@ -4896,8 +4897,6 @@ function ensureDailySupplementRules() {
       if (!supplementSlot) return;
 
       if (!day.meals.some(hasCreatine)) addCreatineToMeal(supplementSlot);
-      if (!dayNeedsWheyTopUp(day)) return;
-
       const wheySlot = day.meals.find(hasWhey) || supplementSlot;
       if (!day.meals.some(hasWhey)) addWheyToMeal(wheySlot);
       if (wheySlot.alt && !hasWhey(wheySlot.alt)) addWheyToMeal(wheySlot.alt);
@@ -5606,14 +5605,14 @@ const supplementsBase = [
     detail: "3-5g por día, todos los días. No se cicla y no depende de entrenar ese día; funciona por saturación y constancia.",
     when: "Con cualquier comida (o con el post-entreno). La clave es cumplirla todos los días."
   },
+  {
+    name: "Whey protein OneFit",
+    detail: "1 scoop diario con agua. Alta evidencia para llegar facil a la proteina diaria cuando entrenas 5 veces por semana y tenes metabolismo rapido.",
+    when: "Post-entreno o merienda. En descanso, con la comida que te resulte mas comoda."
+  },
 ];
 
 const supplementsOptional = [
-  {
-    name: "Whey protein OneFit",
-    detail: "1 scoop con agua cuando el dia queda corto de proteina. Sirve como comodin practico; la base sigue siendo huevos, pollo, carne magra, atun, pescado, queso y leche.",
-    when: "Preferentemente post-entreno o en una merienda floja en proteina."
-  },
   {
     name: "Omega 3 (EPA + DHA)",
     detail: "1-2g por día con almuerzo o cena. Reduce inflamación, mejora la recuperación post-gym y la salud cardiovascular. Más útil si comés poco pescado.",
@@ -5646,8 +5645,8 @@ const supplementsOptional = [
 // =====================================================
 const rules = [
   ["⚖️", "Mantenimiento 78-80kg", "Pesate cada lunes en ayunas. Si pasás de 80kg, achicá 1 porción de carbo en almuerzo/cena. Si bajás de 77kg, sumá 200 kcal/día. El objetivo es recomposición, no subir."],
-  ["🥩", "Proteína primero", "Prioridad: comida real (huevos, pollo, carne magra, atún, pescado, queso y leche). El whey queda para rescatar días flojos, no como base obligatoria."],
-  ["🥛", "Leche entera si la tolerás", "Densa en calorías y útil. Si te cae pesada, tomá leche fría o usá agua en el whey cuando realmente haga falta. Para 78-80kg, no hace falta forzar más calorías."],
+  ["🥩", "Proteína primero", "Prioridad: comida real (huevos, pollo, carne magra, atún, pescado, queso y leche) + 1 scoop de whey diario para cerrar el objetivo sin comer de más."],
+  ["🥛", "Leche entera si la tolerás", "Densa en calorías y útil. Si te cae pesada, tomá leche fría o usá agua en el whey diario. Para 78-80kg, no hace falta forzar más calorías."],
   ["💧", "Hidratación 3L+", "Mínimo 2.5L. En días de gym (especialmente piernas) o calor: 3-3.5L. La sed es señal tardía. La app te recuerda cada 90 min."],
   ["💊", "Creatina TODOS los días", "3-5g, incluso días de descanso. Lo que importa es que esté siempre presente en el músculo. Saltearla 1 día no rompe nada, pero la constancia es la clave."],
   ["🛌", "Dormir 8-9 horas", "El músculo crece cuando dormís. Con menos de 7h, perdés progreso aunque comas perfecto. Establecé una hora fija."],
@@ -5731,7 +5730,7 @@ const shopping = {
   ],
   "Suplementos": [
     "Creatina monohidrato · 3-5g diario",
-    "Whey protein OneFit · usar si falta proteína ese día",
+    "Whey protein OneFit · 1 scoop diario",
     "NAC Swanson 600mg · opcional, 1 cápsula con comida",
     "Omega 3 (opcional pero recomendado)",
     "Vitamina D3 (opcional)",
@@ -6090,9 +6089,9 @@ function renderOperationalBrief(day, consumed, adjustedKcal, proteinTarget) {
     : "Llegá liviano al mediodía, meté carbo simple en el pre y dejá el plato fuerte para después del gym.";
   let closeoutText;
   if (proteinGap <= 0 && kcalGap <= 120) {
-    closeoutText = "Vas en rango. Mantené comida real, creatina diaria y dejá el whey solo para días que queden cortos.";
+    closeoutText = "Vas en rango. Mantené comida real, creatina diaria y 1 scoop de whey OneFit todos los dias.";
   } else if (proteinGap > 0) {
-    closeoutText = `Todavía faltan ${proteinGap}g de proteína. Priorizá huevos, pollo, carne, atún o queso; si igual no llegás, meté un scoop de whey con agua como comodín.`;
+    closeoutText = `Todavia faltan ${proteinGap}g de proteina ademas del whey diario. Priorizá huevos, pollo, carne, atun, queso o leche.`;
   } else {
     closeoutText = `Todavía faltan ~${kcalGap} kcal. Sumá una porción simple de arroz, papa, pan o fruta sin recargar grasas al pedo.`;
   }
@@ -6472,7 +6471,7 @@ const SHOPPING_FOCUS_GROUPS = {
   recovery: [
     { label: "banana y leche para pre/post", terms: ["banana", "leche"] },
     { label: "creatina diaria", terms: ["creatina"] },
-    { label: "whey solo de respaldo", terms: ["whey"] }
+    { label: "whey diario", terms: ["whey"] }
   ]
 };
 
@@ -8180,7 +8179,9 @@ window.requestNotifications = requestNotifications;
   if (!window.isSecureContext && window.location.hostname !== "localhost") return;
 
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js", { scope: "./" })
+    const swUrl = new URL("./sw.js", window.location.href);
+    swUrl.searchParams.set("v", APP_BUILD);
+    navigator.serviceWorker.register(swUrl.pathname + swUrl.search, { scope: "./", updateViaCache: "none" })
       .then((registration) => {
         let updateApplied = false;
         const applyWaitingUpdate = () => {
