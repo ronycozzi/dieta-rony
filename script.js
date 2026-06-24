@@ -20,7 +20,7 @@ const STORAGE = {
   planWeek:        "rony-dieta-plan-week",
   weightSeeded:    "weight-seeded"
 };
-const APP_BUILD = "2026-06-24-weekshift";
+const APP_BUILD = "2026-06-24-neonsync";
 const MENU_ROTATION_CORRECTION_START = "2026-06-15";
 const MENU_ROTATION_CORRECTION_OFFSET = 1;
 
@@ -5795,6 +5795,197 @@ function readJsonStorage(key, fallback) {
   }
 }
 
+const CLOUD_SYNC_ENDPOINT = "/api/sync";
+const CLOUD_SYNC_OWNER = "rony";
+const CLOUD_SYNC_META_KEY = "rony-dieta-cloud-sync";
+const CLOUD_SYNC_KEYS = Array.from(new Set(Object.values(STORAGE)));
+let cloudSyncTimer = null;
+let cloudSyncPulling = false;
+let cloudSyncAvailable = false;
+
+function parseCloudStoredValue(raw) {
+  if (raw === null || raw === undefined) return null;
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return String(raw);
+  }
+}
+
+function writeCloudStoredValue(key, value) {
+  if (value === null || value === undefined) return;
+  localStorage.setItem(key, typeof value === "string" ? value : JSON.stringify(value));
+}
+
+function mergeObjectsByDate(remoteValue, localValue) {
+  const remote = remoteValue && typeof remoteValue === "object" && !Array.isArray(remoteValue) ? remoteValue : {};
+  const local = localValue && typeof localValue === "object" && !Array.isArray(localValue) ? localValue : {};
+  const merged = { ...remote, ...local };
+  Object.keys(remote).forEach((date) => {
+    if (local[date] && typeof local[date] === "object" && typeof remote[date] === "object") {
+      merged[date] = { ...remote[date], ...local[date] };
+    }
+  });
+  return merged;
+}
+
+function mergeWeightHistory(remoteValue, localValue) {
+  const byDate = new Map();
+  (Array.isArray(remoteValue) ? remoteValue : []).forEach((entry) => {
+    if (entry?.date) byDate.set(entry.date, entry);
+  });
+  (Array.isArray(localValue) ? localValue : []).forEach((entry) => {
+    if (entry?.date) byDate.set(entry.date, entry);
+  });
+  return Array.from(byDate.values()).sort((a, b) => String(a.date).localeCompare(String(b.date)));
+}
+
+function mergeShoppingState(remoteValue, localValue) {
+  return Array.from(new Set([
+    ...(Array.isArray(remoteValue) ? remoteValue : []),
+    ...(Array.isArray(localValue) ? localValue : [])
+  ])).filter(Boolean);
+}
+
+function mergeWaterState(remoteValue, localValue) {
+  const today = getTodayKey();
+  const remote = remoteValue && typeof remoteValue === "object" ? remoteValue : null;
+  const local = localValue && typeof localValue === "object" ? localValue : null;
+  if (local?.date === today && remote?.date === today) {
+    return { date: today, count: Math.max(Number(local.count) || 0, Number(remote.count) || 0) };
+  }
+  if (local?.date === today) return local;
+  if (remote?.date === today) return remote;
+  return local || remote || null;
+}
+
+function mergeCloudValue(key, remoteValue) {
+  const rawLocal = localStorage.getItem(key);
+  const localValue = parseCloudStoredValue(rawLocal);
+  let merged;
+
+  if (key === STORAGE.meals || key === STORAGE.fridayMode) merged = mergeObjectsByDate(remoteValue, localValue);
+  else if (key === STORAGE.weight) merged = mergeWeightHistory(remoteValue, localValue);
+  else if (key === STORAGE.shopping) merged = mergeShoppingState(remoteValue, localValue);
+  else if (key === STORAGE.water) merged = mergeWaterState(remoteValue, localValue);
+  else if (key === STORAGE.streak) {
+    const remoteCount = Number(remoteValue?.count) || 0;
+    const localCount = Number(localValue?.count) || 0;
+    merged = localCount >= remoteCount ? localValue : remoteValue;
+  } else {
+    merged = rawLocal === null ? remoteValue : localValue;
+  }
+
+  if (merged === null || merged === undefined) return false;
+  const before = rawLocal;
+  writeCloudStoredValue(key, merged);
+  return localStorage.getItem(key) !== before;
+}
+
+function collectCloudSyncState() {
+  const state = {};
+  CLOUD_SYNC_KEYS.forEach((key) => {
+    const raw = localStorage.getItem(key);
+    if (raw !== null) state[key] = parseCloudStoredValue(raw);
+  });
+  return state;
+}
+
+function getCloudMenuWeekRecord() {
+  const weekStart = formatLocalDateKey(getCurrentPlanWeekStart());
+  const mainMeals = days.map((day) => {
+    const lunch = day.meals.find((mealItem) => /almuerzo/i.test(mealItem.label));
+    const dinner = day.meals.find((mealItem) => /cena/i.test(mealItem.label));
+    return `${day.id}:${lunch?.name || ""}/${lunch?.alt?.name || ""}|${dinner?.name || ""}/${dinner?.alt?.name || ""}`;
+  }).join(" || ");
+  return {
+    weekStart,
+    weekIndex,
+    weekName: displayText(weekNames[weekIndex]),
+    menuSignature: mainMeals,
+    appBuild: APP_BUILD
+  };
+}
+
+function renderAfterCloudMerge() {
+  renderTabs();
+  renderActiveDay();
+  renderWater();
+  renderShopping();
+  renderWeightTracker();
+  renderWeekOverview();
+  updateStreak();
+  updateGymBanner();
+  updateFabBadge();
+}
+
+function scheduleCloudSync(reason = "state") {
+  if (cloudSyncPulling || !("fetch" in window)) return;
+  clearTimeout(cloudSyncTimer);
+  cloudSyncTimer = setTimeout(() => pushCloudSync(reason), 900);
+}
+
+async function pushCloudSync(reason = "state") {
+  if (!("fetch" in window)) return;
+  try {
+    const response = await fetch(`${CLOUD_SYNC_ENDPOINT}?owner=${encodeURIComponent(CLOUD_SYNC_OWNER)}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        reason,
+        state: collectCloudSyncState(),
+        menuWeek: getCloudMenuWeekRecord()
+      }),
+      keepalive: reason === "pagehide"
+    });
+    const data = await response.json().catch(() => ({}));
+    cloudSyncAvailable = Boolean(data.configured);
+    localStorage.setItem(CLOUD_SYNC_META_KEY, JSON.stringify({
+      configured: cloudSyncAvailable,
+      lastPush: new Date().toISOString(),
+      reason
+    }));
+  } catch (error) {
+    localStorage.setItem(CLOUD_SYNC_META_KEY, JSON.stringify({
+      configured: cloudSyncAvailable,
+      lastError: new Date().toISOString(),
+      reason
+    }));
+  }
+}
+
+async function initCloudSync() {
+  if (!("fetch" in window)) return;
+  cloudSyncPulling = true;
+  try {
+    const response = await fetch(`${CLOUD_SYNC_ENDPOINT}?owner=${encodeURIComponent(CLOUD_SYNC_OWNER)}`, {
+      headers: { "Accept": "application/json" },
+      cache: "no-store"
+    });
+    const data = await response.json();
+    cloudSyncAvailable = Boolean(data.configured);
+    let changed = false;
+    if (data.configured && data.state && typeof data.state === "object") {
+      Object.entries(data.state).forEach(([key, value]) => {
+        if (CLOUD_SYNC_KEYS.includes(key)) changed = mergeCloudValue(key, value) || changed;
+      });
+    }
+    localStorage.setItem(CLOUD_SYNC_META_KEY, JSON.stringify({
+      configured: cloudSyncAvailable,
+      lastPull: new Date().toISOString()
+    }));
+    if (changed) renderAfterCloudMerge();
+  } catch (error) {
+    localStorage.setItem(CLOUD_SYNC_META_KEY, JSON.stringify({
+      configured: cloudSyncAvailable,
+      lastError: new Date().toISOString()
+    }));
+  } finally {
+    cloudSyncPulling = false;
+    scheduleCloudSync("initial");
+  }
+}
+
 function normalizeMealStateEntry(entry) {
   if (entry && typeof entry === "object") {
     return {
@@ -5853,6 +6044,7 @@ function getDayState() {
   if (Object.keys(cleanState).length !== Object.keys(rawState).length) {
     all[key] = cleanState;
     localStorage.setItem(STORAGE.meals, JSON.stringify(all));
+    scheduleCloudSync("meal-prune");
   }
   return cleanState;
 }
@@ -5867,6 +6059,7 @@ function saveDayState(state) {
   const all = readJsonStorage(STORAGE.meals, {});
   all[getTodayKey()] = pruneMealStateForIds(state, getMealIdSetForDay(getTodayDayObject()));
   localStorage.setItem(STORAGE.meals, JSON.stringify(all));
+  scheduleCloudSync("meal-state");
 }
 
 function isDone(id) {
@@ -6675,6 +6868,7 @@ function saveShoppingState() {
     .map((el) => el.dataset.itemName || el.querySelector(".sl-name")?.textContent?.trim())
     .filter(Boolean);
   localStorage.setItem("rony-dieta-shopping", JSON.stringify(done));
+  scheduleCloudSync("shopping");
 }
 
 function restoreShoppingState() {
@@ -6694,8 +6888,9 @@ function toggleShop(item) {
 
 function resetShopping() {
   document.querySelectorAll(".sl-item").forEach((item) => setShoppingItemDone(item, false));
-  localStorage.removeItem("rony-dieta-shopping");
+  localStorage.setItem("rony-dieta-shopping", JSON.stringify([]));
   updateShoppingProgress();
+  scheduleCloudSync("shopping-reset");
 }
 
 function updateShoppingProgress() {
@@ -6713,6 +6908,7 @@ function isShoppingPanelExpanded() {
 
 function setShoppingPanelExpanded(expanded, options = {}) {
   localStorage.setItem(STORAGE.shoppingPanel, expanded ? "open" : "closed");
+  scheduleCloudSync("shopping-panel");
   syncShoppingPanelUI();
   if (expanded && options.scrollIntoView) {
     document.querySelector("#shopping-list")?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -7015,6 +7211,7 @@ function getWaterState() {
 function setWater(count) {
   const prevCount = getWaterState();
   localStorage.setItem(STORAGE.water, JSON.stringify({ date: getTodayKey(), count }));
+  scheduleCloudSync("water");
   renderWater();
   if (count === WATER_GOAL && prevCount < WATER_GOAL) {
     celebrateWaterGoal();
@@ -7122,6 +7319,7 @@ function updateStreak() {
   }
 
   localStorage.setItem(STORAGE.streak, JSON.stringify(streak));
+  scheduleCloudSync("streak");
   const count = streak.count || 0;
   const badge = document.querySelector("#streak-badge");
   if (badge) {
@@ -7176,6 +7374,7 @@ function saveWeight() {
   }
   history.sort((a, b) => a.date.localeCompare(b.date));
   localStorage.setItem(STORAGE.weight, JSON.stringify(history));
+  scheduleCloudSync("weight");
   input.value = "";
   renderWeightTracker();
   showToast(`Peso guardado: ${val} kg`);
@@ -7561,6 +7760,7 @@ function writeFridayModeForDay(dayId, mode) {
   if (mode === "rest") modes[dateKey] = "rest";
   else delete modes[dateKey];
   localStorage.setItem(STORAGE.fridayMode, JSON.stringify(modes));
+  scheduleCloudSync("friday-mode");
 }
 
 function renderWeekOverview() {
@@ -7885,6 +8085,7 @@ updateClock();
 updateNextMeal();
 updateGymBanner();
 updateStreak();
+initCloudSync();
 // Intervals con manejo de visibilidad: pausan cuando la página está en background (ahorra batería en mobile)
 let clockInterval = null;
 let nextMealInterval = null;
@@ -7907,6 +8108,7 @@ function syncCurrentPlanDate(reason = "timer") {
   lastCheckedDayKey = currentKey;
   rebuildPlanForDate(now);
   localStorage.setItem(STORAGE.planWeek, newWeekKey);
+  scheduleCloudSync("plan-week");
 
   currentWeekName = getCurrentWeekName();
   const todayObj = getTodayDayObject();
@@ -7994,6 +8196,10 @@ window.addEventListener("focus", () => {
 
 window.addEventListener("pageshow", () => {
   syncCurrentPlanDate("pageshow");
+});
+
+window.addEventListener("pagehide", () => {
+  pushCloudSync("pagehide");
 });
 
 // =====================================================
