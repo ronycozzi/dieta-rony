@@ -131,9 +131,25 @@ async function main() {
     "rony-dieta-shopping-panel": "open",
     "rony-dieta-plan-week": "2:2026-06-22",
     "rony-dieta-shopping": ["pollo", "papa"],
+    "rony-dieta-weight": [{ date: "2026-07-14", kg: 78.6 }],
+    "rony-dieta-checkins": {
+      "2026-07-13": {
+        weekStart: "2026-07-13",
+        date: "2026-07-14",
+        updatedAt: "2026-07-14T15:00:00.000Z",
+        energy: 4,
+        hunger: 2,
+        performance: 4,
+        recovery: 3,
+        adherence: 5,
+        note: "Semana buena"
+      }
+    },
     "not-allowed": "x"
   });
-  assert(Object.keys(validState).length === 3, "normalizeState debe aceptar solo claves validas de cliente.");
+  assert(Object.keys(validState).length === 5, "normalizeState debe aceptar solo claves validas de cliente.");
+  assert(validState["rony-dieta-weight"][0].kg === 78.6, "normalizeState debe aceptar el formato real de peso con kg.");
+  assert(validState["rony-dieta-checkins"]["2026-07-13"].performance === 4, "normalizeState debe aceptar check-in semanal valido.");
   assert(!("not-allowed" in validState), "normalizeState no debe aceptar claves desconocidas.");
   assert(!("rony-dieta-plan-week" in validState), "planWeek debe ser propiedad del servidor, no del cliente.");
 
@@ -141,7 +157,19 @@ async function main() {
     "rony-dieta-water": { date: "bad", count: 999 },
     "rony-dieta-shopping-panel": "half-open",
     "rony-dieta-plan-week": "semana vieja",
-    "rony-dieta-weight": [{ date: "2026-06-24", weight: 900 }]
+    "rony-dieta-weight": [{ date: "2026-06-24", weight: 900 }],
+    "rony-dieta-checkins": {
+      "2026-07-13": {
+        weekStart: "2026-07-13",
+        date: "2026-07-14",
+        updatedAt: "bad",
+        energy: 9,
+        hunger: 2,
+        performance: 4,
+        recovery: 3,
+        adherence: 5
+      }
+    }
   });
   assert(Object.keys(invalidState).length === 0, "normalizeState debe descartar shapes invalidos.");
 

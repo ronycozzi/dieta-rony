@@ -26,10 +26,13 @@ const assetVersions = [
 ];
 assert(assetVersions.length === 4, "UI audit: index/sw deben versionar styles.css y script.js.");
 assert(assetVersions.every((version) => version === expectedAssetVersion), `UI audit: cache-bust no coincide con APP_BUILD (${assetVersions.join(", ")} vs ${expectedAssetVersion}).`);
-assert(swText.includes(`v69-${appBuild}`), "UI audit: VERSION del service worker no coincide con APP_BUILD.");
+assert(new RegExp(`const\\s+VERSION\\s*=\\s*"v\\d+-${appBuild.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}"`).test(swText), "UI audit: VERSION del service worker no coincide con APP_BUILD.");
 
 assert(indexText.includes('id="cloud-status"'), "UI audit: falta indicador visible de sync cloud/Neon.");
+assert(indexText.includes('id="weekly-checkin"'), "UI audit: falta check-in semanal de ajuste nutricional.");
 assert(/function\s+updateCloudSyncStatus\s*\(/.test(scriptText), "UI audit: falta updateCloudSyncStatus().");
+assert(/function\s+renderWeeklyCheckin\s*\(/.test(scriptText), "UI audit: falta renderWeeklyCheckin().");
+assert(/rony-dieta-checkins/.test(scriptText + syncText), "UI audit: el check-in semanal debe estar incluido en cliente y backend.");
 assert(/RONY FUEL CONSOLE V2/.test(cssText), "UI audit: falta la capa visual final RONY FUEL CONSOLE V2.");
 assert(/\.bento-water,\s*\.week-overview,\s*\.plan-intelligence/.test(cssText), "UI audit: las secciones duplicadas deben quedar ocultas por CSS final.");
 assert(/overflow-x:\s*hidden/.test(cssText), "UI audit: falta guardia contra overflow horizontal.");

@@ -3,7 +3,7 @@
 const OWNER_DEFAULT = "rony";
 const MAX_BODY_BYTES = 750_000;
 const PLAN_WEEK_KEY = "rony-dieta-plan-week";
-const APP_BUILD = "2026-07-14-fuel-console";
+const APP_BUILD = "2026-07-14-fuel-console-checkin";
 const MENU_ROTATION_CORRECTION_START = "2026-06-15";
 const MENU_ROTATION_CORRECTION_OFFSET = 1;
 const TZ = "America/Argentina/Buenos_Aires";
@@ -14,6 +14,7 @@ const ALLOWED_KEYS = new Set([
   "rony-dieta-shopping-panel",
   "rony-dieta-streak",
   "rony-dieta-weight",
+  "rony-dieta-checkins",
   "rony-dieta-friday-mode",
   "weight-seeded"
 ]);
@@ -232,9 +233,56 @@ function isValidWeightHistory(value) {
   return Array.isArray(value) && value.length <= 260 && value.every((entry) => (
     isPlainObject(entry)
     && isDateKey(entry.date)
-    && Number(entry.weight) >= 40
-    && Number(entry.weight) <= 200
+    && Number(entry.kg ?? entry.weight) >= 40
+    && Number(entry.kg ?? entry.weight) <= 200
   ));
+}
+
+function normalizeWeightHistory(value) {
+  return value.map((entry) => ({
+    date: entry.date,
+    kg: Number(entry.kg ?? entry.weight)
+  })).sort((a, b) => String(a.date).localeCompare(String(b.date)));
+}
+
+function isValidScore(value) {
+  const score = Number(value);
+  return Number.isInteger(score) && score >= 1 && score <= 5;
+}
+
+function isValidWeeklyCheckins(value) {
+  if (!isPlainObject(value) || Object.keys(value).length > 104) return false;
+  return Object.entries(value).every(([weekStart, entry]) => (
+    isDateKey(weekStart)
+    && isPlainObject(entry)
+    && entry.weekStart === weekStart
+    && isDateKey(entry.date)
+    && typeof entry.updatedAt === "string"
+    && Number.isFinite(Date.parse(entry.updatedAt))
+    && isValidScore(entry.energy)
+    && isValidScore(entry.hunger)
+    && isValidScore(entry.performance)
+    && isValidScore(entry.recovery)
+    && isValidScore(entry.adherence)
+    && (entry.note === undefined || (typeof entry.note === "string" && entry.note.length <= 220))
+  ));
+}
+
+function normalizeWeeklyCheckins(value) {
+  return Object.fromEntries(Object.entries(value).map(([weekStart, entry]) => {
+    const normalized = {
+      weekStart,
+      date: entry.date,
+      updatedAt: entry.updatedAt,
+      energy: Number(entry.energy),
+      hunger: Number(entry.hunger),
+      performance: Number(entry.performance),
+      recovery: Number(entry.recovery),
+      adherence: Number(entry.adherence)
+    };
+    if (entry.note) normalized.note = String(entry.note).slice(0, 220);
+    return [weekStart, normalized];
+  }));
 }
 
 function isValidShopping(value) {
@@ -257,6 +305,7 @@ function isValidValueForKey(key, value) {
   if (key === "rony-dieta-shopping-panel") return value === "open" || value === "closed";
   if (key === "rony-dieta-streak") return isValidStreak(value);
   if (key === "rony-dieta-weight") return isValidWeightHistory(value);
+  if (key === "rony-dieta-checkins") return isValidWeeklyCheckins(value);
   if (key === "rony-dieta-friday-mode") return isValidFridayMode(value);
   if (key === PLAN_WEEK_KEY) return typeof value === "string" && /^[0-9]+:\d{4}-\d{2}-\d{2}$/.test(value);
   if (key === "weight-seeded") return value === 1 || value === "1" || value === true;
@@ -269,7 +318,13 @@ function normalizeState(input) {
   Object.entries(input).forEach(([key, value]) => {
     const normalizedValue = value === undefined ? null : value;
     if (ALLOWED_KEYS.has(key) && isValidValueForKey(key, normalizedValue)) {
-      state[key] = normalizedValue;
+      if (key === "rony-dieta-weight" && normalizedValue !== null) {
+        state[key] = normalizeWeightHistory(normalizedValue);
+      } else if (key === "rony-dieta-checkins" && normalizedValue !== null) {
+        state[key] = normalizeWeeklyCheckins(normalizedValue);
+      } else {
+        state[key] = normalizedValue;
+      }
     }
   });
   return state;

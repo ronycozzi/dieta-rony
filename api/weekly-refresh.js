@@ -2,7 +2,7 @@
 
 const OWNER_DEFAULT = "rony";
 const PLAN_WEEK_KEY = "rony-dieta-plan-week";
-const APP_BUILD = "2026-07-14-fuel-console";
+const APP_BUILD = "2026-07-14-fuel-console-checkin";
 const MENU_ROTATION_CORRECTION_START = "2026-06-15";
 const MENU_ROTATION_CORRECTION_OFFSET = 1;
 const TZ = "America/Argentina/Buenos_Aires";

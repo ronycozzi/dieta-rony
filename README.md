@@ -30,6 +30,7 @@ Jueves piernas · Viernes full body · Sábado/Domingo descanso.
   - Si pasás de 80kg → "achicá una porción de carbo"
   - Si bajás de 77kg → "sumá 200 kcal/día"
   - Si estás en rango → "mantenimiento perfecto"
+- Check-in semanal compacto: energía, hambre, rendimiento, recuperación y adherencia, con ajuste práctico para la semana
 - Streak de días consecutivos con 4+ comidas marcadas
 
 ### Vista
@@ -49,7 +50,7 @@ Jueves piernas · Viernes full body · Sábado/Domingo descanso.
 ### Nutrición
 - Suplementación base con creatina diaria y 1 scoop de whey OneFit todos los días
 - 10 reglas de mantenimiento + recomposición
-- Notificaciones programadas para cada comida y agua cada 90 min
+- Notificaciones programadas para cada comida; el agua queda fuera del flujo principal para no sobrecargar la pantalla
 
 ## Instalación en iPhone
 
@@ -85,7 +86,7 @@ o usar ngrok / Vercel / Netlify deploy.
 
 La app sigue funcionando offline con `localStorage`. Si en Vercel existe `DATABASE_URL`
 apuntando a Neon Postgres, `/api/sync` guarda comidas marcadas, opciones B, agua,
-peso, streak, modo viernes, lista de compras y semana de menu usada.
+peso, check-ins semanales, streak, modo viernes, lista de compras y semana de menú usada.
 
 Variable de entorno en Vercel:
 ```
@@ -103,13 +104,14 @@ Garantias actuales:
 - `/api/sync` no se cachea en el Service Worker.
 - `/api/weekly-refresh` mantiene `rony-dieta-plan-week` y el historial semanal al día desde el servidor.
 - Vercel manda `Cache-Control: no-store` para HTML, Service Worker y API.
-- El backend valida formas de datos antes de guardar en Neon.
+- El backend valida formas de datos antes de guardar en Neon, incluyendo peso real en `kg` y check-in semanal.
 - Errores HTTP de sync quedan como `sync pendiente`, no como guardado exitoso.
 
 ### Qué tiene que estar instalado/configurado
 - Proyecto conectado a GitHub en Vercel.
 - Neon Postgres activo.
 - `DATABASE_URL` cargada en Vercel.
+- `.env.example` queda como referencia; `.env.local` no se sube a GitHub.
 - Cron de Vercel activo desde `vercel.json`.
 - En iPhone/Android, abrir la PWA una vez tras cada deploy para que tome el Service Worker nuevo.
 
@@ -129,7 +131,7 @@ dieta-rony-github/
 ├── scripts/        ← Auditores de menu, rotacion y sync
 ├── vercel.json     ← Headers de cache/seguridad para Vercel
 ├── index.html      ← UI completa
-├── styles.css      ← Tema oscuro, responsive, safe area iOS
+├── styles.css      ← Rony Fuel Console, responsive, safe area iOS
 ├── script.js       ← Toda la lógica y dataset semanal
 ├── favicon.svg     ← Ícono PWA
 ├── manifest.json   ← PWA manifest

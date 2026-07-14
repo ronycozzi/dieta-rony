@@ -16,11 +16,12 @@ const STORAGE = {
   shoppingPanel:   "rony-dieta-shopping-panel",
   streak:          "rony-dieta-streak",
   weight:          "rony-dieta-weight",
+  checkins:        "rony-dieta-checkins",
   fridayMode:      "rony-dieta-friday-mode",
   planWeek:        "rony-dieta-plan-week",
   weightSeeded:    "weight-seeded"
 };
-const APP_BUILD = "2026-07-14-fuel-console";
+const APP_BUILD = "2026-07-14-fuel-console-checkin";
 const MENU_ROTATION_CORRECTION_START = "2026-06-15";
 const MENU_ROTATION_CORRECTION_OFFSET = 1;
 const APP_TIME_ZONE = "America/Argentina/Buenos_Aires";
@@ -2887,6 +2888,15 @@ function displayText(value) {
     .replace(/\bIntegra\b/g, "Integrá")
     .replace(/\bMantene\b/g, "Mantené")
     .replace(/\bMetodo\b/g, "Método");
+}
+
+function escapeHtml(value) {
+  return displayText(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
 
 function mealSearchText(item) {
@@ -6149,13 +6159,22 @@ function mergeMealStateByDate(remoteValue, localValue) {
   return merged;
 }
 
+function normalizeStoredWeightEntry(entry) {
+  if (!entry || typeof entry !== "object") return null;
+  const kg = Number(entry.kg ?? entry.weight);
+  if (!entry.date || !Number.isFinite(kg)) return null;
+  return { date: entry.date, kg };
+}
+
 function mergeWeightHistory(remoteValue, localValue) {
   const byDate = new Map();
   (Array.isArray(remoteValue) ? remoteValue : []).forEach((entry) => {
-    if (entry?.date) byDate.set(entry.date, entry);
+    const normalized = normalizeStoredWeightEntry(entry);
+    if (normalized?.date) byDate.set(normalized.date, normalized);
   });
   (Array.isArray(localValue) ? localValue : []).forEach((entry) => {
-    if (entry?.date) byDate.set(entry.date, entry);
+    const normalized = normalizeStoredWeightEntry(entry);
+    if (normalized?.date) byDate.set(normalized.date, normalized);
   });
   return Array.from(byDate.values()).sort((a, b) => String(a.date).localeCompare(String(b.date)));
 }
@@ -6179,6 +6198,32 @@ function mergeWaterState(remoteValue, localValue) {
   return local || remote || null;
 }
 
+function getUpdatedAtMs(entry) {
+  const time = Date.parse(entry?.updatedAt || "");
+  return Number.isFinite(time) ? time : 0;
+}
+
+function mergeWeeklyCheckins(remoteValue, localValue) {
+  const remote = remoteValue && typeof remoteValue === "object" && !Array.isArray(remoteValue) ? remoteValue : {};
+  const local = localValue && typeof localValue === "object" && !Array.isArray(localValue) ? localValue : {};
+  const merged = {};
+  const weekKeys = new Set([...Object.keys(remote), ...Object.keys(local)]);
+  weekKeys.forEach((weekKey) => {
+    const remoteEntry = remote[weekKey];
+    const localEntry = local[weekKey];
+    if (localEntry === undefined) {
+      merged[weekKey] = remoteEntry;
+      return;
+    }
+    if (remoteEntry === undefined) {
+      merged[weekKey] = localEntry;
+      return;
+    }
+    merged[weekKey] = getUpdatedAtMs(localEntry) >= getUpdatedAtMs(remoteEntry) ? localEntry : remoteEntry;
+  });
+  return merged;
+}
+
 function mergeCloudValue(key, remoteValue) {
   const rawLocal = localStorage.getItem(key);
   const localValue = parseCloudStoredValue(rawLocal);
@@ -6192,6 +6237,7 @@ function mergeCloudValue(key, remoteValue) {
   }
   else if (key === STORAGE.fridayMode) merged = mergeObjectsByDate(remoteValue, localValue);
   else if (key === STORAGE.weight) merged = mergeWeightHistory(remoteValue, localValue);
+  else if (key === STORAGE.checkins) merged = mergeWeeklyCheckins(remoteValue, localValue);
   else if (key === STORAGE.shopping) merged = mergeShoppingState(remoteValue, localValue);
   else if (key === STORAGE.water) merged = mergeWaterState(remoteValue, localValue);
   else if (key === STORAGE.streak) {
@@ -6239,6 +6285,7 @@ function renderAfterCloudMerge() {
   renderWater();
   renderShopping();
   renderWeightTracker();
+  renderWeeklyCheckin();
   renderWeekOverview();
   updateStreak();
   updateGymBanner();
@@ -7892,7 +7939,10 @@ function celebrateStreak(count) {
 // TRACKER DE PESO
 // =====================================================
 function getWeightHistory() {
-  return readJsonStorage(STORAGE.weight, []);
+  return (readJsonStorage(STORAGE.weight, []) || [])
+    .map(normalizeStoredWeightEntry)
+    .filter(Boolean)
+    .sort((a, b) => String(a.date).localeCompare(String(b.date)));
 }
 
 // Compatibilidad: antes se precargaba 78kg. Desde ahora el primer peso lo carga Rony.
@@ -7928,6 +7978,7 @@ function saveWeight() {
   scheduleCloudSync("weight");
   input.value = "";
   renderWeightTracker();
+  renderWeeklyCheckin();
   showToast(`Peso guardado: ${val} kg`);
 }
 
@@ -8060,6 +8111,183 @@ function renderWeightTracker() {
     </div>
     ${suggestion}
     ${svgChart}
+  `;
+}
+
+// =====================================================
+// CHECK-IN SEMANAL
+// =====================================================
+const CHECKIN_METRICS = [
+  ["energy", "Energía"],
+  ["hunger", "Hambre"],
+  ["performance", "Rendimiento"],
+  ["recovery", "Recuperación"],
+  ["adherence", "Adherencia"]
+];
+
+function getWeeklyCheckins() {
+  return readJsonStorage(STORAGE.checkins, {});
+}
+
+function getCurrentCheckinKey() {
+  return formatLocalDateKey(getCurrentPlanWeekStart());
+}
+
+function getLatestWeightKg() {
+  const history = getWeightHistory();
+  const last = history[history.length - 1];
+  return Number(last?.kg ?? last?.weight) || null;
+}
+
+function scoreLabel(value, metricId = "") {
+  const n = Number(value) || 3;
+  if (metricId === "hunger") {
+    if (n <= 1) return "muy poca";
+    if (n === 2) return "controlada";
+    if (n === 4) return "alta";
+    if (n >= 5) return "muy alta";
+    return "normal";
+  }
+  if (n <= 1) return "muy bajo";
+  if (n === 2) return "bajo";
+  if (n === 4) return "bien";
+  if (n >= 5) return "muy bien";
+  return "normal";
+}
+
+function getWeeklyCheckinAdjustment(checkin) {
+  if (!checkin) {
+    return "Completá este check-in una vez por semana. Con eso la app puede ajustar el plan por peso, energía, hambre, rendimiento y recuperación.";
+  }
+
+  const kg = getLatestWeightKg();
+  const energy = Number(checkin.energy) || 3;
+  const hunger = Number(checkin.hunger) || 3;
+  const performance = Number(checkin.performance) || 3;
+  const recovery = Number(checkin.recovery) || 3;
+  const adherence = Number(checkin.adherence) || 3;
+
+  if (kg && kg > 80 && (energy <= 2 || performance <= 2)) {
+    return "Peso arriba, pero energía o rendimiento bajos: no recortes fuerte. Mantené proteína y mové más carbo al pre/post-entreno antes de bajar calorías.";
+  }
+  if (kg && kg > 80 && hunger <= 3 && performance >= 3) {
+    return "Control fino: mantené proteína igual y recortá 1 porción chica de carbo en almuerzo o cena hasta volver a 78-80 kg.";
+  }
+  if ((kg && kg < 77.8) || energy <= 2 || performance <= 2) {
+    return "Subí 150-200 kcal cerca del entreno: más papa, pan, pasta o una merienda simple. No bajes comida si el rendimiento cayó.";
+  }
+  if (hunger >= 4 && (!kg || kg <= 80)) {
+    return "Aumentá saciedad sin complicarte: más verdura cocida, una fruta extra o una porción de proteína magra en la comida que más hambre te deja.";
+  }
+  if (recovery <= 2) {
+    return "No ajustes agresivo esta semana. Priorizá cena fácil de digerir, sueño, creatina diaria y suficiente carbo alrededor del entrenamiento.";
+  }
+  if (adherence <= 2) {
+    return "Simplificá la semana: usá más opción B, comidas conocidas y preparaciones de una sartén. El mejor plan es el que cumplís.";
+  }
+  return "Mantené la estrategia. Si el peso sigue 78-80 kg y entrenás bien, no hace falta tocar calorías.";
+}
+
+function renderScoreOptions(currentValue, metricId = "") {
+  const labels = metricId === "hunger" ? {
+    1: "1 · muy poca",
+    2: "2 · controlada",
+    3: "3 · normal",
+    4: "4 · alta",
+    5: "5 · muy alta"
+  } : {
+    1: "1 · muy bajo",
+    2: "2 · bajo",
+    3: "3 · normal",
+    4: "4 · bien",
+    5: "5 · muy bien"
+  };
+  const value = Number(currentValue) || 3;
+  return [1, 2, 3, 4, 5].map((score) => (
+    `<option value="${score}" ${score === value ? "selected" : ""}>${labels[score]}</option>`
+  )).join("");
+}
+
+function saveWeeklyCheckin() {
+  const weekKey = getCurrentCheckinKey();
+  const checkins = getWeeklyCheckins();
+  const entry = {
+    weekStart: weekKey,
+    date: getTodayKey(),
+    updatedAt: new Date().toISOString()
+  };
+
+  CHECKIN_METRICS.forEach(([id]) => {
+    const el = document.querySelector(`#checkin-${id}`);
+    entry[id] = Math.max(1, Math.min(5, Number(el?.value) || 3));
+  });
+
+  const note = String(document.querySelector("#checkin-note")?.value || "").trim().slice(0, 220);
+  if (note) entry.note = note;
+
+  checkins[weekKey] = entry;
+  localStorage.setItem(STORAGE.checkins, JSON.stringify(checkins));
+  scheduleCloudSync("weekly-checkin");
+  renderWeeklyCheckin();
+  showToast("Check-in semanal guardado");
+}
+
+function resetWeeklyCheckin() {
+  const weekKey = getCurrentCheckinKey();
+  const checkins = getWeeklyCheckins();
+  delete checkins[weekKey];
+  localStorage.setItem(STORAGE.checkins, JSON.stringify(checkins));
+  scheduleCloudSync("weekly-checkin-reset");
+  renderWeeklyCheckin();
+  showToast("Check-in de la semana limpiado");
+}
+
+function renderWeeklyCheckin() {
+  const wrap = document.querySelector("#weekly-checkin");
+  if (!wrap) return;
+
+  const weekKey = getCurrentCheckinKey();
+  const checkin = getWeeklyCheckins()[weekKey] || null;
+  const latestKg = getLatestWeightKg();
+  const adjustment = getWeeklyCheckinAdjustment(checkin);
+  const summary = checkin
+    ? CHECKIN_METRICS.map(([id, label]) => `<span>${label}: ${scoreLabel(checkin[id], id)}</span>`).join("")
+    : `<span>Sin check-in cargado esta semana</span>`;
+
+  wrap.innerHTML = `
+    <div class="checkin-head">
+      <div>
+        <div class="section-eyebrow">Ajuste inteligente</div>
+        <h3>Check-in semanal</h3>
+      </div>
+      <div class="checkin-week">${escapeHtml(weekKey)}</div>
+    </div>
+    <div class="checkin-summary">
+      ${latestKg ? `<span>Peso: ${latestKg} kg</span>` : "<span>Peso pendiente</span>"}
+      ${summary}
+    </div>
+    <div class="checkin-advice">${escapeHtml(adjustment)}</div>
+    <details class="checkin-editor">
+      <summary>${checkin ? "Editar datos" : "Cargar datos"}</summary>
+      <div class="checkin-grid">
+        ${CHECKIN_METRICS.map(([id, label]) => `
+          <label>
+            <span>${label}</span>
+            <select id="checkin-${id}">
+              ${renderScoreOptions(checkin?.[id], id)}
+            </select>
+          </label>
+        `).join("")}
+      </div>
+      <label class="checkin-note">
+        <span>Nota corta</span>
+        <textarea id="checkin-note" maxlength="220" rows="2" placeholder="Ej: hambre a la noche, piernas pesadas, entrené fuerte...">${escapeHtml(checkin?.note || "")}</textarea>
+      </label>
+      <div class="checkin-actions">
+        <button type="button" class="weight-save-btn" onclick="saveWeeklyCheckin()">Guardar check-in</button>
+        ${checkin ? `<button type="button" class="checkin-reset-btn" onclick="resetWeeklyCheckin()">Limpiar</button>` : ""}
+      </div>
+    </details>
   `;
 }
 
@@ -8590,6 +8818,8 @@ window.exportShopping = exportShopping;
 window.setFridayMode = setFridayMode;
 window.quickCheckCurrentMeal = quickCheckCurrentMeal;
 window.saveWeight = saveWeight;
+window.saveWeeklyCheckin = saveWeeklyCheckin;
+window.resetWeeklyCheckin = resetWeeklyCheckin;
 
 // Cleanup de localStorage viejo antes que nada
 cleanupOldData();
@@ -8620,6 +8850,7 @@ renderShopping();
 renderSupplements();
 seedInitialWeight();
 renderWeightTracker();
+renderWeeklyCheckin();
 renderWeekOverview();
 setupDayFab();
 updateClock();
@@ -8660,6 +8891,7 @@ function syncCurrentPlanDate(reason = "timer") {
   renderActiveDay();
   renderWeekOverview();
   renderShopping();
+  renderWeeklyCheckin();
   updateNextMeal();
   updateGymBanner();
   updateFabBadge();
@@ -8694,6 +8926,7 @@ function checkDayChange() {
     renderActiveDay();
     renderWeekOverview();
     renderShopping();
+    renderWeeklyCheckin();
     updateGymBanner();
     updateFabBadge();
     if ("Notification" in window && Notification.permission === "granted") {
