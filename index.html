@@ -16,7 +16,7 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="format-detection" content="telephone=no" />
     <link rel="stylesheet" href="assets/fonts/fonts.css" />
-    <link rel="stylesheet" href="styles.css?v=20260714-weekly-refresh" />
+    <link rel="stylesheet" href="styles.css?v=20260714-fuel-console" />
   </head>
   <body>
 
@@ -116,6 +116,7 @@
             <div class="bento-card-label" id="next-meal-label">⏰ Hoy · próxima comida</div>
             <div id="next-meal" class="bento-next-content">Cargando…</div>
           </div>
+          <div class="cloud-status" id="cloud-status" data-state="local" role="status" aria-live="polite">Modo local</div>
         </div>
 
         <!-- WEEK TABS + DAY PLAN -->
@@ -299,7 +300,7 @@
       <button class="bn-item" type="button" onclick="showWatchModal()"><span class="bn-icon">⌚</span><span class="bn-label">Watch</span></button>
     </nav>
 
-    <script src="script.js?v=20260714-weekly-refresh"></script>
+    <script src="script.js?v=20260714-fuel-console"></script>
     <script>
       // Mirror sidebar values to mobile topbar
       function mirrorToTopbar() {

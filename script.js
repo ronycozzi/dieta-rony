@@ -20,7 +20,7 @@ const STORAGE = {
   planWeek:        "rony-dieta-plan-week",
   weightSeeded:    "weight-seeded"
 };
-const APP_BUILD = "2026-07-14-weekly-refresh";
+const APP_BUILD = "2026-07-14-fuel-console";
 const MENU_ROTATION_CORRECTION_START = "2026-06-15";
 const MENU_ROTATION_CORRECTION_OFFSET = 1;
 const APP_TIME_ZONE = "America/Argentina/Buenos_Aires";
@@ -5844,7 +5844,7 @@ let weekIndex = getWeekIndex();
 let days = allWeeks[weekIndex];
 function getCurrentWeekName(date = planGenerationDate) {
   const weekStartLabel = getPlanWeekStart(date).toLocaleDateString("es-AR", { timeZone: "UTC", day: "numeric", month: "short" });
-  return `Semana ${weekStartLabel} · menú fresco · cambia ${getMenuRefreshShortLabel(date)}`;
+  return `Semana ${weekStartLabel} · cambia ${getMenuRefreshShortLabel(date)}`;
 }
 let currentWeekName = getCurrentWeekName();
 
