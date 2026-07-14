@@ -21,7 +21,7 @@ const STORAGE = {
   planWeek:        "rony-dieta-plan-week",
   weightSeeded:    "weight-seeded"
 };
-const APP_BUILD = "2026-07-14-fuel-console-checkin";
+const APP_BUILD = "2026-07-14-fuel-console-checkin-sync";
 const MENU_ROTATION_CORRECTION_START = "2026-06-15";
 const MENU_ROTATION_CORRECTION_OFFSET = 1;
 const APP_TIME_ZONE = "America/Argentina/Buenos_Aires";
@@ -6418,6 +6418,12 @@ function stopCloudPullLoop() {
 }
 
 async function initCloudSync() {
+  writeCloudSyncMeta({
+    configured: cloudSyncAvailable,
+    syncing: true,
+    lastAttempt: new Date().toISOString(),
+    reason: "initial"
+  });
   await pullCloudSync("initial", { force: true, pushMerged: true });
   scheduleCloudSync("initial");
   startCloudPullLoop();
