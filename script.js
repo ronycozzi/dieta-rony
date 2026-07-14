@@ -1,7 +1,7 @@
 // =====================================================
 // DIETA RONY COZZI · 78-80kg · Ectomorfo
 // Plan de mantenimiento + recomposición
-// Menús rotativos: 4 semanas distintas, auto-actualiza
+// Menu fresco semanal con opcion B y sync cloud
 // Almuerzo y cena con opción B al toque
 // =====================================================
 
@@ -20,9 +20,10 @@ const STORAGE = {
   planWeek:        "rony-dieta-plan-week",
   weightSeeded:    "weight-seeded"
 };
-const APP_BUILD = "2026-06-24-live-sync";
+const APP_BUILD = "2026-07-14-weekly-refresh";
 const MENU_ROTATION_CORRECTION_START = "2026-06-15";
 const MENU_ROTATION_CORRECTION_OFFSET = 1;
+const APP_TIME_ZONE = "America/Argentina/Buenos_Aires";
 
 // =====================================================
 // HELPERS
@@ -49,33 +50,63 @@ function slug(value) {
   return value.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 }
 
+function getAppDateParts(date = new Date()) {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: APP_TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).formatToParts(date);
+  return Object.fromEntries(parts.filter((part) => part.type !== "literal").map((part) => [part.type, part.value]));
+}
+
 function formatLocalDateKey(date) {
-  const d = date || new Date();
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
+  const parts = getAppDateParts(date || new Date());
+  return `${parts.year}-${parts.month}-${parts.day}`;
 }
 
 function getTodayKey() {
   return formatLocalDateKey(new Date());
 }
 
+function dateKeyToUTCNoon(dateKey) {
+  return new Date(`${dateKey}T12:00:00Z`);
+}
+
+function addDaysToDateKey(dateKey, days) {
+  const d = dateKeyToUTCNoon(dateKey);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
+function getPlanWeekStartKey(date = new Date()) {
+  const dateKey = typeof date === "string" ? date : formatLocalDateKey(date);
+  const d = dateKeyToUTCNoon(dateKey);
+  const dayNumber = d.getUTCDay() === 0 ? 7 : d.getUTCDay();
+  return addDaysToDateKey(dateKey, -(dayNumber - 1));
+}
+
 function getPlanWeekStart(date = new Date()) {
-  const d = new Date(date);
-  const dayNumber = d.getDay() === 0 ? 7 : d.getDay();
-  d.setDate(d.getDate() - (dayNumber - 1));
-  d.setHours(0, 0, 0, 0);
-  return d;
+  return dateKeyToUTCNoon(getPlanWeekStartKey(date));
 }
 
 function getMenuRotationCorrection(date = new Date()) {
-  const weekStartKey = formatLocalDateKey(getPlanWeekStart(date));
+  const weekStartKey = getPlanWeekStartKey(date);
   return weekStartKey >= MENU_ROTATION_CORRECTION_START ? MENU_ROTATION_CORRECTION_OFFSET : 0;
 }
 
+function hashSeed(value) {
+  let hash = 2166136261;
+  const text = String(value);
+  for (let i = 0; i < text.length; i++) {
+    hash ^= text.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
+
 function getPlanDayIndex(date = new Date()) {
-  const dayIdx = date.getDay();
+  const dayIdx = dateKeyToUTCNoon(formatLocalDateKey(date)).getUTCDay();
   return dayIdx === 0 ? 7 : dayIdx;
 }
 
@@ -112,15 +143,15 @@ function sumMacros(meals) {
 }
 
 // =====================================================
-// SEMANA ROTATIVA · Elige menú según número de semana ISO
+// SEMANA ACTUAL - Elige menu segun fecha real
 // Semana 1 → 2 → 3 → 4 → 1 → 2 → ... automáticamente
 // =====================================================
 function getISOWeekNumber(date = new Date()) {
-  const d = new Date(date);
-  d.setHours(0, 0, 0, 0);
-  d.setDate(d.getDate() + 3 - (d.getDay() + 6) % 7);
-  const week1 = new Date(d.getFullYear(), 0, 4);
-  return 1 + Math.round(((d.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
+  const d = dateKeyToUTCNoon(formatLocalDateKey(date));
+  d.setUTCHours(0, 0, 0, 0);
+  d.setUTCDate(d.getUTCDate() + 3 - (d.getUTCDay() + 6) % 7);
+  const week1 = new Date(Date.UTC(d.getUTCFullYear(), 0, 4));
+  return 1 + Math.round(((d.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getUTCDay() + 6) % 7) / 7);
 }
 
 
@@ -3676,7 +3707,8 @@ function getPlanGenerationDate() {
 // - Comidas normales, sostenibles y con opcion B real.
 // =====================================================
 function freshMenuSeed(date = getPlanGenerationDate()) {
-  return date.getFullYear() * 100 + getISOWeekNumber(date) + getMenuRotationCorrection(date) * 37;
+  const weekStart = getPlanWeekStartKey(date);
+  return hashSeed(`${weekStart}|${getISOWeekNumber(date)}|${getMenuRotationCorrection(date)}|rony-fresh-menu-v2`);
 }
 
 function pickFreshTemplate(options, seed, predicate = () => true) {
@@ -3686,6 +3718,15 @@ function pickFreshTemplate(options, seed, predicate = () => true) {
     if (predicate(option)) return option;
   }
   return options[start];
+}
+
+function pickFreshTemplateStrict(options, seed, predicate = () => true) {
+  const start = Math.abs(seed) % options.length;
+  for (let i = 0; i < options.length; i++) {
+    const option = options[(start + i) % options.length];
+    if (predicate(option)) return option;
+  }
+  return null;
 }
 
 function mealProteinGroup(item) {
@@ -4160,6 +4201,23 @@ function freshFishOptions() {
       food("260g papa al horno", 5, 52, 0),
       food("Ensalada grande", 2, 10, 0)
     ], ["Salmon simple con limon, papa y ensalada."]),
+    altMeal("Salmon a la plancha con fideos y tomate", "Salmon - fideos - tomate - limon", [
+      food("200g salmon a la plancha", 44, 0, 22),
+      food("80g fideos secos", 10, 58, 2),
+      food("Tomate + hojas verdes", 2, 8, 0),
+      food("Limon", 0, 1, 0)
+    ], [
+      "Cocina el salmon vuelta y vuelta con limon, sal y ajo.",
+      "Hervi fideos al dente y servilos con tomate. Sigue siendo pescado de viernes, pero cambia el plato."
+    ]),
+    altMeal("Salmon al horno con batata y verduras", "Salmon - batata - verduras", [
+      food("200g salmon al horno", 44, 0, 22),
+      food("260g batata", 5, 52, 0),
+      food("Verduras al horno", 3, 14, 0)
+    ], [
+      "Horno con salmon, batata, zanahoria o morron, limon y pimenton.",
+      "Es la version con omega 3 sin repetir papa todas las semanas."
+    ]),
     altMeal("Merluza con pure, huevo y tomate", "Merluza - papa - huevo - tomate", [
       food("230g merluza", 46, 0, 4),
       food("300g papa para pure", 6, 60, 0),
@@ -4175,7 +4233,15 @@ function freshFishOptions() {
   ];
 }
 
-function freshFridayFishAltTemplate() {
+function freshFridayFishAltTemplate(primary = null, seed = 0, rejectOption = () => false) {
+  const picked = primary ? pickFreshTemplateStrict(freshFishOptions(), seed, (option) => {
+    if (option.name === primary.name) return false;
+    if (rejectOption(option)) return false;
+    if (mealCarbGroup(option) === mealCarbGroup(primary)) return false;
+    return true;
+  }) || pickFreshTemplateStrict(freshFishOptions(), seed + 3, (option) => option.name !== primary.name && !rejectOption(option)) : null;
+  if (picked) return cloneMealTemplate(picked);
+
   return altMeal("Merluza con fideos, huevo y tomate", "Merluza - fideos - huevo - tomate", [
     food("85g fideos secos", 11, 62, 2),
     food("230g merluza", 46, 0, 4),
@@ -4347,7 +4413,8 @@ function applyRonyFreshWeeklyMenuRules() {
 
       let lunch;
       if (isFriday) {
-        lunch = freshFishOptions()[0];
+        const salmonOptions = freshFishOptions().filter((option) => /\bsalmon\b/.test(mealCoreSearchText(option)));
+        lunch = salmonOptions[(getISOWeekNumber(planGenerationDate) + weekNumber) % salmonOptions.length];
       } else {
         lunch = freshMainTemplate(seed + 10, usedMainNames, { noRice: dayNumber > 0 && dayNumber % 2 === 1 });
         if (day.id === "mie" && mealHasRice(lunch)) {
@@ -4364,7 +4431,7 @@ function applyRonyFreshWeeklyMenuRules() {
       }
       usedMainNames.add(lunch.name);
       usedWeekMainNames.add(lunch.name);
-      const lunchAlt = isFriday ? freshFridayFishAltTemplate() : pickFreshAlt(lunch, freshMainOptions(), seed + 11, { main: true });
+      const lunchAlt = isFriday ? freshFridayFishAltTemplate(lunch, seed + 11) : pickFreshAlt(lunch, freshMainOptions(), seed + 11, { main: true });
 
       const dinner = freshMainTemplate(seed + 12, usedMainNames, { noRice: mealHasRice(lunch) || isFriday });
       usedMainNames.add(dinner.name);
@@ -4719,7 +4786,7 @@ function applyFreshMainVarietyRules() {
         const forbiddenAltNames = new Set(usedVisibleNames);
         forbiddenAltNames.delete(mealNameKey(mealItem));
         mealItem.alt = isFridayFish && /salmon/i.test(mealCoreSearchText(mealItem))
-          ? cloneMealTemplate(freshFridayFishAltTemplate())
+          ? cloneMealTemplate(freshFridayFishAltTemplate(mealItem, freshMenuSeed() + weekNumber * 149 + dayNumber * 19 + mealNumber, repeatsSupportToken))
           : cloneMealTemplate(pickFreshMainAltAvoiding(mealItem, freshMenuSeed() + weekNumber * 149 + dayNumber * 19 + mealNumber, forbiddenAltNames, repeatsSupportToken));
         usedVisibleNames.add(mealNameKey(mealItem.alt));
         usedNames.add(mealItem.name);
@@ -4779,10 +4846,11 @@ function applyVisibleDayAltVarietyRules() {
 
         const forbiddenForAlt = new Set([...usedVisibleNames, ...dayPrimaryNames]);
         forbiddenForAlt.delete(mealNameKey(mealItem));
-        if (forbiddenForAlt.has(mealNameKey(mealItem.alt))) {
+        const rejectSupport = makeSupportRepeatRejecter(day);
+        if (forbiddenForAlt.has(mealNameKey(mealItem.alt)) || (isMainMeal(mealItem) && rejectSupport(mealItem.alt))) {
           const seed = freshMenuSeed() + weekNumber * 181 + dayNumber * 23 + mealNumber;
           const replacement = isMainMeal(mealItem)
-            ? pickFreshMainAltAvoiding(mealItem, seed, forbiddenForAlt)
+            ? pickFreshMainAltAvoiding(mealItem, seed, forbiddenForAlt, rejectSupport)
             : pickAltAvoidingVisibleNames(mealItem, freshOptionsForMealLabel(mealItem.label), seed, forbiddenForAlt);
           mealItem.alt = cloneMealTemplate(replacement);
         }
@@ -4838,6 +4906,120 @@ function applyCrossWeekTurnVarietyRules() {
         seenNames.add(mealNameKey(mealItem));
         seenByTurn.set(turnKey, seenNames);
       });
+    });
+  });
+}
+
+function getMealByTurn(day, label) {
+  const target = plainText(label);
+  return (day?.meals || []).find((mealItem) => isMainMeal(mealItem) && plainText(mealItem.label) === target) || null;
+}
+
+function getMainNamesForWeek(weekDays, excludeMeal = null) {
+  const names = new Set();
+  (weekDays || []).forEach((day) => {
+    (day.meals || []).forEach((mealItem) => {
+      if (mealItem !== excludeMeal && isMainMeal(mealItem)) names.add(mealNameKey(mealItem));
+    });
+  });
+  return names;
+}
+
+function makeSupportRepeatRejecter(day) {
+  const supportText = (day?.meals || [])
+    .filter((candidate) => !isMainMeal(candidate))
+    .map((candidate) => `${mealCoreSearchText(candidate)} ${candidate.alt ? mealCoreSearchText(candidate.alt) : ""}`)
+    .join(" ");
+  return (option) => {
+    const optionText = mealCoreSearchText(option);
+    return (/tortilla/.test(optionText) && /tortilla/.test(supportText))
+      || (/atun/.test(optionText) && /atun/.test(supportText))
+      || (/arroz/.test(optionText) && /arroz/.test(supportText));
+  };
+}
+
+function replacePriorWeekDuplicateMain(slot, previousMeal, offset = 0) {
+  const currentWeek = allWeeks[slot.weekNumber] || [];
+  const currentWeekNames = getMainNamesForWeek(currentWeek, slot.meal);
+  const previousName = mealNameKey(previousMeal);
+  const rejectSupport = makeSupportRepeatRejecter(slot.day);
+  const fishTurn = slot.day?.id === "vie"
+    && plainText(slot.meal?.label) === "almuerzo"
+    && mealProteinGroup(slot.meal) === "pescado";
+  const optionPool = fishTurn ? freshFishOptions() : freshMainOptions();
+  const seed = freshMenuSeed() + slot.weekNumber * 307 + slot.dayNumber * 43 + slot.mealNumber * 11 + offset;
+
+  const template = pickFreshTemplateStrict(optionPool, seed, (option) => {
+    const key = mealNameKey(option);
+    if (key === previousName) return false;
+    if (currentWeekNames.has(key)) return false;
+    if (mealHasRice(option)) return false;
+    if (fishTurn && !/\bsalmon\b/.test(mealCoreSearchText(option))) return false;
+    if (!fishTurn && mealProteinGroup(option) === "pescado") return false;
+    if (rejectSupport(option)) return false;
+    return true;
+  }) || pickFreshTemplateStrict(optionPool, seed + 13, (option) => {
+    const key = mealNameKey(option);
+    if (key === previousName) return false;
+    if (mealHasRice(option)) return false;
+    if (fishTurn && !/\bsalmon\b/.test(mealCoreSearchText(option))) return false;
+    if (!fishTurn && mealProteinGroup(option) === "pescado") return false;
+    return true;
+  }) || pickRiceFreeMainTemplate(slot.meal, slot.weekNumber, slot.dayNumber, offset + 17, [], rejectSupport);
+
+  applyMealTemplate(slot.meal, template);
+  const forbiddenAltNames = new Set([...currentWeekNames, previousName]);
+  forbiddenAltNames.delete(mealNameKey(slot.meal));
+  slot.meal.alt = fishTurn
+    ? cloneMealTemplate(freshFridayFishAltTemplate(slot.meal, seed + 19, rejectSupport))
+    : cloneMealTemplate(pickFreshMainAltAvoiding(slot.meal, seed + 19, forbiddenAltNames, rejectSupport));
+}
+
+function addDaysToPlanDate(date, days) {
+  return dateKeyToUTCNoon(addDaysToDateKey(formatLocalDateKey(date), days));
+}
+
+function applyPriorWeekSameTurnGuard(date = getPlanGenerationDate(), floorWeekStartKey = null) {
+  const currentDate = new Date(date);
+  if (Number.isNaN(currentDate.getTime())) return;
+
+  const currentWeekIndex = getWeekIndex(currentDate);
+  const currentPlanSnapshot = JSON.parse(JSON.stringify(allWeeks));
+  const currentPlanDate = new Date(planGenerationDate);
+  const previousDate = addDaysToPlanDate(currentDate, -7);
+  const previousWeekStartKey = getPlanWeekStartKey(previousDate);
+
+  rebuildPlanForDate(previousDate, {
+    audit: false,
+    skipPriorWeekGuard: floorWeekStartKey && previousWeekStartKey <= floorWeekStartKey,
+    priorWeekGuardFloorKey: floorWeekStartKey
+  });
+  const previousPlanSnapshot = JSON.parse(JSON.stringify(allWeeks));
+  const previousWeekIndex = getWeekIndex(previousDate);
+
+  allWeeks.splice(0, allWeeks.length, ...currentPlanSnapshot);
+  planGenerationDate = currentPlanDate;
+
+  const currentWeek = allWeeks[currentWeekIndex] || [];
+  const previousWeek = previousPlanSnapshot[previousWeekIndex] || [];
+
+  currentWeek.forEach((day, dayNumber) => {
+    const previousDay = previousWeek[dayNumber];
+    if (!previousDay) return;
+
+    (day.meals || []).forEach((mealItem, mealNumber) => {
+      if (!isMainMeal(mealItem)) return;
+      const previousMeal = getMealByTurn(previousDay, mealItem.label);
+      if (!previousMeal) return;
+      if (mealNameKey(mealItem) !== mealNameKey(previousMeal)) return;
+
+      replacePriorWeekDuplicateMain({
+        weekNumber: currentWeekIndex,
+        dayNumber,
+        mealNumber,
+        day,
+        meal: mealItem
+      }, previousMeal, dayNumber * 31 + mealNumber);
     });
   });
 }
@@ -4912,10 +5094,29 @@ function ensureDailySupplementRules() {
       if (!supplementSlot) return;
 
       if (!day.meals.some(hasCreatine)) addCreatineToMeal(supplementSlot);
+      if (hasCreatine(supplementSlot) && supplementSlot.alt && !hasCreatine(supplementSlot.alt)) addCreatineToMeal(supplementSlot.alt);
       const wheySlot = day.meals.find(hasWhey) || supplementSlot;
       if (!day.meals.some(hasWhey)) addWheyToMeal(wheySlot);
       if (wheySlot.alt && !hasWhey(wheySlot.alt)) addWheyToMeal(wheySlot.alt);
     });
+  });
+}
+
+function ensureFridayFishRules() {
+  allWeeks.forEach((weekDays, weekNumber) => {
+    const friday = weekDays.find((day) => day.id === "vie");
+    if (!friday) return;
+    const lunch = friday.meals.find((mealItem) => plainText(mealItem.label) === "almuerzo");
+    if (!lunch) return;
+
+    const salmonOptions = freshFishOptions().filter((option) => /\bsalmon\b/.test(mealCoreSearchText(option)));
+    if (!/\bsalmon\b/.test(mealCoreSearchText(lunch))) {
+      applyMealTemplate(lunch, salmonOptions[(getISOWeekNumber(planGenerationDate) + weekNumber) % salmonOptions.length]);
+    }
+    const rejectSupport = makeSupportRepeatRejecter(friday);
+    if (!lunch.alt || mealProteinGroup(lunch.alt) !== "pescado" || mealNameKey(lunch.alt) === mealNameKey(lunch) || rejectSupport(lunch.alt)) {
+      lunch.alt = cloneMealTemplate(freshFridayFishAltTemplate(lunch, freshMenuSeed() + weekNumber * 97 + 4, rejectSupport));
+    }
   });
 }
 
@@ -5574,8 +5775,10 @@ function syncPlanTargetsAndIds() {
   });
 }
 
-function rebuildPlanForDate(date = new Date(), { audit = false } = {}) {
+function rebuildPlanForDate(date = new Date(), { audit = false, skipPriorWeekGuard = false, priorWeekGuardFloorKey = null } = {}) {
   planGenerationDate = new Date(date);
+  const currentWeekStartKey = getPlanWeekStartKey(date);
+  const effectivePriorWeekGuardFloorKey = priorWeekGuardFloorKey || addDaysToDateKey(currentWeekStartKey, -21);
   resetPlanWeeksToBase();
   applyProfessionalMenuRules();
   applyFiveDayTrainingRules();
@@ -5606,6 +5809,12 @@ function rebuildPlanForDate(date = new Date(), { audit = false } = {}) {
   applyFinalPlanGuardRules();
   ensureDailySupplementRules();
   trimHighCalorieDaysAfterSupplements();
+  if (!skipPriorWeekGuard && currentWeekStartKey > effectivePriorWeekGuardFloorKey) {
+    applyPriorWeekSameTurnGuard(date, effectivePriorWeekGuardFloorKey);
+    ensureDailySupplementRules();
+  }
+  ensureFridayFishRules();
+  ensureDailySupplementRules();
   syncPlanTargetsAndIds();
   weekIndex = getWeekIndex(date);
   days = allWeeks[weekIndex];
@@ -5619,23 +5828,23 @@ function getWeekIndex(date = new Date()) {
   return (baseIndex + correction + allWeeks.length) % allWeeks.length;
 }
 function getNextMenuRefreshDate(from = new Date()) {
-  const d = new Date(from);
-  const daysUntilMonday = (8 - d.getDay()) % 7 || 7;
-  d.setDate(d.getDate() + daysUntilMonday);
-  d.setHours(0, 0, 0, 0);
-  return d;
+  const fromKey = formatLocalDateKey(from);
+  const d = dateKeyToUTCNoon(fromKey);
+  const dayNumber = d.getUTCDay() === 0 ? 7 : d.getUTCDay();
+  const daysUntilMonday = (8 - dayNumber) % 7 || 7;
+  return dateKeyToUTCNoon(addDaysToDateKey(fromKey, daysUntilMonday));
 }
-function getMenuRefreshLabel() {
-  return getNextMenuRefreshDate().toLocaleDateString("es-AR", { weekday: "long", day: "numeric", month: "short" });
+function getMenuRefreshLabel(from = new Date()) {
+  return getNextMenuRefreshDate(from).toLocaleDateString("es-AR", { timeZone: "UTC", weekday: "long", day: "numeric", month: "short" });
 }
-function getMenuRefreshShortLabel() {
-  return getNextMenuRefreshDate().toLocaleDateString("es-AR", { day: "numeric", month: "short" });
+function getMenuRefreshShortLabel(from = new Date()) {
+  return getNextMenuRefreshDate(from).toLocaleDateString("es-AR", { timeZone: "UTC", day: "numeric", month: "short" });
 }
 let weekIndex = getWeekIndex();
 let days = allWeeks[weekIndex];
-const weekNames = ["Rotacion 1 de 4", "Rotacion 2 de 4", "Rotacion 3 de 4", "Rotacion 4 de 4"];
-function getCurrentWeekName() {
-  return `Menu ${weekIndex + 1}/4 · cambia ${getMenuRefreshShortLabel()}`;
+function getCurrentWeekName(date = planGenerationDate) {
+  const weekStartLabel = getPlanWeekStart(date).toLocaleDateString("es-AR", { timeZone: "UTC", day: "numeric", month: "short" });
+  return `Semana ${weekStartLabel} · menú fresco · cambia ${getMenuRefreshShortLabel(date)}`;
 }
 let currentWeekName = getCurrentWeekName();
 
@@ -5802,6 +6011,7 @@ const CLOUD_SYNC_ENDPOINT = "/api/sync";
 const CLOUD_SYNC_OWNER = "rony";
 const CLOUD_SYNC_META_KEY = "rony-dieta-cloud-sync";
 const CLOUD_SYNC_KEYS = Array.from(new Set(Object.values(STORAGE)));
+const CLOUD_SYNC_PUSH_KEYS = CLOUD_SYNC_KEYS.filter((key) => key !== STORAGE.planWeek);
 const CLOUD_SYNC_KEEPALIVE_LIMIT_BYTES = 60_000;
 const CLOUD_SYNC_PULL_MIN_INTERVAL_MS = 8_000;
 const CLOUD_SYNC_FOREGROUND_PULL_INTERVAL_MS = 15_000;
@@ -5975,6 +6185,11 @@ function mergeCloudValue(key, remoteValue) {
   let merged;
 
   if (key === STORAGE.meals) merged = mergeMealStateByDate(remoteValue, localValue);
+  else if (key === STORAGE.planWeek) {
+    merged = typeof remoteValue === "string" && /^[0-9]+:\d{4}-\d{2}-\d{2}$/.test(remoteValue)
+      ? remoteValue
+      : localValue;
+  }
   else if (key === STORAGE.fridayMode) merged = mergeObjectsByDate(remoteValue, localValue);
   else if (key === STORAGE.weight) merged = mergeWeightHistory(remoteValue, localValue);
   else if (key === STORAGE.shopping) merged = mergeShoppingState(remoteValue, localValue);
@@ -5995,7 +6210,7 @@ function mergeCloudValue(key, remoteValue) {
 
 function collectCloudSyncState() {
   const state = {};
-  CLOUD_SYNC_KEYS.forEach((key) => {
+  CLOUD_SYNC_PUSH_KEYS.forEach((key) => {
     const raw = localStorage.getItem(key);
     if (raw !== null) state[key] = parseCloudStoredValue(raw);
   });
@@ -6012,7 +6227,7 @@ function getCloudMenuWeekRecord() {
   return {
     weekStart,
     weekIndex,
-    weekName: displayText(weekNames[weekIndex]),
+    weekName: displayText(currentWeekName),
     menuSignature: mainMeals,
     appBuild: APP_BUILD
   };
@@ -6090,6 +6305,7 @@ async function pullCloudSync(reason = "pull", options = {}) {
   cloudSyncPulling = true;
   cloudLastPullAt = now;
   let changed = false;
+  let planWeekChanged = false;
   try {
     const response = await fetch(`${CLOUD_SYNC_ENDPOINT}?owner=${encodeURIComponent(CLOUD_SYNC_OWNER)}`, {
       headers: { "Accept": "application/json" },
@@ -6102,7 +6318,10 @@ async function pullCloudSync(reason = "pull", options = {}) {
     cloudSyncAvailable = Boolean(data.configured);
     if (data.configured && data.state && typeof data.state === "object") {
       Object.entries(data.state).forEach(([key, value]) => {
-        if (CLOUD_SYNC_KEYS.includes(key)) changed = mergeCloudValue(key, value) || changed;
+        if (!CLOUD_SYNC_KEYS.includes(key)) return;
+        const didChange = mergeCloudValue(key, value);
+        if (key === STORAGE.planWeek && didChange) planWeekChanged = true;
+        changed = didChange || changed;
       });
     }
     writeCloudSyncMeta({
@@ -6112,6 +6331,7 @@ async function pullCloudSync(reason = "pull", options = {}) {
       lastError: null,
       reason
     });
+    if (planWeekChanged) syncCurrentPlanDate("cloud-plan-week");
     if (changed) renderAfterCloudMerge();
     if (changed && pushMerged) scheduleCloudSync(`${reason}-merge`);
   } catch (error) {
@@ -6604,8 +6824,8 @@ function buildWeekIntelligenceData() {
   const uniqueMainNames = new Set(primaryMains.map((item) => mealNameKey(item))).size;
 
   return {
-    weekName: displayText(weekNames[weekIndex]),
-    nextRefresh: getMenuRefreshLabel(),
+    weekName: displayText(currentWeekName),
+    nextRefresh: getMenuRefreshLabel(planGenerationDate),
     primaryProteinSummary: topGroupLabels(primaryProteins, { pollo: "pollo", carne: "carne", pescado: "pescado", huevo: "huevo", jamon: "jamon", legumbre: "legumbre", mixto: "mixto" }),
     primaryCarbSummary: topGroupLabels(primaryCarbs, { arroz: "arroz", pasta: "pasta", papa: "papa", pan: "pan/wrap", legumbre: "legumbre", otro: "otro" }),
     altProteinSummary: topGroupLabels(altProteins, { pollo: "pollo", carne: "carne", pescado: "pescado", huevo: "huevo", jamon: "jamon", legumbre: "legumbre", mixto: "mixto" }, 2),
@@ -7120,7 +7340,7 @@ function buildShoppingWeekFocusData() {
   ]);
 
   return {
-    weekName: displayText(weekNames[weekIndex]),
+    weekName: displayText(currentWeekName),
     breakfastSummary: joinShoppingLabels(breakfastSignals, "desayunos simples y sostenibles"),
     proteinSummary: joinShoppingLabels(proteinSignals, "pollo, carne magra y huevos"),
     carbSummary: joinShoppingLabels(carbSignals, "papa, arroz y pasta"),
@@ -8048,16 +8268,8 @@ function getDayStateForDate(dateKey, allMealsCache) {
 }
 
 function getWeekDates() {
-  // Lunes a domingo de la semana actual
-  const today = new Date();
-  const todayDay = today.getDay() === 0 ? 7 : today.getDay(); // Mon=1...Sun=7
-  const monday = new Date(today);
-  monday.setDate(today.getDate() - (todayDay - 1));
-  return Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(monday);
-    d.setDate(monday.getDate() + i);
-    return formatLocalDateKey(d);
-  });
+  const mondayKey = getPlanWeekStartKey(new Date());
+  return Array.from({ length: 7 }, (_, i) => addDaysToDateKey(mondayKey, i));
 }
 
 function getDateKeyForDayId(dayId) {
@@ -8158,13 +8370,11 @@ function formatICSLocal(date) {
 
 function nextOccurrenceOfDay(targetDayIndex) {
   // targetDayIndex: 0=dom, 1=lun, ..., 6=sab
-  const today = new Date();
-  let diff = targetDayIndex - today.getDay();
+  const todayKey = getTodayKey();
+  const todayDay = dateKeyToUTCNoon(todayKey).getUTCDay();
+  let diff = targetDayIndex - todayDay;
   if (diff < 0) diff += 7;
-  const next = new Date(today);
-  next.setDate(today.getDate() + diff);
-  next.setHours(0, 0, 0, 0);
-  return next;
+  return dateKeyToUTCNoon(addDaysToDateKey(todayKey, diff));
 }
 
 function getCurrentPlanWeekStart() {
@@ -8459,7 +8669,7 @@ function syncCurrentPlanDate(reason = "timer") {
   }
 
   if (weekChanged && reason !== "initial") {
-    showToast(`Menú actualizado: ${displayText(weekNames[weekIndex])}`);
+    showToast(`Menu actualizado: ${displayText(currentWeekName)}`);
   }
   return true;
 }

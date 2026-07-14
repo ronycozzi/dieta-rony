@@ -1,4 +1,10 @@
 {
+  "crons": [
+    {
+      "path": "/api/weekly-refresh?owner=rony",
+      "schedule": "0 8 * * *"
+    }
+  ],
   "headers": [
     {
       "source": "/(.*)",

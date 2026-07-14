@@ -2,6 +2,11 @@
 
 const OWNER_DEFAULT = "rony";
 const MAX_BODY_BYTES = 750_000;
+const PLAN_WEEK_KEY = "rony-dieta-plan-week";
+const APP_BUILD = "2026-07-14-weekly-refresh";
+const MENU_ROTATION_CORRECTION_START = "2026-06-15";
+const MENU_ROTATION_CORRECTION_OFFSET = 1;
+const TZ = "America/Argentina/Buenos_Aires";
 const ALLOWED_KEYS = new Set([
   "rony-dieta-meals",
   "rony-dieta-water",
@@ -10,7 +15,6 @@ const ALLOWED_KEYS = new Set([
   "rony-dieta-streak",
   "rony-dieta-weight",
   "rony-dieta-friday-mode",
-  "rony-dieta-plan-week",
   "weight-seeded"
 ]);
 
@@ -118,6 +122,84 @@ function isDateKey(value) {
   return /^\d{4}-\d{2}-\d{2}$/.test(String(value || ""));
 }
 
+function getBuenosAiresDateKey(date = new Date()) {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: TZ,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).format(date);
+}
+
+function addDays(dateKey, days) {
+  const d = new Date(`${dateKey}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
+function getPlanWeekStartKey(dateKey) {
+  const d = new Date(`${dateKey}T12:00:00Z`);
+  const dayNumber = d.getUTCDay() === 0 ? 7 : d.getUTCDay();
+  return addDays(dateKey, -(dayNumber - 1));
+}
+
+function getISOWeekNumberFromDateKey(dateKey) {
+  const d = new Date(`${dateKey}T12:00:00Z`);
+  d.setUTCHours(0, 0, 0, 0);
+  d.setUTCDate(d.getUTCDate() + 3 - ((d.getUTCDay() + 6) % 7));
+  const week1 = new Date(Date.UTC(d.getUTCFullYear(), 0, 4));
+  return 1 + Math.round(((d.getTime() - week1.getTime()) / 86400000 - 3 + ((week1.getUTCDay() + 6) % 7)) / 7);
+}
+
+function getWeekIndex(dateKey) {
+  const weekStart = getPlanWeekStartKey(dateKey);
+  const baseIndex = (getISOWeekNumberFromDateKey(dateKey) - 1) % 4;
+  const correction = weekStart >= MENU_ROTATION_CORRECTION_START ? MENU_ROTATION_CORRECTION_OFFSET : 0;
+  return (baseIndex + correction + 4) % 4;
+}
+
+function getWeekLabel(weekStart) {
+  const date = new Date(`${weekStart}T12:00:00Z`);
+  const label = date.toLocaleDateString("es-AR", { timeZone: "UTC", day: "numeric", month: "short" });
+  return `Semana ${label} - menu fresco`;
+}
+
+function getCurrentServerPlanWeek(now = new Date()) {
+  const todayKey = getBuenosAiresDateKey(now);
+  const weekStart = getPlanWeekStartKey(todayKey);
+  const weekIndex = getWeekIndex(todayKey);
+  return {
+    todayKey,
+    weekStart,
+    weekIndex,
+    weekName: getWeekLabel(weekStart),
+    planWeek: `${weekIndex}:${weekStart}`
+  };
+}
+
+async function ensureServerPlanWeek(sql, ownerId, now = new Date()) {
+  const current = getCurrentServerPlanWeek(now);
+  await sql`
+    INSERT INTO rony_dieta_sync (owner_id, key, value, updated_at)
+    VALUES (${ownerId}, ${PLAN_WEEK_KEY}, ${JSON.stringify(current.planWeek)}::jsonb, now())
+    ON CONFLICT (owner_id, key)
+    DO UPDATE SET value = EXCLUDED.value, updated_at = now()
+  `;
+  await sql`
+    INSERT INTO rony_dieta_menu_history
+      (owner_id, week_start, week_index, week_name, menu_signature, app_build, updated_at)
+    VALUES
+      (${ownerId}, ${current.weekStart}::date, ${current.weekIndex}, ${current.weekName}, ${`server-sync:${current.weekStart}:${current.weekIndex}`}, ${APP_BUILD}, now())
+    ON CONFLICT (owner_id, week_start)
+    DO UPDATE SET
+      week_index = EXCLUDED.week_index,
+      week_name = EXCLUDED.week_name,
+      app_build = EXCLUDED.app_build,
+      updated_at = now()
+  `;
+  return current;
+}
+
 function isValidMealState(value) {
   if (!isPlainObject(value)) return false;
   return Object.values(value).every((dayState) => {
@@ -174,7 +256,7 @@ function isValidValueForKey(key, value) {
   if (key === "rony-dieta-streak") return isValidStreak(value);
   if (key === "rony-dieta-weight") return isValidWeightHistory(value);
   if (key === "rony-dieta-friday-mode") return isValidFridayMode(value);
-  if (key === "rony-dieta-plan-week") return typeof value === "string" && /^[0-9]+:\d{4}-\d{2}-\d{2}$/.test(value);
+  if (key === PLAN_WEEK_KEY) return typeof value === "string" && /^[0-9]+:\d{4}-\d{2}-\d{2}$/.test(value);
   if (key === "weight-seeded") return value === 1 || value === "1" || value === true;
   return false;
 }
@@ -245,7 +327,7 @@ async function handleGet(req, res, sql, ownerId) {
   });
 }
 
-async function handlePost(req, res, sql, ownerId) {
+async function handlePost(req, res, sql, ownerId, serverPlanWeek) {
   const raw = await readBody(req);
   const body = parseRequestBody(raw);
   const state = normalizeState(body.state);
@@ -265,12 +347,17 @@ async function handlePost(req, res, sql, ownerId) {
   }
 
   const menuWeek = normalizeMenuWeek(body.menuWeek);
-  if (menuWeek) {
+  const currentMenuWeek = menuWeek
+    && menuWeek.weekStart === serverPlanWeek.weekStart
+    && menuWeek.weekIndex === serverPlanWeek.weekIndex
+      ? menuWeek
+      : null;
+  if (currentMenuWeek) {
     await sql`
       INSERT INTO rony_dieta_menu_history
         (owner_id, week_start, week_index, week_name, menu_signature, app_build, updated_at)
       VALUES
-        (${ownerId}, ${menuWeek.weekStart}::date, ${menuWeek.weekIndex}, ${menuWeek.weekName}, ${menuWeek.menuSignature}, ${menuWeek.appBuild}, now())
+        (${ownerId}, ${serverPlanWeek.weekStart}::date, ${serverPlanWeek.weekIndex}, ${serverPlanWeek.weekName}, ${currentMenuWeek.menuSignature}, ${currentMenuWeek.appBuild}, now())
       ON CONFLICT (owner_id, week_start)
       DO UPDATE SET
         week_index = EXCLUDED.week_index,
@@ -286,7 +373,8 @@ async function handlePost(req, res, sql, ownerId) {
     configured: true,
     ownerId,
     savedKeys: entries.length,
-    savedMenuWeek: Boolean(menuWeek)
+    savedMenuWeek: Boolean(currentMenuWeek),
+    serverPlanWeek: serverPlanWeek.planWeek
   });
 }
 
@@ -318,13 +406,14 @@ module.exports = async function handler(req, res) {
     await ensureSchemaOnce(sql);
     const url = new URL(req.url, `https://${req.headers.host || "localhost"}`);
     const ownerId = sanitizeOwner(url.searchParams.get("owner") || req.headers["x-rony-owner"]);
+    const serverPlanWeek = await ensureServerPlanWeek(sql, ownerId);
 
     if (req.method === "GET") {
       await handleGet(req, res, sql, ownerId);
       return;
     }
     if (req.method === "POST") {
-      await handlePost(req, res, sql, ownerId);
+      await handlePost(req, res, sql, ownerId, serverPlanWeek);
       return;
     }
 
@@ -346,5 +435,8 @@ module.exports._internals = {
   normalizeState,
   normalizeMenuWeek,
   parseRequestBody,
+  getCurrentServerPlanWeek,
+  getPlanWeekStartKey,
+  getWeekIndex,
   sanitizeOwner
 };

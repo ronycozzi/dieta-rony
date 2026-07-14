@@ -23,6 +23,7 @@ Jueves piernas · Viernes full body · Sábado/Domingo descanso.
 - Marcar comidas completadas (persiste por día con localStorage)
 - Sincronización bidireccional con Neon + Vercel Functions cuando `DATABASE_URL` está configurada
 - Pull automático al abrir, volver a primer plano, recuperar foco y cada 15 segundos mientras la app está visible
+- Vercel Cron diario en `/api/weekly-refresh?owner=rony` para reconciliar la semana real en Neon aunque no abras la app el lunes
 - Auditoría automática contra duplicados críticos de render, compras, rotación y secciones de UI innecesarias
 - Barras de progreso de kcal, proteína, carbos y grasas en vivo
 - Tracker de peso semanal con alertas:
@@ -90,15 +91,27 @@ Variable de entorno en Vercel:
 ```
 DATABASE_URL=postgresql://...
 ```
+Opcional para proteger el cron:
+```
+CRON_SECRET=una_clave_larga
+```
 
 No pongas la URL de Neon en `script.js`: queda visible para cualquiera. La API de
 Vercel la lee del servidor.
 
 Garantias actuales:
 - `/api/sync` no se cachea en el Service Worker.
+- `/api/weekly-refresh` mantiene `rony-dieta-plan-week` y el historial semanal al día desde el servidor.
 - Vercel manda `Cache-Control: no-store` para HTML, Service Worker y API.
 - El backend valida formas de datos antes de guardar en Neon.
 - Errores HTTP de sync quedan como `sync pendiente`, no como guardado exitoso.
+
+### Qué tiene que estar instalado/configurado
+- Proyecto conectado a GitHub en Vercel.
+- Neon Postgres activo.
+- `DATABASE_URL` cargada en Vercel.
+- Cron de Vercel activo desde `vercel.json`.
+- En iPhone/Android, abrir la PWA una vez tras cada deploy para que tome el Service Worker nuevo.
 
 ## Validaciones
 

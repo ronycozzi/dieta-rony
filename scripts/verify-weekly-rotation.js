@@ -329,6 +329,32 @@ function createAppHarness(initialIso) {
     })()`);
   }
 
+  function weekSnapshot(label) {
+    return evalInApp(`(() => ({
+      label: ${JSON.stringify(label)},
+      todayKey: getTodayKey(),
+      weekIndex,
+      currentWeekName: displayText(currentWeekName),
+      planWeek: localStorage.getItem(STORAGE.planWeek),
+      days: days.map((day) => ({
+        id: day.id,
+        title: displayText(day.title),
+        meals: day.meals.map((meal) => ({
+          label: displayText(meal.label),
+          name: displayText(meal.name || ""),
+          alt: displayText((meal.alt && meal.alt.name) || ""),
+          isMain: isMainMeal(meal),
+          primaryText: mealCoreSearchText(meal),
+          altText: meal.alt ? mealCoreSearchText(meal.alt) : "",
+          hasCreatine: hasCreatine(meal),
+          altHasCreatine: meal.alt ? hasCreatine(meal.alt) : null,
+          hasWhey: hasWhey(meal),
+          altHasWhey: meal.alt ? hasWhey(meal.alt) : null
+        }))
+      }))
+    }))()`);
+  }
+
   function fireWindow(type) {
     (windowHandlers.get(type) || []).forEach((handler) => handler({ type }));
   }
@@ -341,6 +367,7 @@ function createAppHarness(initialIso) {
     evalInApp,
     setNow: fakeDate.setNow,
     snapshot,
+    weekSnapshot,
     fireWindow,
     fireDocument,
     setHidden(value) {
@@ -356,8 +383,13 @@ function createAppHarness(initialIso) {
 function assertSnapshot(actual, expected) {
   assert(actual.weekIndex === expected.weekIndex, `${actual.label}: weekIndex esperado ${expected.weekIndex}, recibido ${actual.weekIndex}.`);
   assert(actual.planWeek === expected.planWeek, `${actual.label}: planWeek esperado ${expected.planWeek}, recibido ${actual.planWeek}.`);
-  assert(actual.currentWeekName.includes(expected.weekName), `${actual.label}: nombre de semana incorrecto: ${actual.currentWeekName}.`);
-  assert(normalize(actual.lunch).includes(normalize(expected.lunchNeedle)), `${actual.label}: almuerzo inesperado: ${actual.lunch}.`);
+  if (expected.weekName) {
+    assert(actual.currentWeekName.includes(expected.weekName), `${actual.label}: nombre de semana incorrecto: ${actual.currentWeekName}.`);
+  }
+  if (expected.lunchNeedle) {
+    assert(normalize(actual.lunch).includes(normalize(expected.lunchNeedle)), `${actual.label}: almuerzo inesperado: ${actual.lunch}.`);
+  }
+  assert(!/menu\s+\d\s*\/\s*4/i.test(actual.currentWeekName), `${actual.label}: no debe volver a mostrar Menu X/4: ${actual.currentWeekName}.`);
 }
 
 function assertNoRiceLunch(actual) {
@@ -371,6 +403,34 @@ function assertNoPostLunchVisibleDuplicate(actual) {
   ["tortilla", "atun", "arroz"].forEach((token) => {
     assert(!(postText.includes(token) && lunchText.includes(token)), `${actual.label}: post-entreno y almuerzo no deben repetir ${token}. Recibido: ${actual.post} / ${actual.postAlt} / ${actual.lunch} / ${actual.lunchAlt}.`);
   });
+}
+
+function assertWeekMenuQuality(week, previousTurnNames = new Map()) {
+  const nextTurnNames = new Map(previousTurnNames);
+  week.days.forEach((day) => {
+    const supportText = normalize(day.meals
+      .filter((meal) => !meal.isMain)
+      .map((meal) => `${meal.primaryText} ${meal.altText}`)
+      .join(" "));
+    const creatineMeal = day.meals.find((meal) => meal.hasCreatine);
+    assert(Boolean(creatineMeal), `${week.label} ${day.id}: falta creatina diaria.`);
+    if (creatineMeal.altHasCreatine !== null) {
+      assert(creatineMeal.altHasCreatine === true, `${week.label} ${day.id}: la opcion B de la comida con creatina tambien debe tener creatina.`);
+    }
+
+    day.meals.filter((meal) => meal.isMain).forEach((meal) => {
+      const turnKey = `${day.id}:${normalize(meal.label)}`;
+      const previousName = previousTurnNames.get(turnKey);
+      assert(meal.name !== previousName, `${week.label} ${turnKey}: plato repetido contra la semana anterior: ${meal.name}.`);
+      nextTurnNames.set(turnKey, meal.name);
+
+      const visibleMainText = normalize(`${meal.primaryText} ${meal.altText}`);
+      ["tortilla", "atun", "arroz"].forEach((token) => {
+        assert(!(supportText.includes(token) && visibleMainText.includes(token)), `${week.label} ${day.id}: soporte y plato fuerte no deben repetir ${token}. Recibido: ${meal.name} / ${meal.alt}.`);
+      });
+    });
+  });
+  return nextTurnNames;
 }
 
 function assertSameMenuForSameDate(left, right) {
@@ -389,18 +449,16 @@ function main() {
   const june10 = app.snapshot("2026-06-10 initial");
   assertSnapshot(june10, {
     weekIndex: 3,
-    weekName: "Menu 4/4",
-    planWeek: "3:2026-06-08",
-    lunchNeedle: "salpicon de pollo"
+    weekName: "Semana 8 jun",
+    planWeek: "3:2026-06-08"
   });
 
   const june17CleanApp = createAppHarness("2026-06-17T12:00:00-03:00");
   const june17Clean = june17CleanApp.snapshot("2026-06-17 clean-load");
   assertSnapshot(june17Clean, {
     weekIndex: 1,
-    weekName: "Menu 2/4",
-    planWeek: "1:2026-06-15",
-    lunchNeedle: "pastel de papa"
+    weekName: "Semana 15 jun",
+    planWeek: "1:2026-06-15"
   });
   assert(june17Clean.preTime === "11:15", `El pre-entreno debe quedar antes de entrenar, 11:15. Recibido: ${june17Clean.preTime}.`);
   assertNoRiceLunch(june17Clean);
@@ -412,7 +470,9 @@ function main() {
       const wheyMeal = day.meals.find((meal) => hasWhey(meal));
       if (!wheyMeal) missing.push('whey-daily:' + wi + ':' + di + ':' + day.id);
       else if (wheyMeal.alt && !hasWhey(wheyMeal.alt)) missing.push('whey-alt:' + wi + ':' + di + ':' + day.id);
-      if (!day.meals.some((meal) => hasCreatine(meal))) missing.push('creatine:' + wi + ':' + di + ':' + day.id);
+      const creatineMeal = day.meals.find((meal) => hasCreatine(meal));
+      if (!creatineMeal) missing.push('creatine:' + wi + ':' + di + ':' + day.id);
+      else if (creatineMeal.alt && !hasCreatine(creatineMeal.alt)) missing.push('creatine-alt:' + wi + ':' + di + ':' + day.id);
     }));
     return missing;
   })()`);
@@ -466,9 +526,8 @@ function main() {
   const june17Focus = app.snapshot("2026-06-17 focus");
   assertSnapshot(june17Focus, {
     weekIndex: 1,
-    weekName: "Menu 2/4",
-    planWeek: "1:2026-06-15",
-    lunchNeedle: "pastel de papa"
+    weekName: "Semana 15 jun",
+    planWeek: "1:2026-06-15"
   });
   assertSameMenuForSameDate(june17Clean, june17Focus);
 
@@ -477,9 +536,8 @@ function main() {
   const june24Pageshow = app.snapshot("2026-06-24 pageshow");
   assertSnapshot(june24Pageshow, {
     weekIndex: 2,
-    weekName: "Menu 3/4",
-    planWeek: "2:2026-06-22",
-    lunchNeedle: "carne al horno"
+    weekName: "Semana 22 jun",
+    planWeek: "2:2026-06-22"
   });
 
   app.setNow("2026-07-01T12:00:00-03:00");
@@ -488,9 +546,8 @@ function main() {
   const july01Visible = app.snapshot("2026-07-01 visible");
   assertSnapshot(july01Visible, {
     weekIndex: 3,
-    weekName: "Menu 4/4",
-    planWeek: "3:2026-06-29",
-    lunchNeedle: "pizza casera"
+    weekName: "Semana 29 jun",
+    planWeek: "3:2026-06-29"
   });
 
   app.setNow("2026-07-08T12:00:00-03:00");
@@ -498,9 +555,8 @@ function main() {
   const july08Pageshow = app.snapshot("2026-07-08 pageshow");
   assertSnapshot(july08Pageshow, {
     weekIndex: 0,
-    weekName: "Menu 1/4",
-    planWeek: "0:2026-07-06",
-    lunchNeedle: "pastel de papa"
+    weekName: "Semana 6 jul",
+    planWeek: "0:2026-07-06"
   });
 
   const uniqueWeeks = new Set([june17Focus.weekIndex, june24Pageshow.weekIndex, july01Visible.weekIndex, july08Pageshow.weekIndex]);
@@ -516,21 +572,31 @@ function main() {
   }
 
   let previousExtendedLunch = null;
+  let previousWeekTurnNames = new Map();
   for (let step = 0; step < 16; step++) {
     const d = new Date(Date.UTC(2026, 5, 10 + step * 7));
     const dateKey = d.toISOString().slice(0, 10);
     const extendedApp = createAppHarness(`${dateKey}T12:00:00-03:00`);
     const snap = extendedApp.snapshot(`${dateKey} extended`);
+    const week = extendedApp.weekSnapshot(`${dateKey} week`);
     assertNoRiceLunch(snap);
     assertNoPostLunchVisibleDuplicate(snap);
     if (previousExtendedLunch) {
       assert(snap.lunch !== previousExtendedLunch, `${dateKey}: almuerzo repetido contra la semana anterior: ${snap.lunch}.`);
     }
     previousExtendedLunch = snap.lunch;
+    previousWeekTurnNames = assertWeekMenuQuality(week, previousWeekTurnNames);
   }
   console.log("EXTENDED 16-WEEK ROTATION OK");
 
+  const buenosAiresEdgeApp = createAppHarness("2026-07-13T02:30:00Z");
+  const buenosAiresEdge = buenosAiresEdgeApp.snapshot("BA timezone edge");
+  assert(buenosAiresEdge.todayKey === "2026-07-12", `La app debe usar fecha de Buenos Aires. Recibido: ${buenosAiresEdge.todayKey}.`);
+  assert(buenosAiresEdge.dayId === "dom", `En Buenos Aires todavia debe ser domingo. Recibido: ${buenosAiresEdge.dayId}.`);
+
   const source = fs.readFileSync(appScriptPath, "utf8");
+  assert(!/const\s+weekNames\s*=/.test(source), "No debe volver el array weekNames con rotaciones viejas.");
+  assert(!/Rotacion\s+\d\s+de\s+4/i.test(source), "No debe volver a mostrarse Rotacion X de 4.");
   assert(/syncCurrentPlanDate\("initial"\)/.test(source), "Falta sincronizacion inicial del menu.");
   assert(/syncCurrentPlanDate\("visible"\)/.test(source), "Falta sincronizacion al volver de background.");
   assert(/syncCurrentPlanDate\("focus"\)/.test(source), "Falta sincronizacion al recuperar foco.");
