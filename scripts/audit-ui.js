@@ -9,6 +9,8 @@ const indexText = fs.readFileSync(path.join(repoRoot, "index.html"), "utf8");
 const scriptText = fs.readFileSync(path.join(repoRoot, "script.js"), "utf8");
 const swText = fs.readFileSync(path.join(repoRoot, "sw.js"), "utf8");
 const cssText = fs.readFileSync(path.join(repoRoot, "styles.css"), "utf8");
+const syncText = fs.readFileSync(path.join(repoRoot, "api", "sync.js"), "utf8");
+const weeklyText = fs.readFileSync(path.join(repoRoot, "api", "weekly-refresh.js"), "utf8");
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -33,5 +35,7 @@ assert(/\.bento-water,\s*\.week-overview,\s*\.plan-intelligence/.test(cssText), 
 assert(/overflow-x:\s*hidden/.test(cssText), "UI audit: falta guardia contra overflow horizontal.");
 assert(/grid-template-columns:\s*repeat\(7,\s*minmax\(0,\s*1fr\)\)/.test(cssText), "UI audit: los dias deben quedar en grilla estable de 7 columnas.");
 assert(!/Menu\s+\d+\s*\/\s*4|Rotacion\s+\d+\s+de\s+4/i.test(scriptText + indexText), "UI audit: no debe volver copy viejo de Menu X/4 o Rotacion X de 4.");
+assert(!/menu fresco/i.test(syncText + weeklyText), "UI audit: el backend no debe volver a guardar weekName con 'menu fresco'.");
+assert(/cambia/.test(syncText) && /cambia/.test(weeklyText), "UI audit: el backend debe guardar weekName con proxima rotacion.");
 
 console.log("UI AUDIT OK");

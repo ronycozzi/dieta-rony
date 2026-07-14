@@ -115,7 +115,9 @@ function getWeekIndex(dateKey) {
 function getWeekLabel(weekStart, weekIndex) {
   const date = new Date(`${weekStart}T12:00:00Z`);
   const label = date.toLocaleDateString("es-AR", { timeZone: "UTC", day: "numeric", month: "short" });
-  return `Semana ${label} - menu fresco`;
+  const next = new Date(`${addDays(weekStart, 7)}T12:00:00Z`);
+  const nextLabel = next.toLocaleDateString("es-AR", { timeZone: "UTC", day: "numeric", month: "short" });
+  return `Semana ${label} - cambia ${nextLabel}`;
 }
 
 async function refreshWeek(sql, ownerId, now = new Date()) {
